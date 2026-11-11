@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { PayApprovalError, requestPayGateApproval, type ApprovalAsk } from '../../src/payments/pay-approvals';
+import { inDollars, PayApprovalError, requestPayGateApproval, type ApprovalAsk } from '../../src/payments/pay-approvals';
 
 const ask: ApprovalAsk = {
   projectId: 'p1',
@@ -52,5 +52,14 @@ describe('requestPayGateApproval', () => {
     const rpc = vi.fn().mockResolvedValue({ data: null, error: { code: '42501', message: 'request_pay_gate_approval: only members who see costs pay the firms' } });
     await expect(requestPayGateApproval({ rpc } as never, ask)).rejects.toThrow(/only members who see costs/);
     expect(rpc).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('a refusal’s amounts', () => {
+  it('are said in dollars, never in the database’s minor units', () => {
+    expect(inDollars('the payout of 3780000 minor units exceeds your approval limit of 2500000')).toBe('the payout of $37,800.00 exceeds your approval limit of $25,000.00');
+    expect(inDollars('payouts over 2500000 minor units need a second person who sees costs to approve them first')).toBe(
+      'payouts over $25,000.00 need a second person who sees costs to approve them first',
+    );
   });
 });

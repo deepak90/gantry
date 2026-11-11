@@ -25,11 +25,11 @@ const PLACE_SUFFIX = /\s*[,–—-]\s*(?:levels?|floors?|stor(?:e)?ys?|lvl|wings
 /** PayPal takes an item of at most $1,000,000 (the sandbox refuses more: "Amount should be between 0 and 1000000"). */
 export const LINE_MAX_MINOR = 100_000_000;
 /**
- * A line's name, as the tenant reads it on the invoice: short enough to take in at a glance, and well under the 200
- * characters PayPal takes (it refuses exactly 200: "Item Name should be less than 200 characters").
+ * A line's name, as the tenant reads it on the invoice: short enough to take in at a glance, and well under what PayPal
+ * takes (200 characters and 200 bytes: a 200-character name ending in "…" was refused as too long).
  */
 export const LINE_LABEL_MAX = 120;
-/** The tasks listed under a line, with their amounts (PayPal's item description takes under 1,000 characters). */
+/** The tasks listed under a line, with their amounts (PayPal's item description takes 1,000 characters and bytes). */
 export const LINE_DETAIL_MAX = 900;
 /** An invoice has 1 to 40 lines (prepare_invoice). */
 export const MAX_LINES = 40;

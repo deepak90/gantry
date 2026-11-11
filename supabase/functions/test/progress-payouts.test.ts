@@ -8,7 +8,7 @@ import { firmAccounts, partyWord, rentalPayeeRefusal, sandboxAccounts } from '..
 import type { PaymentLimits } from '../_shared/hosted.ts';
 import { mockPayPalFetch } from '../_shared/paypal-mock.ts';
 import { PAYPAL_SANDBOX_API, type Fetch } from '../_shared/paypal.ts';
-import { batchRequest, claimPayout, createProgressPayoutHandler, statusOf, unpaidOf, type BatchRequest, type ClaimTarget, type Unpaid } from '../_shared/progress-payouts.ts';
+import { batchRequest, claimPayout, createProgressPayoutHandler, inDollars, statusOf, unpaidOf, type BatchRequest, type ClaimTarget, type Unpaid } from '../_shared/progress-payouts.ts';
 import { jsonResponse, SANDBOX_BATCH_EXISTS } from './fakes.ts';
 
 const HARBOR = '00000000-0000-4000-8000-000000000002';
@@ -148,6 +148,13 @@ describe('the database lets the payout through first', () => {
   it('passes the database’s refusal back in its own words', async () => {
     const { fake } = target({ status: 403, body: { code: '42501', message: 'claim_pay_gate_payout: the approval is requested, not approved' } });
     expect(await claimPayout(request, 'user-token', fake)).toEqual({ ok: false, status: 403, error: 'The approval is requested, not approved' });
+  });
+
+  it('says the database’s amounts in dollars, never in minor units', async () => {
+    const { fake } = target({ status: 403, body: { code: '42501', message: 'claim_pay_gate_payout: payouts over 2500000 minor units need a second person who sees costs to approve them first' } });
+    expect(await claimPayout(request, 'user-token', fake)).toEqual({ ok: false, status: 403, error: 'Payouts over $25,000.00 need a second person who sees costs to approve them first' });
+    expect(inDollars('the payout of 3780000 minor units exceeds your approval limit of 2500000')).toBe('the payout of $37,800.00 exceeds your approval limit of $25,000.00');
+    expect(inDollars('nothing to say in dollars')).toBe('nothing to say in dollars');
   });
 
   it('refuses without a login before asking anyone', async () => {
@@ -350,7 +357,7 @@ describe('paypal-progress-payout', () => {
     const { handle, seen } = fn({ claim: { status: 400, body: { code: '42501', message: 'claim_pay_gate_payout: payouts over 2500000 minor units need a second person who sees costs to approve them first' } } });
     const response = await handle(post({ ...request, approvalId: null }));
     expect(response.status).toBe(403);
-    expect(await read(response)).toMatchObject({ refused: true, code: 'PAYOUT_REFUSED', error: 'Payouts over 2500000 minor units need a second person who sees costs to approve them first' });
+    expect(await read(response)).toMatchObject({ refused: true, code: 'PAYOUT_REFUSED', error: 'Payouts over $25,000.00 need a second person who sees costs to approve them first' });
     expect(payouts(seen)).toEqual([]);
   });
 

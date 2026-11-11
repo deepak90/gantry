@@ -60,6 +60,17 @@ const SAFE_ID = /^[A-Za-z0-9._-]{6,60}$/;
 const BATCH_ID = /^[A-Za-z0-9._-]{6,200}$/;
 
 /** The request as the page sent it, checked; null when it isn't one. */
+/**
+ * The database counts money in cents and says so ("payouts over 2500000 minor units need a second person…"); a person
+ * reads dollars ("payouts over $25,000.00 need…"). Both numbers of an approval limit are said in dollars too.
+ */
+export function inDollars(message: string): string {
+  const usd = (minor: string) => (Number(minor) / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+  return message
+    .replace(/(\d+) minor units exceeds your approval limit of (\d+)/g, (_, amount: string, limit: string) => `${usd(amount)} exceeds your approval limit of ${usd(limit)}`)
+    .replace(/(\d+) minor units/g, (_, amount: string) => usd(amount));
+}
+
 export function batchRequest(body: unknown): BatchRequest | null {
   const value = body as Partial<BatchRequest> | null;
   if (!value || typeof value !== 'object' || typeof value.batchId !== 'string' || !SAFE_ID.test(value.batchId)) return null;
@@ -138,7 +149,7 @@ export async function claimPayout(request: BatchRequest, token: string | null, t
   const body = asObject(await response.json().catch(() => ({})));
   if (!response.ok) {
     const said = text(body.message) ?? `The database answered ${response.status}.`;
-    return { ok: false, status: response.status === 401 ? 401 : 403, error: said.replace(/^claim_pay_gate_payout:\s*/, '').replace(/^./, (first) => first.toUpperCase()) };
+    return { ok: false, status: response.status === 401 ? 401 : 403, error: inDollars(said.replace(/^claim_pay_gate_payout:\s*/, '')).replace(/^./, (first) => first.toUpperCase()) };
   }
   return { ok: true, approvalId: text(body.approval_id), approvedBy: text(body.approved_by), ...(body.resumed === true ? { resumed: true } : {}) };
 }

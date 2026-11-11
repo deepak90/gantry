@@ -94,11 +94,22 @@ export class PayApprovalError extends Error {
   }
 }
 
+/**
+ * The database counts money in cents and says so ("payouts over 2500000 minor units need a second person…"); a person
+ * reads dollars ("payouts over $25,000.00 need…"). Both numbers of an approval limit are said in dollars too.
+ */
+export function inDollars(message: string): string {
+  const usd = (minor: string) => (Number(minor) / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+  return message
+    .replace(/(\d+) minor units exceeds your approval limit of (\d+)/g, (_, amount: string, limit: string) => `${usd(amount)} exceeds your approval limit of ${usd(limit)}`)
+    .replace(/(\d+) minor units/g, (_, amount: string) => usd(amount));
+}
+
 async function call(client: Pick<WorkflowClient, 'rpc'>, fn: string, args: object): Promise<PayGateApprovalRow> {
   const { data, error } = (await client.rpc(fn, args)) as { data: unknown; error: WorkflowErrorLike | null };
   if (error) {
     const missing = error.code === 'PGRST202' || error.code === '42883';
-    throw new PayApprovalError(missing ? 'Second approval not set up in this database (migration not applied)' : error.message.replace(/^[a-z_]+: /, ''), error.code);
+    throw new PayApprovalError(missing ? 'Second approval not set up in this database (migration not applied)' : inDollars(error.message.replace(/^[a-z_]+: /, '')), error.code);
   }
   const parsed = PayGateApprovalRow.safeParse(data);
   if (!parsed.success) throw new PayApprovalError(`${fn} answered in an unexpected shape`, 'INVALID_RESPONSE');

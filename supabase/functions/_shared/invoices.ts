@@ -83,10 +83,11 @@ export interface InvoiceDeps {
 export const ONE_PAYMENT_LIMIT_MINOR = 6_000_000;
 
 /**
- * The most PayPal takes in an invoice's text, kept one under what it documents: it refused an item name of exactly 200
- * characters ("INVALID_ITEM_NAME_LENGTH: Item Name should be less than 200 characters"). Counted in UTF-8 bytes, so a
- * "·" or "…" can't tip a name over. The drafts stay well inside these (apps/agent/src/plan/invoice.ts); this is the last
- * guard, so no wording ever fails a send.
+ * The most PayPal takes in an invoice's text, kept a byte under. Checked against the sandbox: an item name may be 200
+ * characters and 200 bytes of UTF-8, a description 1000 of each, a reference 120 characters. The name it refused
+ * ("INVALID_ITEM_NAME_LENGTH: Item Name should be less than 200 characters") was 200 characters ending in "…": 202 bytes.
+ * Counted in bytes here, so a "·" or "…" can't tip one over. The drafts stay well inside these
+ * (apps/agent/src/plan/invoice.ts); this is the last guard, so no wording ever fails a send.
  */
 export const PAYPAL_TEXT_MAX = { name: 199, description: 999, reference: 119 } as const;
 
