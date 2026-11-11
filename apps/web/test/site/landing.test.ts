@@ -20,7 +20,8 @@ describe('the landing page', () => {
   it('opens on the claim, one way in, and the model of the building', () => {
     const hero = /<section class="hero"[\s\S]*?<\/section>/.exec(landing)?.[0] ?? '';
     expect(hero).toMatch(/<h1 id="hero-title"><span>Pay the crew\.<\/span> <span>Pour the slab\.<\/span><\/h1>/);
-    expect(hero).toMatch(/where plans become <span class="hero-concrete">concrete<\/span>\./);
+    expect(hero).toContain('<p class="hero-track">Keep the plan <span class="hero-on-track">on track.</span></p>');
+    expect(hero).toMatch(/The construction schedule where plans become concrete\. Talk it through with /);
     // Remy's mark beside her name is the one the app draws (assistant/RemyMark.tsx).
     expect(hero).toContain(
       `<span class="hero-remy"><svg class="hero-remy-mark" viewBox="0 0 120 120" aria-hidden="true" focusable="false">${markDrawing('hero-remy')}</svg>Remy</span>, your AI&nbsp;coordinator,`,

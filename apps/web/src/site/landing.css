@@ -175,12 +175,11 @@
 }
 
 /*
- * "concrete": the one warm word on the blue sheets, where the plan turns real. Orange and yellow drift through the
- * letters, the aurora-text idea in plain CSS; the letters themselves never move, so the line reads as it sits.
+ * "on track.": the promise, and the one warm color on the blue sheets. Orange and yellow drift through the letters, the
+ * aurora-text idea in plain CSS, over the line's ice; the letters themselves never move, so the line reads as it sits.
  */
-.hero-concrete {
+.hero-on-track {
   color: oklch(0.82 0.16 72);
-  font-weight: 650;
   background: linear-gradient(
       115deg,
       oklch(0.72 0.19 48) 0%,
@@ -231,7 +230,7 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .hero-concrete {
+  .hero-on-track {
     animation: hero-aurora 12s linear infinite;
   }
 
@@ -250,7 +249,7 @@
 
 /* High contrast: the words in the text color, and Remy's mark drawn in it too rather than left out. */
 @media (forced-colors: active) {
-  :is(.hero-track, .hero-concrete) {
+  :is(.hero-track, .hero-on-track) {
     background: none;
     -webkit-text-fill-color: currentColor;
   }
