@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ConfigError } from '../_shared/config.ts';
-import { createInvoiceHandler, invoiceBody, invoiceRecipient, ONE_PAYMENT_LIMIT_MINOR, statusOf, type InvoiceRecord, type InvoiceStore } from '../_shared/invoices.ts';
+import { createInvoiceHandler, fitPayPal, invoiceBody, invoiceRecipient, ONE_PAYMENT_LIMIT_MINOR, PAYPAL_TEXT_MAX, statusOf, type InvoiceRecord, type InvoiceStore } from '../_shared/invoices.ts';
 import { sandboxAccounts } from '../_shared/accounts.ts';
 import type { PaymentLimits } from '../_shared/hosted.ts';
 
@@ -110,10 +110,32 @@ describe('paypal-invoice', () => {
       ['Order light fixtures, levels 1 to 3', '105000.00', null],
       ['Deliver, install and test light fixtures, level 1', '8500.00', 'Deliver light fixtures $900 · Install light fixtures $6,200 · Test light fixtures $1,400'],
     ]);
-    // Exactly $60,000 still goes in one payment; PayPal's reference field takes 120 characters.
+    // Exactly $60,000 still goes in one payment; PayPal's reference field takes under 120 characters.
     const atLimit = invoiceBody({ ...change, title: 'x'.repeat(150), lines: [{ label: 'One payment', amount_minor: ONE_PAYMENT_LIMIT_MINOR }] });
     expect(atLimit.configuration.partial_payment.allow_partial_payment).toBe(false);
-    expect(atLimit.detail.reference).toHaveLength(120);
+    expect(new TextEncoder().encode(atLimit.detail.reference).length).toBeLessThanOrEqual(PAYPAL_TEXT_MAX.reference);
+    expect(atLimit.detail.reference.endsWith('…')).toBe(true);
+  });
+
+  it('never sends PayPal a name, description or reference it refuses, whatever the draft says', () => {
+    // The line PayPal refused on the hosted site: fourteen tasks in one name, cut to 199 characters and a "…".
+    const refused = `${'Review fixture schedule and submittals, deliver fixtures, receive, inspect and stage on the floor, mark fixture layout, rough-in conduit and whips to fixture points, adjust ceiling grid for fixtures, '.slice(0, 199)}…`;
+    expect(refused).toHaveLength(200);
+    const body = invoiceBody({ ...draft(), title: `Harbor Street Offices · Change order: ${'Light fixtures '.repeat(10)}`, lines: [{ label: refused, amount_minor: 1_620_000, detail: 'Review fixture schedule and submittals $600 · '.repeat(40) }] });
+    const bytes = (text: string) => new TextEncoder().encode(text).length;
+    const item = body.items[0]!;
+    expect(bytes(item.name)).toBeLessThanOrEqual(199);
+    expect(bytes('description' in item ? item.description! : '')).toBeLessThanOrEqual(999);
+    expect(bytes(body.detail.reference)).toBeLessThanOrEqual(119);
+    // Cut at a word, and said to be cut.
+    expect(item.name).toMatch(/[a-z]…$/);
+    expect(item.name.startsWith('Review fixture schedule and submittals, deliver fixtures')).toBe(true);
+    // What fits goes as it is.
+    expect(fitPayPal('Light fixtures, level 1 (14 tasks)', PAYPAL_TEXT_MAX.name)).toBe('Light fixtures, level 1 (14 tasks)');
+    expect(fitPayPal('a'.repeat(199), 199)).toBe('a'.repeat(199));
+    expect(fitPayPal('a'.repeat(200), 199)).toBe(`${'a'.repeat(196)}…`);
+    // Two-byte characters count twice.
+    expect(bytes(fitPayPal('·'.repeat(150), 199))).toBeLessThanOrEqual(199);
   });
 
   it('only counts an invoice as paid when PayPal says all of it is', () => {

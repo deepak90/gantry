@@ -24,6 +24,13 @@ const PLACE_SUFFIX = /\s*[,–—-]\s*(?:levels?|floors?|stor(?:e)?ys?|lvl|wings
 
 /** PayPal takes an item of at most $1,000,000 (the sandbox refuses more: "Amount should be between 0 and 1000000"). */
 export const LINE_MAX_MINOR = 100_000_000;
+/**
+ * A line's name, as the tenant reads it on the invoice: short enough to take in at a glance, and well under the 200
+ * characters PayPal takes (it refuses exactly 200: "Item Name should be less than 200 characters").
+ */
+export const LINE_LABEL_MAX = 120;
+/** The tasks listed under a line, with their amounts (PayPal's item description takes under 1,000 characters). */
+export const LINE_DETAIL_MAX = 900;
 /** An invoice has 1 to 40 lines (prepare_invoice). */
 export const MAX_LINES = 40;
 /** The invoice's title is its reference in PayPal, which takes 120 characters. */
@@ -43,6 +50,49 @@ export interface ChangeTasks {
 export type ChangeInvoiceDraft = Omit<ChangeInvoiceCard, 'invoice_id'>;
 
 const clip = (text: string, max: number) => (text.length <= max ? text : `${text.slice(0, max - 1).trimEnd()}…`);
+
+/** `text` in at most `max` characters, cut at a word where that keeps most of it, with "…" when cut. */
+function clipWords(text: string, max: number): string {
+  if (text.length <= max) return text;
+  const cut = text.slice(0, Math.max(0, max - 1));
+  const atWord = cut.replace(/[\s,;:–—-]+\S*$/, '');
+  return `${(atWord.length >= cut.length * 0.6 ? atWord : cut).trimEnd()}…`;
+}
+
+/** A name and where its work is ("…, level 2"), in at most LINE_LABEL_MAX characters: the name gives way, never the place. */
+function withWhere(name: string, where: string): string {
+  if (`${name}${where}`.length <= LINE_LABEL_MAX) return `${name}${where}`;
+  if (where.length >= LINE_LABEL_MAX - 12) return clipWords(`${name}${where}`, LINE_LABEL_MAX);
+  return `${clipWords(name, LINE_LABEL_MAX - where.length)}${where}`;
+}
+
+/**
+ * A floor's line, at most LINE_LABEL_MAX characters, always saying where its work is: the work in one phrase when that
+ * fits ("Deliver, install and test light fixtures, level 2"); otherwise what the change is and how many tasks
+ * ("Light fixtures, level 2 (14 tasks)"). Its tasks are listed under it either way.
+ */
+export function floorLabel({ work, place, groupName, subject, count }: { work: string; place: string | null; groupName: string | null; subject: string; count: number }): string {
+  const where = place ? `, ${place}` : groupName ? ` (${groupName})` : '';
+  if (`${work}${where}`.length <= LINE_LABEL_MAX) return `${work}${where}`;
+  const tasks = count > 1 ? ` (${count} tasks)` : '';
+  // A place that already says what the work is ("light fixtures, level 2") needs nothing before it.
+  if (place && place.toLowerCase().includes(subject.toLowerCase())) return withWhere(upperFirst(place), tasks);
+  return withWhere(subject, `${where}${tasks}`);
+}
+
+/** The tasks under a line with their amounts, "a $600 · b $900", as many as fit in `max` characters, then how many more. */
+export function taskList(items: readonly string[], max: number = LINE_DETAIL_MAX): string {
+  const all = items.join(' · ');
+  if (all.length <= max) return all;
+  const kept: string[] = [];
+  for (const item of items) {
+    const more = ` · and ${items.length - kept.length - 1} more`;
+    if ([...kept, item].join(' · ').length + more.length > max) break;
+    kept.push(item);
+  }
+  if (kept.length === 0) return clipWords(items[0] ?? '', max);
+  return `${kept.join(' · ')} · and ${items.length - kept.length} more`;
+}
 const lowerFirst = (text: string) => (/^[A-Z][a-z]/.test(text) ? text[0]!.toLowerCase() + text.slice(1) : text);
 const upperFirst = (text: string) => (text ? text[0]!.toUpperCase() + text.slice(1) : text);
 /** "$6,200" (no cents unless they matter). */
@@ -177,11 +227,17 @@ export function changeInvoice(plan: PlanSnapshot, change: ChangeTasks, options: 
   const priced = change.tasks.filter((task) => task.budgetMinor > 0);
   if (priced.length === 0) throw new ChangeInvoiceError('None of the change’s tasks has a cost in the plan yet, so there is nothing to bill: set what they cost first.');
 
+  // What the change is, for a floor's line whose tasks don't fit in one phrase: "Light fixtures" from "Light fixtures,
+  // levels 1 to 3", the library piece's name, or the words its tasks share.
+  const subject =
+    upperFirst(withoutPlace(options.name?.trim() || options.pieceName?.trim() || sharedWork(priced.map((task) => withoutPlace(task.name))) || '')) || 'Work';
+
   const lines: ChangeInvoiceLine[] = [];
   // Bought once for every floor: a line each, saying where when its name does not.
   for (const task of priced.filter((candidate) => BUYS.test(candidate.name))) {
     const place = placeOfGroup(floorOf(task));
-    lines.push({ label: clip(NAMES_A_PLACE.test(task.name) || !place ? task.name : `${task.name}, ${place}`, 200), amount_minor: task.budgetMinor, detail: null, task_ids: [task.id] });
+    const label = NAMES_A_PLACE.test(task.name) || !place ? clipWords(task.name, LINE_LABEL_MAX) : withWhere(task.name, `, ${place}`);
+    lines.push({ label, amount_minor: task.budgetMinor, detail: null, task_ids: [task.id] });
   }
   // Then each floor's own work, in plan order: one line, its tasks under it.
   const floors = new Map<number | null, PlanTask[]>();
@@ -194,11 +250,10 @@ export function changeInvoice(plan: PlanSnapshot, change: ChangeTasks, options: 
     const place = placeOfGroup(group);
     const names = tasks.map((task) => withoutPlace(task.name));
     const work = upperFirst(workPhrase(names));
-    const label = place ? `${work}, ${place}` : group ? `${work} (${group.name})` : work;
     lines.push({
-      label: clip(label, 200),
+      label: floorLabel({ work, place, groupName: group?.name ?? null, subject, count: tasks.length }),
       amount_minor: tasks.reduce((sum, task) => sum + task.budgetMinor, 0),
-      detail: tasks.length > 1 ? clip(tasks.map((task, index) => `${names[index]} ${dollars(task.budgetMinor)}`).join(' · '), 1000) : null,
+      detail: tasks.length > 1 ? taskList(tasks.map((task, index) => `${names[index]} ${dollars(task.budgetMinor)}`)) : null,
       // The card keeps at most 60 a line (a floor's own work is a handful).
       task_ids: tasks.map((task) => task.id).slice(0, 60),
     });

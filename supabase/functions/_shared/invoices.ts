@@ -82,8 +82,33 @@ export interface InvoiceDeps {
  */
 export const ONE_PAYMENT_LIMIT_MINOR = 6_000_000;
 
-/** PayPal's limit on an invoice's reference ("PO number") field. */
-const REFERENCE_MAX = 120;
+/**
+ * The most PayPal takes in an invoice's text, kept one under what it documents: it refused an item name of exactly 200
+ * characters ("INVALID_ITEM_NAME_LENGTH: Item Name should be less than 200 characters"). Counted in UTF-8 bytes, so a
+ * "·" or "…" can't tip a name over. The drafts stay well inside these (apps/agent/src/plan/invoice.ts); this is the last
+ * guard, so no wording ever fails a send.
+ */
+export const PAYPAL_TEXT_MAX = { name: 199, description: 999, reference: 119 } as const;
+
+const utf8 = new TextEncoder();
+const bytesOf = (text: string) => utf8.encode(text).length;
+
+/** `text` in at most `maxBytes` bytes of UTF-8: whole when it fits, else cut at a word where that keeps most of it, with "…". */
+export function fitPayPal(text: string, maxBytes: number): string {
+  const whole = text.trim();
+  if (bytesOf(whole) <= maxBytes) return whole;
+  const room = maxBytes - bytesOf('…');
+  let cut = '';
+  let used = 0;
+  for (const char of whole) {
+    const size = bytesOf(char);
+    if (used + size > room) break;
+    cut += char;
+    used += size;
+  }
+  const atWord = cut.replace(/[\s,;:·–—-]+\S*$/, '');
+  return `${(atWord.length >= cut.length * 0.6 ? atWord : cut).trimEnd()}…`;
+}
 
 /**
  * Our own invoice number, so PayPal doesn't continue the account's sequence (a sandbox account carries whatever
@@ -137,7 +162,7 @@ export function invoiceBody(invoice: InvoiceRecord, seller: string | null = sell
       invoice_number: invoiceNumber(invoice),
       currency_code: invoice.currency,
       // The project and what is billed, e.g. "Harbor Street Offices · Change order: New light fixtures, levels 1 to 3".
-      reference: invoice.title.slice(0, REFERENCE_MAX),
+      reference: fitPayPal(invoice.title, PAYPAL_TEXT_MAX.reference),
       note: invoice.title,
       payment_term: { term_type: 'NET_30' },
     },
@@ -152,8 +177,8 @@ export function invoiceBody(invoice: InvoiceRecord, seller: string | null = sell
       },
     ],
     items: invoice.lines.map((line) => ({
-      name: line.label.slice(0, 200),
-      ...(line.detail ? { description: line.detail.slice(0, 1000) } : {}),
+      name: fitPayPal(line.label, PAYPAL_TEXT_MAX.name),
+      ...(line.detail ? { description: fitPayPal(line.detail, PAYPAL_TEXT_MAX.description) } : {}),
       quantity: '1',
       unit_amount: { currency_code: invoice.currency, value: minorToDecimal(line.amount_minor) },
     })),

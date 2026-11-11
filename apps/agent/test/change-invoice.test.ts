@@ -14,7 +14,7 @@ import { runDataTool, ToolRefusal, type ToolContext } from '../src/agent/tools';
 import { FakeBrowser, FakeDb, FakeTransport, presenceOf } from '../src/dev/fake';
 import { makeClient } from '../src/llm/client';
 import { silentLogger } from '../src/log';
-import { workPhrase } from '../src/plan/invoice';
+import { floorLabel, LINE_DETAIL_MAX, LINE_LABEL_MAX, taskList, workPhrase } from '../src/plan/invoice';
 import { planFromRows, type PlanRows } from '../src/plan/rows';
 import { ProjectAgent } from '../src/project-agent';
 import type { TurnResult } from '../src/agent/brain';
@@ -239,6 +239,81 @@ describe('the invoice for a change', () => {
     const grounding = { issues: new Map(), knownMinor: new Set<number>(), invoices: new Set(ctx.invoices!.keys()) };
     expect(groundCard('show_change_invoice', { invoice_id: result.invoice_id }, grounding)).toEqual([]);
     expect(groundCard('show_change_invoice', { invoice_id: 'invoice-99' }, grounding)).toEqual(['invoice_id invoice-99 was not returned by draft_change_invoice']);
+  });
+});
+
+/** The package Remy drafted on the hosted site: an order on each floor, then fourteen tasks a floor, too many for one phrase. */
+const PACKAGE: [string, number][] = [
+  ['Review fixture schedule and submittals', 600],
+  ['Deliver fixtures', 900],
+  ['Receive, inspect and stage on the floor', 500],
+  ['Mark fixture layout', 600],
+  ['Rough-in conduit and whips to fixture points', 2_400],
+  ['Adjust ceiling grid for fixtures', 800],
+  ['Install light fixtures', 5_400],
+  ['Wire and connect fixtures', 1_200],
+  ['Install switches and occupancy sensors', 1_500],
+  ['Test fixtures', 500],
+  ['Commission and adjust lighting levels', 600],
+  ['Touch up paint around fixtures', 500],
+  ['Clean fixtures and lenses', 400],
+  ['Punch list and tenant sign-off', 300],
+];
+
+function elaborate(): Record<string, unknown>[] {
+  const rows: Record<string, unknown>[] = [];
+  [100, 200, 300].forEach((floor, index) => {
+    const base = 6000 + index * 100;
+    rows.push(added(base, `Order light fixtures, level ${index + 1}`, floor, 5, 3_250));
+    PACKAGE.forEach(([name, dollars], at) => rows.push(added(base + 1 + at, name, floor, 6 + at, dollars)));
+  });
+  return rows;
+}
+
+describe('a change with more tasks a floor than one phrase holds', () => {
+  it('names each floor’s line by the change and its floor, with its tasks listed under it, all within what PayPal takes', async () => {
+    const rows = harborRows();
+    const ctx = context({ ...rows, revisions: [{ revision_no: 1, changes: { tasks: { added: elaborate() } } }] });
+    const result = await run(ctx, { change: 'Light fixtures, levels 1 to 3' });
+    expect(result.lines.map((line: { label: string; text: string; tasks: number }) => [line.label, line.text, line.tasks])).toEqual([
+      ['Order light fixtures, level 1', '$3,250', 1],
+      ['Order light fixtures, level 2', '$3,250', 1],
+      ['Order light fixtures, level 3', '$3,250', 1],
+      ['Light fixtures, level 1 (14 tasks)', '$16,200', 14],
+      ['Light fixtures, level 2 (14 tasks)', '$16,200', 14],
+      ['Light fixtures, level 3 (14 tasks)', '$16,200', 14],
+    ]);
+    expect(result.text.total).toBe('$58,350');
+    const card = ctx.invoices!.get(result.invoice_id)!;
+    expect(CARD_PROPS.show_change_invoice.safeParse(card).success).toBe(true);
+    expect(card.lines[3]!.detail).toBe(PACKAGE.map(([name, dollars]) => `${name} $${dollars.toLocaleString('en-US')}`).join(' · '));
+    for (const line of card.lines) {
+      expect(line.label.length).toBeLessThanOrEqual(LINE_LABEL_MAX);
+      expect((line.detail ?? '').length).toBeLessThanOrEqual(LINE_DETAIL_MAX);
+    }
+  });
+
+  it('keeps the floor when the name has to give way, and says so when the list does', () => {
+    const long = 'Review fixture schedule and submittals, deliver fixtures, receive, inspect and stage on the floor and mark fixture layout';
+    expect(floorLabel({ work: long, place: 'level 2', groupName: 'Level 2', subject: 'Light fixtures', count: 14 })).toBe('Light fixtures, level 2 (14 tasks)');
+    // A floor group that already says what the work is.
+    expect(floorLabel({ work: long, place: 'light fixtures, level 2', groupName: 'Light fixtures, level 2', subject: 'Light fixtures', count: 14 })).toBe('Light fixtures, level 2 (14 tasks)');
+    // No place: the group's name instead.
+    expect(floorLabel({ work: long, place: null, groupName: 'Lobby', subject: 'Light fixtures', count: 3 })).toBe('Light fixtures (Lobby) (3 tasks)');
+    // A subject too long for the line gives way to the floor.
+    const label = floorLabel({ work: long, place: 'level 12', groupName: 'Level 12', subject: 'A very long name for a change '.repeat(6).trim(), count: 40 });
+    expect(label.length).toBeLessThanOrEqual(LINE_LABEL_MAX);
+    expect(label.endsWith('…, level 12 (40 tasks)')).toBe(true);
+    // Short work keeps its one phrase.
+    expect(floorLabel({ work: 'Deliver, install and test light fixtures', place: 'level 1', groupName: 'Level 1', subject: 'Light fixtures', count: 3 })).toBe('Deliver, install and test light fixtures, level 1');
+
+    const items = Array.from({ length: 60 }, (_, index) => `Task number ${index + 1} on the floor $1,000`);
+    const listed = taskList(items);
+    expect(listed.length).toBeLessThanOrEqual(LINE_DETAIL_MAX);
+    expect(listed.startsWith('Task number 1 on the floor $1,000 · Task number 2 ')).toBe(true);
+    const shown = listed.split(' · ').length - 1;
+    expect(listed.endsWith(` · and ${60 - shown} more`)).toBe(true);
+    expect(taskList(['a $1', 'b $2'])).toBe('a $1 · b $2');
   });
 });
 
