@@ -79,22 +79,52 @@
   text-wrap: pretty;
 }
 
-/* Hero: the claim and the way in on the left, the model of the building on the right -------------------- */
+/* Hero: the cover, live. The claim and the way in on the left; on the right the app's own 3D model of Harbor as a
+ * sheet tilted toward the claim, the odds board behind it, and three cards from the film around it. Night blue, a faint
+ * drawing grid and Remy's light, running on from the header. The PayPal card comes in when the model's story pays the
+ * footings (landing/model.ts sets .is-paid), never before. ------------------------------------------------------ */
+
+.landing main > .hero {
+  --hero-text: #f4f6fb;
+  --hero-soft: rgb(244 246 251 / 0.74);
+  --hero-faint: rgb(244 246 251 / 0.52);
+  --hero-ice: #a9e0fe;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  padding-top: clamp(2.5rem, 1.25rem + 3.5vw, 5rem);
+  padding-bottom: clamp(3.5rem, 2rem + 4vw, 6.5rem);
+  border-top: 0;
+  color: var(--hero-text);
+  background:
+    radial-gradient(ellipse 55% 62% at 74% 52%, rgb(66 127 247 / 0.28) 0%, rgb(66 127 247 / 0.07) 45%, transparent 75%),
+    radial-gradient(ellipse 40% 45% at 12% 18%, rgb(120 199 253 / 0.09) 0%, transparent 70%),
+    linear-gradient(180deg, var(--header) 0%, #0b1120 38%, #090d16 100%);
+}
+
+/* The drawing grid, strongest behind the model. */
+.landing main > .hero::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgb(140 180 255 / 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(140 180 255 / 0.07) 1px, transparent 1px);
+  background-size: 3rem 3rem;
+  mask-image: radial-gradient(ellipse 70% 78% at 64% 50%, #000 0%, rgb(0 0 0 / 0.5) 55%, transparent 92%);
+}
 
 .hero {
   display: grid;
-  gap: clamp(2rem, 1rem + 3vw, 4rem);
+  gap: clamp(2.5rem, 1rem + 4vw, 4.5rem);
   align-items: center;
-}
-
-.landing main > .hero {
-  padding-top: clamp(2.5rem, 1.25rem + 3.5vw, 5rem);
-  padding-bottom: clamp(3rem, 1.5rem + 4vw, 6rem);
 }
 
 @media (min-width: 62rem) {
   .hero {
-    grid-template-columns: minmax(0, 5.5fr) minmax(0, 6.5fr);
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
   }
 }
 
@@ -108,7 +138,7 @@
 /* Two lines, each a whole phrase: sized to the column, so "Pour the slab." never breaks. */
 .hero h1 {
   margin: 0;
-  color: var(--ink);
+  color: var(--hero-text);
   font-size: clamp(2.25rem, 12.1cqi, 6.25rem);
   font-stretch: var(--display-stretch);
   font-weight: 800;
@@ -121,10 +151,24 @@
   white-space: nowrap;
 }
 
+.hero-track {
+  margin: calc(-1 * var(--space-2xs)) 0 0;
+  font-size: clamp(1.5rem, 6.4cqi, 3rem);
+  font-stretch: 108%;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--hero-ice);
+  background: linear-gradient(95deg, #a9e0fe 0%, #78c7fd 50%, #5c9cff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 .hero-sub {
-  max-width: 30rem;
+  max-width: 32rem;
   margin: 0;
-  color: var(--ink-soft);
+  color: var(--hero-soft);
   font-size: var(--site-lead);
   line-height: 1.5;
   text-wrap: pretty;
@@ -138,14 +182,26 @@
   margin-top: var(--space-xs);
 }
 
+/* The main action, light on the night blue, as in the header. */
+.hero .button.is-primary {
+  border-color: var(--hero-text);
+  color: var(--gray-900);
+  background: var(--hero-text);
+}
+
+.hero .button.is-primary:hover:not(:disabled) {
+  border-color: var(--gray-200);
+  background: var(--gray-200);
+}
+
 .hero-film {
   display: inline-flex;
   align-items: center;
   gap: var(--space-sm);
-  color: var(--ink);
+  color: var(--hero-text);
   font-weight: var(--fw-strong);
   text-decoration: underline;
-  text-decoration-color: var(--rule-strong);
+  text-decoration-color: rgb(244 246 251 / 0.35);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.3em;
 }
@@ -154,14 +210,14 @@
   text-decoration-color: currentColor;
 }
 
-/* A play mark: an ink circle with a triangle cut out of it. */
+/* A play mark: a light circle with a triangle cut out of it. */
 .hero-film-play {
   display: inline-grid;
   place-items: center;
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 50%;
-  background: var(--ink);
+  background: var(--hero-text);
 }
 
 .hero-film-play::before {
@@ -169,62 +225,310 @@
   margin-left: 0.15rem;
   border-top: 0.32rem solid transparent;
   border-bottom: 0.32rem solid transparent;
-  border-left: 0.5rem solid var(--paper);
+  border-left: 0.5rem solid var(--gray-900);
 }
 
 .hero-note {
   margin: 0;
-  color: var(--ink-faint);
+  color: var(--hero-faint);
   font-size: var(--fs-md);
 }
 
-/* The model, framed as a drawing: graph paper behind it, and a title block along its foot. */
+.hero .join.is-quiet > summary {
+  color: var(--hero-soft);
+  text-decoration-color: rgb(244 246 251 / 0.3);
+}
+
+.hero .join.is-quiet > summary:hover {
+  color: var(--hero-text);
+}
+
+.hero-built {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: var(--space-md) 0 0;
+  color: var(--hero-faint);
+  font-size: var(--fs-xs);
+  font-stretch: 112%;
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.hero-pill {
+  padding: 0.4rem 0.8rem 0.36rem;
+  border: 1px solid rgb(244 246 251 / 0.22);
+  border-radius: 999px;
+  color: var(--hero-text);
+  background: rgb(255 255 255 / 0.04);
+  letter-spacing: 0.06em;
+}
+
+/* The stage: the model as a sheet turned toward the claim, the odds board behind it, the cards in front. */
+.hero-stage {
+  position: relative;
+  padding: 5.5rem 0 2.5rem;
+  perspective: 2200px;
+}
+
 .hero-model {
   position: relative;
+  z-index: 1;
   margin: 0;
-  border: 1px solid var(--rule-strong);
+  container-type: inline-size;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: 0.875rem;
   background:
     linear-gradient(var(--grid-bold) 1px, transparent 1px) 0 0 / 2.5rem 2.5rem,
     linear-gradient(90deg, var(--grid-bold) 1px, transparent 1px) 0 0 / 2.5rem 2.5rem,
     linear-gradient(var(--grid-fine) 1px, transparent 1px) 0 0 / 0.5rem 0.5rem,
     linear-gradient(90deg, var(--grid-fine) 1px, transparent 1px) 0 0 / 0.5rem 0.5rem,
     var(--paper);
+  box-shadow:
+    0 2.5rem 5.5rem -1.75rem rgb(0 0 0 / 0.85),
+    0 0 0 1px rgb(0 0 0 / 0.4),
+    0 0 5rem -1.25rem rgb(66 127 247 / 0.38);
+  color: var(--ink);
 }
 
-/* Registration marks at two corners, as on a printed sheet. */
-.hero-model::before,
-.hero-model::after {
-  content: '';
+.hero-odds {
   position: absolute;
-  width: 0.9rem;
-  height: 0.9rem;
-  pointer-events: none;
-}
-
-.hero-model::before {
-  top: -0.45rem;
-  left: -0.45rem;
-  border-top: 1px solid var(--ink);
-  border-left: 1px solid var(--ink);
-}
-
-.hero-model::after {
-  right: -0.45rem;
-  bottom: -0.45rem;
-  border-right: 1px solid var(--ink);
-  border-bottom: 1px solid var(--ink);
+  z-index: 0;
+  top: 0;
+  right: -10%;
+  width: 60%;
+  height: auto;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: 0.75rem;
+  opacity: 0.86;
+  box-shadow: 0 2rem 4rem -1.5rem rgb(0 0 0 / 0.8);
 }
 
 /* The picture keeps 16:10 of the width and the schedule strip (about 8.7rem) sits under it (landing/model.ts); the
  * height is held from the start so nothing moves when the model is built in. */
-.hero-model {
-  container-type: inline-size;
-}
-
 .model {
   position: relative;
   min-height: calc(62.5cqi + 8.7rem);
   overflow: hidden;
+}
+
+@media (min-width: 62rem) {
+  .hero-model {
+    transform: rotateY(-11deg) rotateX(3deg);
+    transform-origin: 0% 50%;
+  }
+
+  .hero-odds {
+    transform: rotateY(-16deg) rotateX(3deg);
+    transform-origin: 100% 50%;
+  }
+}
+
+/* The cards from the film: Remy on the call, the crane rental cut back, and the footings paid with PayPal. */
+.hero-card {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 1.75rem 3.5rem -1.25rem rgb(0 0 0 / 0.75);
+  animation: hero-card-in 0.7s var(--ease-out) both;
+}
+
+.hero-card.is-remy {
+  top: 4.1rem;
+  left: -2.5rem;
+  gap: var(--space-sm);
+  padding: 0.55rem 1.05rem 0.55rem 0.55rem;
+  border: 1px solid rgb(120 199 253 / 0.4);
+  border-radius: 999px;
+  color: var(--hero-text);
+  background: rgb(17 21 28 / 0.95);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+  animation-delay: 0.35s;
+}
+
+.hero-card.is-remy small {
+  margin-left: var(--space-2xs);
+  color: var(--hero-faint);
+  font-size: inherit;
+  font-weight: var(--fw-medium);
+}
+
+.hero-spark {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #1b2e4c, #0d1420);
+  box-shadow:
+    0 0 1.1rem rgb(66 127 247 / 0.7),
+    inset 0 0 0 1.5px rgb(169 224 254 / 0.8);
+}
+
+.hero-spark svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  fill: #cfeeff;
+}
+
+.hero-card.is-saved {
+  top: 55%;
+  left: -3rem;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  padding: 0.9rem 1.15rem;
+  border: 2px solid var(--gray-800);
+  border-radius: 0.875rem;
+  color: var(--gray-900);
+  background: #f8fafc;
+  animation-delay: 0.55s;
+}
+
+.hero-card.is-saved span {
+  display: grid;
+  gap: 0.15rem;
+  white-space: nowrap;
+}
+
+.hero-card.is-saved b {
+  font-size: var(--fs-md);
+}
+
+.hero-card.is-saved small {
+  color: var(--gray-600);
+  font-size: var(--fs-xs);
+}
+
+.hero-card.is-saved strong {
+  color: #1a7f45;
+  font-size: clamp(1.35rem, 1rem + 0.9vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.hero-card.is-paypal {
+  top: 37%;
+  right: -2.5rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  width: min(19rem, 46%);
+  padding: 0.95rem 1.1rem 0.85rem;
+  border: 1px solid rgb(120 199 253 / 0.45);
+  border-radius: 0.875rem;
+  color: var(--hero-text);
+  background: rgb(17 21 28 / 0.97);
+  font-size: var(--fs-sm);
+  animation: none;
+  opacity: 0;
+  transform: translateY(0.75rem);
+  transition:
+    opacity 0.6s var(--ease-out),
+    transform 0.6s var(--ease-out);
+}
+
+.hero.is-paid .hero-card.is-paypal {
+  opacity: 1;
+  transform: none;
+}
+
+.hero-paypal-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-weight: var(--fw-heavy);
+}
+
+.hero-paypal-head > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.hero-paypal-head em {
+  color: #3ddc84;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--fs-2xs);
+  font-style: normal;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero-card.is-paypal strong {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: clamp(1.4rem, 1rem + 1vw, 1.9rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.hero-paypal-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding-top: 0.4rem;
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+  color: var(--hero-soft);
+}
+
+.hero-paypal-row span:last-child {
+  color: var(--hero-text);
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+.hero-card.is-paypal small {
+  margin-top: 0.2rem;
+  color: var(--hero-faint);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.02em;
+}
+
+@keyframes hero-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-card {
+    animation: none;
+  }
+
+  .hero-card.is-paypal {
+    transition: none;
+  }
+}
+
+/* Two narrow columns: one card beside the model, inside its stage. */
+@media (min-width: 62rem) and (max-width: 71.98rem) {
+  .hero-card.is-saved {
+    display: none;
+  }
+
+  .hero-card.is-paypal {
+    right: -0.5rem;
+    width: min(16.5rem, 54%);
+  }
+}
+
+/* Below two columns: the model upright under the claim, without the board and the cards around it. */
+@media (max-width: 61.98rem) {
+  .hero-stage {
+    padding: 0;
+    perspective: none;
+  }
+
+  .hero-odds,
+  .hero-card {
+    display: none;
+  }
 }
 
 .title-block {

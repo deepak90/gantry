@@ -9,6 +9,8 @@
  * end, where there is no WebGL, under reduced motion, and on screens narrower than 600px. The story pauses while the
  * hero is off screen or the tab is hidden, and everything is let go on pagehide.
  *
+ * The hero around it (landing.html) gets .is-paid from the moment the story pays the footings, for its PayPal card.
+ *
  * Markup, inside [data-model]:
  *   .model-body
  *     .model-stage > .model-frame             the picture, 16:10, centered in the space the strip leaves
@@ -239,6 +241,8 @@ export function startModel(root: ParentNode = document): void {
 }
 
 interface View {
+  /** The hero around the model: its PayPal card shows once the story has paid the footings (.is-paid). */
+  hero: HTMLElement | null;
   body: HTMLElement;
   frame: HTMLElement;
   still: HTMLImageElement;
@@ -275,7 +279,7 @@ function buildView(host: HTMLElement): View {
   const paid = pinWith('model-paid', 'Paid with PayPal');
   const strip = element('div', 'model-strip', body);
   host.append(body);
-  return { body, frame, still, canvas, hold, paid, strip };
+  return { hero: host.closest<HTMLElement>('.hero'), body, frame, still, canvas, hold, paid, strip };
 }
 
 /** Puts a label's pin on a point of the picture (CSS pixels), or hides it. */
@@ -293,6 +297,7 @@ function labels(view: View, seconds: number): void {
   if (beat.lifted >= 1) view.hold.hidden = true;
   view.paid.style.setProperty('--land', beat.landed.toFixed(3));
   if (!beat.paid) view.paid.hidden = true;
+  view.hero?.classList.toggle('is-paid', beat.paid);
 }
 
 interface Strip {

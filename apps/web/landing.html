@@ -15,7 +15,8 @@
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero-copy">
           <h1 id="hero-title"><span>Pay the crew.</span> <span>Pour the slab.</span></h1>
-          <p class="hero-sub">Gantry is a construction schedule your team talks through with Remy, an AI coordinator, and pays from with PayPal.</p>
+          <p class="hero-track">Keep the plan on track.</p>
+          <p class="hero-sub">Gantry is a construction schedule your team talks through with Remy, an AI coordinator on Claude, and pays the crews from with PayPal.</p>
           <div class="hero-actions">
             <a class="button is-primary is-xl" href="/app" data-track="Start a session" data-track-place="hero">{{START_SESSION}}</a>
             <a class="hero-film" href="#film" data-track="Watch the film" data-track-place="hero"><span class="hero-film-play" aria-hidden="true"></span>Watch the film · 2:59</a>
@@ -33,18 +34,37 @@
               <p class="join-error" data-join-error role="alert" hidden></p>
             </form>
           </details>
+          <p class="hero-built">Built with <span class="hero-pill">PayPal</span> <span class="hero-pill">Bryntum</span></p>
         </div>
 
-        <figure class="hero-model">
-          <div class="model" data-model></div>
-          <figcaption class="title-block">
-            <span class="visually-hidden">The app’s own 3D model of Harbor Street Offices. The footings payment holds the slab; once the trade partners are paid with PayPal, the slab pours and the building goes up, story by story.</span>
-            <span class="tb-cell is-project" aria-hidden="true"><small>Project</small>Harbor Street Offices</span>
-            <span class="tb-cell" aria-hidden="true"><small>Sheet</small>A-001</span>
-            <span class="tb-cell" aria-hidden="true"><small>Plan date</small>Nov 10, 2026</span>
-            <span class="tb-cell is-drawn" aria-hidden="true"><small>Drawn by</small>Gantry, from the plan</span>
-          </figcaption>
-        </figure>
+        <div class="hero-stage">
+          <img class="hero-odds" src="/src/site/media/hero-odds.webp" width="1200" height="658" decoding="async" alt="" />
+          <figure class="hero-model">
+            <div class="model" data-model></div>
+            <figcaption class="title-block">
+              <span class="visually-hidden">The app’s own 3D model of Harbor Street Offices. The footings payment holds the slab; once the trade partners are paid with PayPal, the slab pours and the building goes up, story by story.</span>
+              <span class="tb-cell is-project" aria-hidden="true"><small>Project</small>Harbor Street Offices</span>
+              <span class="tb-cell" aria-hidden="true"><small>Sheet</small>A-001</span>
+              <span class="tb-cell" aria-hidden="true"><small>Plan date</small>Nov 10, 2026</span>
+              <span class="tb-cell is-drawn" aria-hidden="true"><small>Drawn by</small>Gantry, from the plan</span>
+            </figcaption>
+          </figure>
+          <div class="hero-card is-remy" aria-hidden="true">
+            <span class="hero-spark"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 1.5C12.7 7.2 16.8 11.3 22.5 12 16.8 12.7 12.7 16.8 12 22.5 11.3 16.8 7.2 12.7 1.5 12 7.2 11.3 11.3 7.2 12 1.5Z" /></svg></span>
+            <span>Remy is on the call <small>AI coordinator</small></span>
+          </div>
+          <div class="hero-card is-saved" aria-hidden="true">
+            <span><b>Tower crane rental</b> <small>19 days on rent, was 29</small></span>
+            <strong>$6,000 saved</strong>
+          </div>
+          <div class="hero-card is-paypal" aria-hidden="true">
+            <span class="hero-paypal-head"><span><img src="/paypal/paypal-mark-white.svg" alt="" width="12" height="14" />Paid with PayPal</span><em>Completed</em></span>
+            <strong>$37,800.00</strong>
+            <span class="hero-paypal-row"><span>Granite Ridge Concrete</span><span>$31,320.00</span></span>
+            <span class="hero-paypal-row"><span>Pinecrest Sitework</span><span>$6,480.00</span></span>
+            <small>Sandbox · order 1C222018LJ567390E</small>
+          </div>
+        </div>
       </section>
 
       <section class="film-band" id="film" aria-labelledby="film-title">
