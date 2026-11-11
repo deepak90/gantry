@@ -1,13 +1,19 @@
 /**
  * On the hosted site a call is for the tab in front. A tab left in the background for ten seconds leaves its call, and
  * so does one sent there a third time on the same call: a call nobody is watching shouldn't run down the session's
- * minutes with Remy. Coming back within the ten seconds keeps the call. CallLayer watches while the tab is on a call.
+ * minutes with Remy. Coming back within the ten seconds keeps the call. Another of the session's tabs in front in the
+ * same browser (a teammate's, opened from Invite, as Remy suggests for a second approval) counts as someone there: no
+ * strike, no countdown, until it isn't (tabs.ts). CallLayer watches while the tab is on a call.
  */
 
 /** In the background this long, the tab leaves the call. */
 export const AWAY_LEAVE_MS = 10_000;
 /** The time the tab goes to the background on one call that leaves it at once. */
 export const AWAY_STRIKES = 3;
+/** How long after going to the background the tab looks whether another of the session's tabs came to the front. */
+export const AWAY_SETTLE_MS = 600;
+/** How often it looks again while another of them is in front. */
+export const AWAY_RECHECK_MS = 1_000;
 
 /** Why the tab left: in the background too long, or sent there too often. */
 export type AwayReason = 'background' | 'often';
@@ -26,10 +32,28 @@ export interface Visibility {
 export function watchAway(
   page: Visibility,
   leave: (why: AwayReason) => void,
-  { leaveMs = AWAY_LEAVE_MS, strikes = AWAY_STRIKES, setTimer = setTimeout, clearTimer = clearTimeout }: { leaveMs?: number; strikes?: number; setTimer?: typeof setTimeout; clearTimer?: typeof clearTimeout } = {},
+  {
+    leaveMs = AWAY_LEAVE_MS,
+    strikes = AWAY_STRIKES,
+    settleMs = AWAY_SETTLE_MS,
+    recheckMs = AWAY_RECHECK_MS,
+    watchedElsewhere = () => false,
+    setTimer = setTimeout,
+    clearTimer = clearTimeout,
+  }: {
+    leaveMs?: number;
+    strikes?: number;
+    settleMs?: number;
+    recheckMs?: number;
+    /** Another of the session's tabs is in front, in this browser (tabs.ts). */
+    watchedElsewhere?: () => boolean;
+    setTimer?: typeof setTimeout;
+    clearTimer?: typeof clearTimeout;
+  } = {},
 ): () => void {
   let times = 0;
   let timer: ReturnType<typeof setTimeout> | null = null;
+  let checking: ReturnType<typeof setTimeout> | null = null;
   let done = false;
   const go = (why: AwayReason) => {
     if (done) return;
@@ -37,13 +61,8 @@ export function watchAway(
     stop();
     leave(why);
   };
-  const look = () => {
-    if (done) return;
-    if (!page.hidden) {
-      if (timer !== null) clearTimer(timer);
-      timer = null;
-      return;
-    }
+  // Nobody is watching: a strike, and the countdown.
+  const away = () => {
     times += 1;
     if (times >= strikes) {
       go('often');
@@ -51,10 +70,28 @@ export function watchAway(
     }
     if (timer === null) timer = setTimer(() => go('background'), leaveMs);
   };
+  const check = () => {
+    checking = null;
+    if (done || !page.hidden) return;
+    if (watchedElsewhere()) checking = setTimer(check, recheckMs);
+    else away();
+  };
+  const look = () => {
+    if (done) return;
+    if (checking !== null) clearTimer(checking);
+    checking = null;
+    if (!page.hidden) {
+      if (timer !== null) clearTimer(timer);
+      timer = null;
+      return;
+    }
+    // A moment for the tab that came to the front to say so.
+    checking = setTimer(check, settleMs);
+  };
   const stop = () => {
     page.removeEventListener('visibilitychange', look);
-    if (timer !== null) clearTimer(timer);
-    timer = null;
+    for (const pending of [timer, checking]) if (pending !== null) clearTimer(pending);
+    timer = checking = null;
   };
   page.addEventListener('visibilitychange', look);
   if (page.hidden) look();

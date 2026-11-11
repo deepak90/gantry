@@ -194,6 +194,16 @@ describe('sum_costs', () => {
     // Shared tasks are split by units, so the crews add up to the total within a cent per task.
     const crewTotal = byCrew.groups.reduce((sum: number, group: { forecast_minor: number }) => sum + group.forecast_minor, 0);
     expect(Math.abs(crewTotal - all.totals.forecast_minor)).toBeLessThanOrEqual(leaves.length);
+    // A machine is no crew: it takes no share of its tasks, and each rental is listed apart, at rate times days.
+    const machines = ctx.plan.resources.filter((resource) => resource.kind === 'equipment').map((resource) => resource.name);
+    expect(byCrew.groups.map((group: { name: string }) => group.name).filter((name: string) => machines.includes(name))).toEqual([]);
+    expect(byCrew.rentals.length).toBe(ctx.plan.bookings.length);
+    for (const rental of byCrew.rentals as { supplier: string; days: number; amount_minor: number }[]) {
+      const booking = ctx.plan.bookings.find((candidate) => candidate.supplierName === rental.supplier)!;
+      expect(rental.amount_minor).toBe(rental.days * booking.rentalRateMinor);
+      expect(rental.days).toBeGreaterThan(0);
+    }
+    expect(byCrew.note).toMatch(/A machine is no crew/);
   });
 
   it('limits to picked tasks and everything under them', async () => {

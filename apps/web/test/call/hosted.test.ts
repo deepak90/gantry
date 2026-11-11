@@ -21,6 +21,9 @@ import {
   MESSAGES,
   breakerResetAt,
   callBlockOf,
+  hookAnswer,
+  hookResponse,
+  type HookEvent,
   MIN_CALL_MS,
   MIN_TURNS_FOR_CALL,
   minutesFrom,
@@ -97,6 +100,8 @@ function directory(state: DirectoryState = {}) {
   let joins = state.joins ?? 20;
   let lastStart = state.lastStart ?? null;
   let charged = 0;
+  /** What remy_minutes_ended was told: the room, and when the Remy who left joined. */
+  const ended: { room: string; since: number | null }[] = [];
   const pool = state.pool ? { totalMs: state.pool.totalMs ?? 300_000, usedMs: state.pool.usedMs ?? 0, call: state.pool.call ?? null } : null;
   // What remy_minutes_settled does: a call whose time ran out counts in full; one she is seen gone from, until now.
   const settle = (gone: boolean) => {
@@ -184,6 +189,15 @@ function directory(state: DirectoryState = {}) {
       pool.call = { from: NOW, until: NOW + left };
       return { endsAt: pool.call.until };
     },
+    async endedCall(_projectId, _lease, room, since) {
+      asked.push('endedCall');
+      fail();
+      ended.push({ room, since });
+      if (pool?.call) {
+        pool.usedMs += Math.min(NOW, pool.call.until) - pool.call.from;
+        pool.call = null;
+      }
+    },
     async readiness() {
       asked.push('readiness');
       fail();
@@ -199,7 +213,7 @@ function directory(state: DirectoryState = {}) {
       };
     },
   };
-  return { impl, asked, allowance: () => allowance, joins: () => joins, charged: () => charged, pool: () => pool };
+  return { impl, asked, allowance: () => allowance, joins: () => joins, charged: () => charged, pool: () => pool, ended };
 }
 
 const person = (identity: string, joinedAtMs: number, extra: Partial<Person> = {}): Person => ({ identity, kind: 0, joinedAtMs: BigInt(joinedAtMs), attributes: { name: identity }, ...extra });
@@ -404,7 +418,8 @@ describe('POST /api/call/token: the visit’s own call', () => {
 
 describe('POST /api/call/token: the copy’s joins', () => {
   it('counts every token minted, with or without Remy, and only when one is minted', async () => {
-    const { hosted, dir } = service(directory(), rooms({ rooms: GOING }));
+    // Remy on the call, and this tab not on it yet: its joins count (one already on it takes none).
+    const { hosted, dir } = service(directory(), rooms({ rooms: { [ROOM]: { people: [remy()] } } }));
     await ask(hosted, JOIN);
     await ask(hosted, { ...JOIN, remy: false });
     expect(dir.joins()).toBe(18);
@@ -634,6 +649,67 @@ describe('POST /api/call/token: Remy’s minutes, one pool a visit', () => {
     hosted.directory = { ...hosted.directory!, minutesOf: async () => Promise.reject(new Error('the database did not answer')) };
     expect((await ask(hosted, JOIN)).status).toBe(503);
     expect(call.minted).toEqual([]);
+  });
+});
+
+describe('POST /api/call/hook: LiveKit’s word that Remy left', () => {
+  /** A receiver that takes "signed" for LiveKit's signature and reads the body as the event. */
+  const receiver = {
+    async receive(body: string, auth?: string): Promise<HookEvent> {
+      if (auth !== 'signed') throw new Error('bad signature');
+      return JSON.parse(body) as HookEvent;
+    },
+  };
+  const hook = (hosted: HostedCall, event: unknown, authorization: string | null = 'signed') => hookAnswer(hosted, receiver, { authorization, text: JSON.stringify(event) });
+  const remyLeft = (room = ROOM, joinedAtMs = NOW - 60_000) => ({ event: 'participant_left', room: { name: room }, participant: { identity: 'remy', kind: 4, joinedAtMs } });
+
+  it('counts the visit’s call when Remy leaves it, whether or not anyone is there to ask', async () => {
+    const dir = directory({ pool: { usedMs: 0, call: { from: NOW - 70_000, until: NOW + 230_000 } } });
+    const { hosted } = service(dir);
+    expect(await hook(hosted, remyLeft())).toEqual({ status: 200, body: { counted: true } });
+    expect(dir.ended).toEqual([{ room: ROOM, since: NOW - 60_000 }]);
+    expect(dir.pool()).toMatchObject({ usedMs: 70_000, call: null });
+  });
+
+  it('counts it when the room closes, and leaves everything else alone', async () => {
+    const dir = directory({ pool: {} });
+    const { hosted } = service(dir);
+    expect((await hook(hosted, { event: 'room_finished', room: { name: ROOM } })).body).toEqual({ counted: true });
+    expect(dir.ended).toEqual([{ room: ROOM, since: null }]);
+    expect((await hook(hosted, { event: 'participant_left', room: { name: ROOM }, participant: { identity: SESSION, kind: 0 } })).body).toEqual({ counted: false });
+    expect((await hook(hosted, { event: 'room_started', room: { name: ROOM } })).body).toEqual({ counted: false });
+    expect((await hook(hosted, remyLeft('somebody-elses-room'))).body).toEqual({ counted: false });
+    expect(dir.ended).toHaveLength(1);
+  });
+
+  it('refuses an event LiveKit didn’t sign, and answers 503 without its keys', async () => {
+    const dir = directory({ pool: {} });
+    const { hosted } = service(dir);
+    expect((await hook(hosted, remyLeft(), 'forged')).status).toBe(401);
+    expect((await hookAnswer(hosted, null, { authorization: 'signed', text: JSON.stringify(remyLeft()) })).status).toBe(503);
+    expect(dir.ended).toEqual([]);
+    expect((await hookResponse(hosted, receiver, new Request('https://site/api/call/hook'))).status).toBe(405);
+  });
+});
+
+describe('a place on a call already going', () => {
+  it('takes no join from a tab already on it, pressing “Call Remy” there', async () => {
+    const { hosted, dir, call } = service(directory(), rooms({ rooms: { [ROOM]: { people: [person(SESSION, NOW - 60_000)] } } }));
+    expect((await ask(hosted, JOIN)).body.remy).toBe('dispatched');
+    expect(dir.joins()).toBe(20);
+    expect(call.dispatched).toEqual([ROOM]);
+  });
+
+  it('starts and charges a call once when two people press at the same time', async () => {
+    // The first press set the call aside a moment ago, and she is on her way.
+    const dir = directory({ pool: { usedMs: 0, call: { from: NOW - 3_000, until: NOW + 297_000 } }, lastStart: null });
+    const { hosted, call } = service(dir, rooms());
+    const answer = await ask(hosted, { ...JOIN, sessionId: SESSION });
+    expect(answer.status).toBe(200);
+    expect(dir.allowance()).toBe(3);
+    expect(dir.charged()).toBe(0);
+    // Her end is the first press's, carried by this token too.
+    expect(call.minted[0]).toMatchObject({ endsAt: NOW + 297_000 });
   });
 });
 

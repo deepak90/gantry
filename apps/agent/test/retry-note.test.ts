@@ -1,7 +1,8 @@
 /**
- * What the model writes to itself before retrying a refused tool ("Crew names need to be bare names; redraw.") is not
- * an answer: it is not streamed (so nobody hears it on a call) and not kept in the message. An answer written after a
- * refusal, with nothing retried, still reaches people, and so do words before a tool that nothing refused.
+ * What the model writes to itself beside a tool call ("Crew names need to be bare names; redraw.", "They asked for
+ * exactly the end date; draft as asked.", which a live call once heard) is not an answer: it is not streamed (so nobody
+ * hears it on a call) and not kept in the message. What people hear and read comes through reply; an answer written as
+ * plain words with no tool beside it still reaches them, once the step is done.
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { describe, expect, it } from 'vitest';
@@ -90,12 +91,18 @@ describe('words around a refused tool', () => {
     expect(streamed).toContain('I could not find that calendar.');
   });
 
-  it('keeps words before a tool that nothing refused', async () => {
+  it('drops words beside a tool even when nothing refused it: they are the model’s own note', async () => {
     const { say, streamed } = await run([
-      { blocks: [{ type: 'text', text: 'Counting now.' }, FINE], stop_reason: 'tool_use' },
+      { blocks: [{ type: 'text', text: 'They asked for exactly the end date; draft as asked.' }, FINE], stop_reason: 'tool_use' },
       { blocks: [reply('Five working days.')], stop_reason: 'tool_use' },
     ]);
-    expect(say).toBe('Counting now. Five working days.');
-    expect(streamed).toContain('Counting now.');
+    expect(say).toBe('Five working days.');
+    expect(streamed).not.toContain('draft as asked');
+  });
+
+  it('says words written alone, with no tool beside them', async () => {
+    const { say, streamed } = await run([{ blocks: [{ type: 'text', text: 'Five working days.' }], stop_reason: 'end_turn' }]);
+    expect(say).toBe('Five working days.');
+    expect(streamed).toContain('Five working days.');
   });
 });

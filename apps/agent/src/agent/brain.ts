@@ -618,7 +618,9 @@ export class AgentBrain {
           ...(supportsServerFallback(model) ? { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' as const } : {}),
         });
         const blocks = new Map<number, { id: string; name: string; json: string; spoken: number }>();
-        // After a refusal, plain words wait until the step shows whether a retry follows them.
+        // Plain words (not written through reply) wait until the step shows what they are: beside a tool call they are
+        // the model's own note ("They asked for exactly the end date; draft as asked."), never said or kept; alone they
+        // are an answer written as text, said once the step is done.
         let held = '';
         stream.on('streamEvent', (event, snapshot) => {
           if (event.type === 'content_block_start' && event.content_block.type === 'tool_use') {
@@ -627,8 +629,7 @@ export class AgentBrain {
             if (name === 'reply' && say) speak(' ');
             if (name !== 'reply') this.emit({ type: 'tool', turnId, toolId: id, name, state: 'start' });
           } else if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-            if (afterRefusal) held += event.delta.text;
-            else speak(event.delta.text);
+            held += event.delta.text;
           } else if (event.type === 'content_block_delta' && event.delta.type === 'input_json_delta') {
             const block = blocks.get(event.index);
             if (!block) return;
@@ -678,12 +679,13 @@ export class AgentBrain {
         // says is kept.
         const saidBefore = say.trimEnd().length;
         const talkOnly = message.content.some((block) => block.type === 'tool_use' && block.name === 'reply') && message.content.every((block) => block.type !== 'tool_use' || block.name === 'reply');
-        // "Crew names need to be bare names; redraw." before the second try is no answer: not streamed, said or kept.
-        const retrying = afterRefusal && message.content.some((block) => block.type === 'tool_use' && block.name !== 'reply');
-        if (held && !retrying && !talkOnly) speak(held);
+        // Words beside a tool call are the model's note to itself ("Crew names need to be bare names; redraw.", "They asked
+        // for exactly the end date; draft as asked."): what people hear and read comes through reply alone.
+        const tooled = message.content.some((block) => block.type === 'tool_use' && block.name !== 'reply');
+        if (held && !tooled && !talkOnly) speak(held);
         for (const [index, block] of message.content.entries()) {
           if (block.type === 'text') {
-            if (talkOnly || retrying) continue;
+            if (talkOnly || tooled) continue;
             say += (say && !/\s$/.test(say) ? ' ' : '') + block.text.trim();
           } else if (block.type === 'tool_use' && block.name === 'reply') {
             const full = typeof (block.input as { text?: unknown }).text === 'string' ? (block.input as { text: string }).text : '';

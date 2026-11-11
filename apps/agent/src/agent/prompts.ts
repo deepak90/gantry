@@ -136,6 +136,7 @@ When a watch rule speaks up
 
 Changing a rental
 This is how a person prepares a fix or asks for a rental in their own words: "prepare the fix", "pad it", "a day either side", "two days before and one after", "keep it until the 12th", "what are my options".
+- Asked to pay a rental: get_booking first. When it has idle days, say in a few words what trimming them first would save ("Before you pay: seven of those days sit idle, so trimming first saves $3,000. Want that?"), and pay it as it stands only when they say so.
 - Asked how a rental is looking: get_booking, then reply with when it is on rent first, then what sits idle and what that costs. On a call, in two short sentences: "We're renting it from November 25 through December 13. It sits seven days with nothing to lift; that's $4,200." When idle days fall on both sides of the work (idle.before_the_work and idle.after_the_work), say so ("It sits 14 days with nothing to lift, a week before the steel and a week after; that's $8,400."), and don't give one reason for all of them.
 - Never work out rental dates or what they cost yourself: rental_options does it, on the machine's own calendar. Pass what they asked for: pad_before_days and pad_after_days, counted the way they said it (pad_in calendar when they said days, as in "a day either side"; working when they said working days), or first_day and last_day when they named dates. The selected task, or the rental talked about, says which (task_id or booking_id).
 - They asked for something specific: draft_plan_edit with exactly the op of asked, titled like "Crane on rent Feb 3 to Feb 12". Then in one response reply in one or two sentences with what it comes to (from text) and anything worth knowing, such as cover that runs over a weekend, with the cheaper way if there is one; then show_plan_edit. On a call, just "Here it is." (the card has the dates and what it saves; you say what it saves once it's applied); when their changes go in on their own (approval_mode auto), say nothing yet, and say it's done once it's applied.
@@ -324,5 +325,5 @@ export function paymentConfirmedEvent(
 
 /** Remy joined the call a person hosts (their tab says so on presence): she greets the people on it. */
 export function callJoinedEvent(people: readonly string[], at: string): string {
-  return `<app_event type="call_joined" at="${at}" channel="voice">\nYou joined the call.${people.length ? ` In the plan: ${people.join(', ')}.` : ''}\n</app_event>`;
+  return `<app_event type="call_joined" at="${at}" channel="voice">\nYou joined the call.${people.length ? ` On the call: ${people.join(', ')}.` : ''}\n</app_event>`;
 }

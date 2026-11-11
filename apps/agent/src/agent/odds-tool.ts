@@ -54,9 +54,17 @@ const percent = (odds: number) => (odds > 0 && odds < 0.01 ? `${(odds * 100).toF
 
 const TIMES = ['', 'one time', 'two times', 'three times', 'four times', 'five times', 'six times', 'seven times', 'eight times', 'nine times'];
 
-/** How often the date is made, as a colleague says it on a call: "about half the time", "about three times out of four", "about eight times out of ten". */
+/**
+ * How often the date is made, as a colleague says it on a call: "about half the time", "about three times out of four",
+ * "about eight times out of ten"; under 8%, in a hundred ("about two times in a hundred"), since tens would round 2% up
+ * to one in ten.
+ */
 export function oddsWords(odds: number): string {
   if (odds < 0.01) return 'almost never';
+  if (odds < 0.08) {
+    const times = Math.max(1, Math.round(odds * 100));
+    return `about ${times} ${times === 1 ? 'time' : 'times'} in a hundred`;
+  }
   if (odds > 0.99) return 'almost every time';
   if (odds >= 0.45 && odds <= 0.55) return 'about half the time';
   // What the board's percent reads as: 75% said as "eight out of ten" would not match the screen.
@@ -123,14 +131,21 @@ export async function runOddsTool(name: OddsToolName, rawArgs: unknown, ctx: Odd
       : null,
     holds: odds.holds.map((hold) => ({ name: hold.name, text: `half the runs hand over ${hold.days_later_p50} days later, eight in ten ${hold.days_later_p80} days later` })),
     threats: odds.threats.map((threat) => ({ task: threat.name, how_closely_the_handover_follows_it: percent(threat.correlation) })),
-    ways_forward: odds.ladder.map((step) => ({
-      step: step.step,
-      odds: percent(step.odds),
-      words: oddsWords(step.odds),
-      half_by: day(step.p50),
-      adds: step.cost_minor > 0 ? `${usd(step.cost_minor)} more` : 'nothing extra',
-      ...(step.saturdays > 0 ? { saturdays: step.saturdays } : {}),
-    })),
+    // Each way forward is taken on top of the ones before it: its odds and date are with all of them.
+    ways_forward_read_as:
+      'Each step is on top of the steps before it: its odds and half_by are with all of them taken, adds is what this step costs, and in_all what they cost together. Say them that way ("with the Saturdays too, nine in ten, $8,564 in all"), never as choices on their own.',
+    ways_forward: odds.ladder.map((step, index) => {
+      const inAll = odds.ladder.slice(0, index + 1).reduce((sum, taken) => sum + taken.cost_minor, 0);
+      return {
+        step: step.step,
+        odds: percent(step.odds),
+        words: oddsWords(step.odds),
+        half_by: day(step.p50),
+        adds: step.cost_minor > 0 ? `${usd(step.cost_minor)} more` : 'nothing extra',
+        in_all: inAll > 0 ? `${usd(inAll)} in all` : 'nothing extra',
+        ...(step.saturdays > 0 ? { saturdays: step.saturdays } : {}),
+      };
+    }),
     assumptions: odds.assumptions,
     ...(odds.on_copy ? { note: 'Someone changed the plan while the runs went: they answer for the plan as it was when asked.' } : {}),
   };

@@ -29,6 +29,8 @@
  * `POST /api/call/token` `{ projectId, sessionId, remy? }` → `{ url, token, remy }`
  * `GET /api/call/room?projectId=` → `{ up, people, remy, minutes?, blocked? }`, `minutes` being `{ totalMs, leftMs, going }`
  *   and `blocked` why a call can't start now, before anyone presses the button (`{ why, what, until }`: callBlockOf)
+ * `POST /api/call/hook` ← LiveKit's webhook, signed with the site's API key: Remy leaving a visit's call, or its room
+ *   closing, counts the visit's minutes then (hookAnswer)
  * A refusal is `{ error }` in plain words: 400, 401, 403 (not a member, not their tab, calls off or paused for the day,
  * the allowance or the minutes spent), 409 (Remy is on as many calls as she takes), 503 (not set up, or a service didn't
  * answer). One the page can show as such carries a `code`, and a pause the moment it lifts (`until`, ms).
@@ -239,6 +241,11 @@ export interface CallDirectory {
   startMinutes(projectId: string, lease: number | null, room: string): Promise<{ endsAt: number } | 'spent' | 'unlimited'>;
   /** What a call needs, as it stands (call_readiness); null where the database can't say. */
   readiness(projectId: string): Promise<Readiness | null>;
+  /**
+   * Remy left the visit's call in `room`, or the room closed (remy_minutes_ended): its minutes are counted until now.
+   * `since`: when the Remy who left joined (ms), so word of an earlier call's Remy changes nothing; null for a closed room.
+   */
+  endedCall(projectId: string, lease: number | null, room: string, since: number | null): Promise<void>;
 }
 
 /** What the functions ask the call server (a CallServer; a fake in tests). Each throws when it doesn't answer. */
@@ -454,12 +461,19 @@ async function place(
     if (minutes && !going && minutes.leftMs < MIN_CALL_MS) return refuse(403, MESSAGES.minutesSpent, 'minutes_spent');
     const block = readiness ? callBlockOf(readiness, { start: bringing(need), now }) : null;
     if (block) return refuseFor(block);
-    if (!(await directory.useCallJoin(projectId))) return refuse(403, MESSAGES.joinsSpent, 'allowance_spent');
-    if (bringing(need)) {
+    // A tab already on the call (pressing "Call Remy" there) takes no new join.
+    const onCall = people?.some((person) => person.identity === request.sessionId) ?? false;
+    if (!onCall && !(await directory.useCallJoin(projectId))) return refuse(403, MESSAGES.joinsSpent, 'allowance_spent');
+    // A call set aside a moment ago, by someone who pressed at the same time, and she is on her way: started and charged
+    // once, by that press.
+    const starting = minutes?.endsAt != null;
+    if (bringing(need) && !starting) {
       const last = await directory.lastCallStart(projectId);
       const again = last !== null && now - last < FREE_AGAIN_MS;
       if (!again && !(await directory.useCallStart(projectId))) return refuse(403, MESSAGES.allowanceSpent, 'allowance_spent');
       if (!(await directory.chargeDispatch())) return refuseFor({ why: 'paused', what: 'spend', until: breakerResetAt(now) });
+    }
+    if (bringing(need)) {
       const started = await directory.startMinutes(projectId, lease, room);
       if (started === 'spent') return refuse(403, MESSAGES.minutesSpent, 'minutes_spent');
       if (started !== 'unlimited') endsAt = started.endsAt;
@@ -555,6 +569,66 @@ export async function tokenResponse(call: HostedCall, request: Request): Promise
     const text = await request.text();
     if (text.length > MAX_BODY) return json(refuse(413, 'Too long'));
     return json(await tokenAnswer(call, { authorization: request.headers.get('authorization'), text }));
+  } catch {
+    return json(refuse(500, MESSAGES.failed));
+  }
+}
+
+/** What the hook route reads LiveKit's signed events with (livekit-server-sdk's WebhookReceiver). */
+export interface HookReceiver {
+  receive(body: string, authHeader?: string): Promise<HookEvent>;
+}
+
+/** A LiveKit webhook event, as far as the hook reads it. */
+export interface HookEvent {
+  event: string;
+  room?: { name?: string } | null;
+  participant?: Person | null;
+}
+
+/** The receiver for LiveKit's webhooks, with the site's API key; null without one. */
+export function hookReceiverOf(env: Record<string, string | undefined>, sdk: { WebhookReceiver: new (key: string, secret: string) => HookReceiver }): HookReceiver | null {
+  const key = env.LIVEKIT_API_KEY?.trim();
+  const secret = env.LIVEKIT_API_SECRET?.trim();
+  return key && secret ? new sdk.WebhookReceiver(key, secret) : null;
+}
+
+/**
+ * `POST /api/call/hook`: LiveKit's events for the site's calls, signed with its API key. Remy leaving a visit's call, or
+ * its room closing, counts the visit's minutes then (remy_minutes_ended), whether or not anyone's tab is there to ask;
+ * word of a Remy who joined before the call was set aside is about an earlier call. Anything else is acknowledged and
+ * left alone; an event that isn't LiveKit's is refused.
+ */
+export async function hookAnswer(call: HostedCall, receiver: HookReceiver | null, input: { authorization: string | null; text: string }): Promise<Answer> {
+  const { directory } = call;
+  if (!directory || !receiver) return refuse(503, MESSAGES.notSetUp);
+  let event: HookEvent;
+  try {
+    event = await receiver.receive(input.text, input.authorization ?? undefined);
+  } catch {
+    return refuse(401, 'Not signed by the call server.');
+  }
+  const name = event.room?.name ?? '';
+  const named = roomOf(name);
+  const left = event.event === 'participant_left' && event.participant != null && isRemy(event.participant);
+  const closed = event.event === 'room_finished';
+  if (!named || (!left && !closed)) return { status: 200, body: { counted: false } };
+  const joined = left && event.participant ? joinedAtMsOf(event.participant) : 0;
+  try {
+    await directory.endedCall(named.projectId, named.lease, name, joined > 0 ? joined : null);
+  } catch {
+    return refuse(503, MESSAGES.cantCheck);
+  }
+  return { status: 200, body: { counted: true } };
+}
+
+/** The hook route as a web handler (api/call/hook.ts). */
+export async function hookResponse(call: HostedCall, receiver: HookReceiver | null, request: Request): Promise<Response> {
+  if (request.method !== 'POST') return json(refuse(405, 'POST only'));
+  try {
+    const text = await request.text();
+    if (text.length > 100_000) return json(refuse(413, 'Too long'));
+    return json(await hookAnswer(call, receiver, { authorization: request.headers.get('authorization'), text }));
   } catch {
     return json(refuse(500, MESSAGES.failed));
   }
@@ -694,6 +768,14 @@ export function supabaseDirectory(client: SupabaseClient): CallDirectory {
       const ok = (result.data as { ok?: unknown } | null)?.ok === true;
       const minutes = minutesFrom(result.data);
       return ok && minutes?.endsAt != null ? { endsAt: minutes.endsAt } : 'spent';
+    },
+    async endedCall(projectId, lease, room, since) {
+      const result = (await client.rpc('remy_minutes_ended', { p_project: projectId, p_lease: lease ?? 0, p_room: room, p_since: since === null ? null : new Date(since).toISOString() })) as Row<unknown>;
+      if (result.error) {
+        // No minutes in this database: nothing to count.
+        if (missingFunction(result.error)) return;
+        throw new Error(`remy_minutes_ended: ${result.error.message}`);
+      }
     },
     async readiness(projectId) {
       const result = (await client.rpc('call_readiness', { p_project: projectId, p_booking: DISPATCH_SPEND })) as Row<unknown>;

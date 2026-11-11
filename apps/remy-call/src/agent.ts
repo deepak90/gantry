@@ -345,7 +345,7 @@ class Call {
       transcribe: (samples) => transcribeWords(this.#whisper, samples, SAMPLE_RATE),
     };
     await Promise.all(
-      config.FILLERS.map(async (text) => {
+      [...config.FILLERS, ...config.STILL_FILLERS].map(async (text) => {
         const take = await prepareFiller(text, maker, {
           cacheDir: config.FILLER_CACHE_DIR,
           voiceKey: speech.voiceKey,

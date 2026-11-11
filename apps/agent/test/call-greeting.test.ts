@@ -46,9 +46,9 @@ describe('the greeting when Remy joins a call', () => {
     expect(rule).toMatch(/No news, figures or plan details/);
   });
 
-  it('comes as an app event on the voice channel, naming the people in the plan', () => {
+  it('comes as an app event on the voice channel, naming the people on the call', () => {
     const at = '2026-11-10T20:00:00.000Z';
-    expect(callJoinedEvent(['Ana Ruiz', 'Ben Ortiz'], at)).toBe(`<app_event type="call_joined" at="${at}" channel="voice">\nYou joined the call. In the plan: Ana Ruiz, Ben Ortiz.\n</app_event>`);
+    expect(callJoinedEvent(['Ana Ruiz', 'Ben Ortiz'], at)).toBe(`<app_event type="call_joined" at="${at}" channel="voice">\nYou joined the call. On the call: Ana Ruiz, Ben Ortiz.\n</app_event>`);
     expect(callJoinedEvent([], at)).toBe(`<app_event type="call_joined" at="${at}" channel="voice">\nYou joined the call.\n</app_event>`);
   });
 });

@@ -93,6 +93,11 @@ describe('schedule_odds', () => {
 
   it('puts shares in plain words', () => {
     expect(oddsWords(0.004)).toBe('almost never');
+    // Low odds in a hundred: 2% isn't "one time out of ten".
+    expect(oddsWords(0.01)).toBe('about 1 time in a hundred');
+    expect(oddsWords(0.021)).toBe('about 2 times in a hundred');
+    expect(oddsWords(0.074)).toBe('about 7 times in a hundred');
+    expect(oddsWords(0.11)).toBe('about one time out of ten');
     expect(oddsWords(0.515)).toBe('about half the time');
     expect(oddsWords(0.839)).toBe('about eight times out of ten');
     expect(oddsWords(0.754)).toBe('about three times out of four');

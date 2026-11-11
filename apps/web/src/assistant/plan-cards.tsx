@@ -646,7 +646,7 @@ export function PlanEditCardView({ card, env }: { card: Partial<PlanEditCardProp
             <>
               {!onlyPieces && (
               <span>
-                <i className="fa fa-flag-checkered" aria-hidden="true" /> Handover {moved === 0 ? `stays ${shortDay(preview.handoverAfter)}` : `${shortDay(preview.handoverBefore)} → ${shortDay(preview.handoverAfter)} (${moved > 0 ? '+' : ''}${moved} days)`}
+                <i className="fa fa-flag-checkered" aria-hidden="true" /> Handover {moved === 0 ? `stays ${shortDay(preview.handoverAfter)}` : `${shortDay(preview.handoverBefore)} → ${shortDay(preview.handoverAfter)} (${moved > 0 ? '+' : ''}${moved} ${Math.abs(moved) === 1 ? 'day' : 'days'})`}
               </span>
               )}
               <span>

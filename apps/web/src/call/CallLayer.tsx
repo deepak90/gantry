@@ -33,6 +33,7 @@ import { CallBarControls, CallEntry, RemySeat } from './CallStrip';
 import { CallTiles } from './CallTiles';
 import { CallTip } from './CallTip';
 import { awayNote, watchAway, type AwayReason } from './away';
+import { watchTabs, type Tabs } from './tabs';
 import { callEndpoints, CallRefusedError, requestCallToken, requestRoom } from './endpoints';
 import { followRemy } from './face';
 import { glowSpeakers } from './glow';
@@ -85,7 +86,7 @@ export function noticeOf(refusal: { message: string; status: number; code?: stri
 }
 
 /** After a call ends, the tab asks about the room again this long after (ms): at once, and once Remy has left an empty room. */
-export const AFTER_CALL_LOOKS_MS = [1_000, 12_000] as const;
+export const AFTER_CALL_LOOKS_MS = [1_000, 20_000] as const;
 /** How long the header says the tab left its call on its own. */
 const AWAY_NOTE_MS = 30_000;
 /** The whole of a session's minutes, when the site hasn't said yet (call-hosted.ts: five minutes). */
@@ -171,7 +172,9 @@ export default function CallLayer({ projectId, sessionId, name, color, role, sim
   const [link, setLink] = useState<ThreadLink | null>(null);
   useEffect(() => {
     if (!assistant) return undefined;
-    const linked = linkThread(session, assistant, { log: (event, data) => session.record(event, data) });
+    // An answer cut off by people talking among themselves is finished once the floor is free (`resume`): a live test
+    // heard a teammate's aside end her answer for good.
+    const linked = linkThread(session, assistant, { resume: true, log: (event, data) => session.record(event, data) });
     setLink(linked);
     return () => {
       linked.stop();
@@ -273,16 +276,31 @@ export default function CallLayer({ projectId, sessionId, name, color, role, sim
     };
   }, [inCall, endpoints, projectId]);
 
-  // A call is for the tab in front: in the background too long, or too often, and this tab leaves it.
+  // A call is for the tab in front: in the background too long, or too often, and this tab leaves it. Another of the
+  // session's tabs in front in this browser (a teammate's, from Invite) counts as someone there.
+  const tabsRef = useRef<Tabs | null>(null);
+  useEffect(() => {
+    if (!HOSTED) return undefined;
+    const tabs = watchTabs(projectId);
+    tabsRef.current = tabs;
+    return () => {
+      tabs.stop();
+      tabsRef.current = null;
+    };
+  }, [projectId]);
   const [away, setAway] = useState<AwayReason | null>(null);
   useEffect(() => {
     if (!HOSTED || !inCall) return undefined;
     setAway(null);
-    return watchAway(document, (why) => {
-      setAway(why);
-      session.record('call_left_away', { why });
-      void session.leave();
-    });
+    return watchAway(
+      document,
+      (why) => {
+        setAway(why);
+        session.record('call_left_away', { why });
+        void session.leave();
+      },
+      { watchedElsewhere: () => tabsRef.current?.othersInFront() ?? false },
+    );
   }, [inCall, session]);
   useEffect(() => {
     if (!away) return undefined;

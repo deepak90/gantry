@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { FILLERS } from '../src/config.ts';
+import { FILLER_AFTER_MS, FILLERS, STILL_AFTER_MS, STILL_FILLERS } from '../src/config.ts';
 import { FillerScheduler, fillerDueAt, pickFiller } from '../src/filler.ts';
 
 const [FIRST, SECOND, THIRD] = FILLERS;
@@ -30,6 +30,15 @@ describe('the fillers', () => {
     for (const text of FILLERS) {
       expect(text.split(' ').length, text).toBeLessThanOrEqual(4);
       expect(text, text).toMatch(/^[A-Z][a-z' ]+\.$/);
+    }
+  });
+
+  it('have a few still-on-it lines for a long wait, short and different from the first', () => {
+    expect(STILL_FILLERS.length).toBeGreaterThanOrEqual(3);
+    for (const text of STILL_FILLERS) {
+      expect(text.split(' ').length, text).toBeLessThanOrEqual(3);
+      expect(text, text).toMatch(/^[A-Z][a-z' ]+\.$/);
+      expect(FILLERS as readonly string[]).not.toContain(text);
     }
   });
 
@@ -203,5 +212,43 @@ describe('FillerScheduler', () => {
     s.addressed(Date.now());
     vi.advanceTimersByTime(1200);
     expect(played).toEqual([FIRST, SECOND]);
+  });
+});
+
+describe('a long wait after the filler', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(0);
+  });
+  afterEach(() => vi.useRealTimers());
+
+  it('says one still-on-it line when the answer is long in coming, and only one', () => {
+    const { s, played } = scheduler();
+    s.addressed(Date.now());
+    vi.advanceTimersByTime(FILLER_AFTER_MS);
+    expect(played).toHaveLength(1);
+    vi.advanceTimersByTime(STILL_AFTER_MS - 1);
+    expect(played).toHaveLength(1);
+    vi.advanceTimersByTime(1);
+    expect(played).toHaveLength(2);
+    expect(STILL_FILLERS as readonly string[]).toContain(played[1]);
+    vi.advanceTimersByTime(60_000);
+    expect(played).toHaveLength(2);
+  });
+
+  it('says none when the answer comes first, or while someone keeps talking', () => {
+    const answered = scheduler();
+    answered.s.addressed(Date.now());
+    vi.advanceTimersByTime(FILLER_AFTER_MS + 2_000);
+    answered.s.lineArrived();
+    vi.advanceTimersByTime(60_000);
+    expect(answered.played).toHaveLength(1);
+
+    const talking = scheduler();
+    talking.s.addressed(Date.now());
+    vi.advanceTimersByTime(FILLER_AFTER_MS);
+    talking.state.floor = true;
+    vi.advanceTimersByTime(60_000);
+    expect(talking.played).toHaveLength(1);
   });
 });

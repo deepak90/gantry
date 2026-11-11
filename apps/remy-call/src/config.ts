@@ -20,7 +20,7 @@ export const DISPLAY_NAME = 'Remy';
 // words at 1.1 s against 8.2 s for gpt-4o-mini-transcribe on a 7 s line, finals word for word, the same addressing).
 export const STT_MODEL = process.env.REMY_STT_MODEL?.trim() || 'gpt-live-transcribe';
 /** What the transcriber is told about the call; people's names and the plan's words are added per call. */
-export const STT_SETTING = 'A construction work call with Remy, an AI assistant.';
+export const STT_SETTING = 'A construction work call with Remy, an AI assistant, about the schedule, rentals, change orders, billing the tenant, invoices and paying the crews.';
 
 /**
  * Mouth: one request per line, streamed. Her own ElevenLabs voice when `ELEVEN_LABS_VOICE_REMY_KEY` holds its id
@@ -97,6 +97,13 @@ export const FILLER_GIVE_UP_MS = 1500;
  * and the "Mm" of "Mm, let me look." is always a beat of its own.
  */
 export const FILLERS = ['Let me look.', 'Pulling it up.', 'One moment.', 'Looking into it.', 'Let me see.', 'Checking the plan.', 'Give me a second.', 'Looking it up.'] as const;
+/**
+ * When the answer is long in coming after the filler (a drafted change, the odds), one more short line, so the call
+ * doesn't sit in silence: a live test heard 7.5 s of nothing after "Looking into it." Said once a wait, at most.
+ */
+export const STILL_FILLERS = ['Still on it.', 'Almost there.', 'Nearly done.', 'Bear with me.'] as const;
+/** How long after the filler the still-on-it line comes, when no answer has. */
+export const STILL_AFTER_MS = 4500;
 /** A filler take is refused when two of its words sit further apart than this (filler-audio.ts)... */
 export const FILLER_MAX_GAP_MS = 250;
 /** ...or when it is drawn out: slower than this many syllables a second. */

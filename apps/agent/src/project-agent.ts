@@ -96,6 +96,12 @@ const HISTORY_MESSAGES = 12;
 /** A visit read this recently is not read again before a turn (a message's turn reads it just before). */
 const VISIT_FRESH_MS = 2_000;
 
+/**
+ * A call said again this soon after the last stopped is the same call: the first person left and the next one's tab
+ * took over hosting it (presence updates are throttled, so the handover can take a few seconds).
+ */
+export const CALL_GAP_MS = 45_000;
+
 export class ProjectAgent {
   readonly brain: AgentBrain;
   /** The watch list, checked on the server (tests call `watch.request` to run a pass). */
@@ -120,8 +126,11 @@ export class ProjectAgent {
   private paidGates: Set<string> | null = null;
   /** The conversation people last spoke in out loud (a call's), and when. */
   private lastVoice: { threadId: string | null; at: number } | null = null;
-  /** The tabs hosting a call Remy is on (from presence), so each call is greeted once. */
-  private remyCalls = new Set<string>();
+  /**
+   * The call Remy is on, as presence tells it: on while a tab says it hosts her call, and when it last stopped, so a
+   * call is greeted once, whichever tab hosts it (the host moves when the first person leaves).
+   */
+  private remyCall: { on: boolean; endedAt: number | null } = { on: false, endedAt: null };
   /** Commands run in a person's browser (the odds), woken by the agent topic's `command` announcements. */
   private readonly commands: CommandRunner;
   /** The copy's visit as last read (`copy_pool.claimed_at`): undefined before the first read, null when free or no copy. */
@@ -343,20 +352,27 @@ export class ProjectAgent {
 
   /**
    * A tab says on presence that Remy is on the call it hosts: she has just joined, so she greets the call, in its
-   * conversation, out loud. Once per call (per hosting tab); a call that ends and starts again is greeted again.
+   * conversation, out loud, naming the person who called her in (the host: who else is on the call, presence doesn't
+   * say). Once per call: while some tab still says it hosts her call, it is the same call, and one said again within
+   * CALL_GAP_MS of the last stopping is the same call too, its host having moved to the next person's tab.
    */
   private noteCalls(peers: readonly PresencePeer[]): void {
-    const now = new Set<string>();
-    for (const peer of peers) {
-      if (!peer.call?.remy) continue;
-      now.add(peer.session);
-      if (this.remyCalls.has(peer.session)) continue;
-      const people = presentMembers(this.ctx.plan, peers).map((member) => member.name);
-      const at = planStamp(this.ctx.planDate, this.options.now?.() ?? new Date());
-      this.options.log.info(`Remy joined the call ${peer.name} hosts: greeting it in ${peer.call.thread ?? 'the main thread'}`);
-      void this.brain.appEvent(callJoinedEvent(people, at), peer.call.thread, 'voice').catch((error: unknown) => this.options.log.warn('the greeting turn failed', error));
+    const now = (this.options.now?.() ?? new Date()).getTime();
+    const host = peers.find((peer) => peer.call?.remy);
+    if (!host?.call) {
+      if (this.remyCall.on) this.remyCall = { on: false, endedAt: now };
+      return;
     }
-    this.remyCalls = now;
+    if (this.remyCall.on) return;
+    const moved = this.remyCall.endedAt !== null && now - this.remyCall.endedAt <= CALL_GAP_MS;
+    this.remyCall = { on: true, endedAt: null };
+    if (moved) {
+      this.options.log.info(`Remy's call is now hosted by ${host.name}: the same call, not greeted again`);
+      return;
+    }
+    const at = planStamp(this.ctx.planDate, new Date(now));
+    this.options.log.info(`Remy joined the call ${host.name} hosts: greeting it in ${host.call.thread ?? 'the main thread'}`);
+    void this.brain.appEvent(callJoinedEvent([host.name], at), host.call.thread, 'voice').catch((error: unknown) => this.options.log.warn('the greeting turn failed', error));
   }
 
   private async onPaymentConfirmed(gateId: number): Promise<void> {

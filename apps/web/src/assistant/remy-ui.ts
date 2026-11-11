@@ -209,7 +209,7 @@ export function createRemyUi(screen: () => RemyScreen | null, cursor: RemyCursor
     await waitFor(() => site.siteSettled?.() ?? true, 9000);
     if (action.look === 'crane') {
       await cursor.press(() => find('[data-testid="site-view-rental-days"]') ?? find('[data-testid="view-site"]'));
-      if (!site.crane?.('days')) throw new NotShown('No tower crane is on rent in this plan to show.');
+      if (!site.crane?.('days')) throw new NotShown('The 3D site view shows a tower crane on its lot only; this plan has none for it to show. Any rental is still in the plan and its rentals panel.');
       const tag = await waitFor(() => find('.fxb-calendar-tag'), 3000);
       const words = tag?.innerText.replace(/\s*\n\s*/g, ': ').trim();
       return { did: `Showing the tower crane and its days on rent on the lot${words ? ` (${words})` : ''}.` };

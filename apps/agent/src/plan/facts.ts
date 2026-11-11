@@ -46,13 +46,49 @@ export interface CostGroup extends CostTotals {
   name: string;
 }
 
+/** A machine on rent for a task: its supplier, what it is, and what its billable days come to. */
+export interface RentalCost {
+  supplier: string;
+  machine: string;
+  task: string;
+  days: number;
+  amount_minor: number;
+  text: string;
+}
+
 export interface CostReport {
   scope: string;
   totals: CostTotals;
   groups: CostGroup[];
   /** True when more groups exist than are listed (the biggest by forecast come first). */
   truncated: boolean;
+  /** By crew: the machines on rent for the tasks, apart from the crews' work (a machine is no crew). */
+  rentals?: RentalCost[];
   note: string;
+}
+
+/** Calendar days from `start` to `end` (exclusive), as a rental is billed: weekends included. */
+function billableDays(start: string, end: string): number {
+  return Math.max(0, Math.round((Date.parse(`${end}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)) / 86_400_000));
+}
+
+/** The machines on rent for these tasks, each at its rate times its billable days, under its supplier. */
+function rentalsFor(plan: PlanSnapshot, tasks: readonly PlanTask[]): RentalCost[] {
+  const names = new Map(tasks.map((task) => [task.id, task.name]));
+  return plan.bookings
+    .filter((booking) => names.has(booking.taskId))
+    .map((booking) => {
+      const days = billableDays(booking.billableStart, booking.billableEnd);
+      const amount = days * booking.rentalRateMinor;
+      return {
+        supplier: booking.supplierName,
+        machine: plan.resources.find((resource) => resource.id === booking.resourceId)?.name ?? 'Equipment',
+        task: names.get(booking.taskId)!,
+        days,
+        amount_minor: amount,
+        text: usd(amount),
+      };
+    });
 }
 
 function totalsOf(tasks: readonly PlanTask[], crewShare: (task: PlanTask) => number = () => 1): CostTotals {
@@ -130,8 +166,13 @@ export function costReport(plan: PlanSnapshot, options: { taskIds?: readonly num
     }
     for (const [key, bucket] of buckets) groups.push({ key, name: bucket.name, ...totalsOf(bucket.tasks) });
   } else if (groupBy === 'crew') {
+    // A machine is no crew: a task's money is its crews', and each machine on rent is listed apart (rentals).
+    const machines = new Set(plan.resources.filter((resource) => resource.kind === 'equipment').map((resource) => resource.id));
     const crewsOf = new Map<number, { resourceId: number; units: number }[]>();
-    for (const assignment of plan.assignments) crewsOf.set(assignment.taskId, [...(crewsOf.get(assignment.taskId) ?? []), { resourceId: assignment.resourceId, units: assignment.units }]);
+    for (const assignment of plan.assignments) {
+      if (machines.has(assignment.resourceId)) continue;
+      crewsOf.set(assignment.taskId, [...(crewsOf.get(assignment.taskId) ?? []), { resourceId: assignment.resourceId, units: assignment.units }]);
+    }
     const buckets = new Map<number, PlanTask[]>();
     const unassigned: PlanTask[] = [];
     for (const task of leaves) {
@@ -153,9 +194,20 @@ export function costReport(plan: PlanSnapshot, options: { taskIds?: readonly num
   groups.sort((a, b) => b.forecast_minor - a.forecast_minor || a.name.localeCompare(b.name));
   const scope = options.taskIds?.length ? `${leaves.length} task(s) under ${options.taskIds.length} picked task(s)` : 'the whole plan';
   const notes = ['Leaf tasks only: groups add up their tasks.'];
-  if (groupBy === 'crew') notes.push('A task shared by crews is split between them by their units.');
+  const rentals = groupBy === 'crew' ? rentalsFor(plan, leaves) : [];
+  if (groupBy === 'crew') {
+    notes.push('A task shared by crews is split between them by their units.');
+    notes.push('A machine is no crew: each machine on rent is under rentals, at its rate times its billable days (weekends included), billed to its supplier apart from the crews’ work. What a firm is paid: its crew’s share of the tasks, plus its rentals.');
+  }
   if (missing.length) notes.push(`No task ${missing.join(', ')} in the plan.`);
-  return { scope, totals: totalsOf(leaves), groups: groups.slice(0, MAX_GROUPS), truncated: groups.length > MAX_GROUPS, note: notes.join(' ') };
+  return {
+    scope,
+    totals: totalsOf(leaves),
+    groups: groups.slice(0, MAX_GROUPS),
+    truncated: groups.length > MAX_GROUPS,
+    ...(rentals.length ? { rentals } : {}),
+    note: notes.join(' '),
+  };
 }
 
 // ---------------------------------------------------------------------------------------------

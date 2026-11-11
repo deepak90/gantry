@@ -8,7 +8,7 @@
  * Which one: never the one she said last, nor any of the last half of the set; of the rest, any (pickFiller). So a call
  * starts on any of them, and each comes round again only after at least half of the others.
  */
-import { FILLER_AFTER_MS, FILLER_GIVE_UP_MS, FILLER_GRACE_MS, FILLERS } from './config.ts';
+import { FILLER_AFTER_MS, FILLER_GIVE_UP_MS, FILLER_GRACE_MS, FILLERS, STILL_AFTER_MS, STILL_FILLERS } from './config.ts';
 
 export interface FillerHooks {
   /** Remy is speaking, or a line is on its way. */
@@ -26,6 +26,9 @@ export interface FillerOptions {
   giveUpMs: number;
   retryMs: number;
   texts: readonly string[];
+  /** After a filler, one still-on-it line this much later when no answer has come (0: none). */
+  stillAfterMs: number;
+  stillTexts: readonly string[];
   /** 0 to 1, for picking among the fillers she hasn't said lately. */
   random: () => number;
 }
@@ -36,6 +39,8 @@ const DEFAULTS: FillerOptions = {
   giveUpMs: FILLER_GIVE_UP_MS,
   retryMs: 100,
   texts: FILLERS,
+  stillAfterMs: STILL_AFTER_MS,
+  stillTexts: STILL_FILLERS,
   random: Math.random,
 };
 
@@ -63,6 +68,10 @@ export class FillerScheduler {
   #lastWasFiller = false;
   /** The fillers said on this call, oldest first (a few kept). */
   #said: string[] = [];
+  /** The still-on-it line waiting for its moment after a filler, and the ones said on this call. */
+  #stillTimer: ReturnType<typeof setTimeout> | null = null;
+  #stillGiveUpAt = 0;
+  #stillSaid: string[] = [];
 
   constructor(hooks: FillerHooks, options: Partial<FillerOptions> = {}) {
     this.#hooks = hooks;
@@ -89,8 +98,8 @@ export class FillerScheduler {
   }
 
   cancel(): void {
-    if (this.#timer) clearTimeout(this.#timer);
-    this.#timer = null;
+    for (const timer of [this.#timer, this.#stillTimer]) if (timer) clearTimeout(timer);
+    this.#timer = this.#stillTimer = null;
   }
 
   #arm(ms: number): void {
@@ -109,6 +118,26 @@ export class FillerScheduler {
     if (!text) return;
     this.#said = [...this.#said, text].slice(-this.#options.texts.length);
     this.#lastWasFiller = true;
+    this.#hooks.play(text);
+    // The answer may be long in coming: one more short line, later, if it still hasn't.
+    const { stillAfterMs, stillTexts, giveUpMs } = this.#options;
+    if (stillAfterMs > 0 && stillTexts.length > 0) {
+      this.#stillGiveUpAt = Date.now() + stillAfterMs + giveUpMs;
+      this.#stillTimer = setTimeout(() => this.#fireStill(), stillAfterMs);
+    }
+  }
+
+  #fireStill(): void {
+    this.#stillTimer = null;
+    if (this.#hooks.busy()) return;
+    if (this.#hooks.floorTaken()) {
+      if (Date.now() + this.#options.retryMs <= this.#stillGiveUpAt) this.#stillTimer = setTimeout(() => this.#fireStill(), this.#options.retryMs);
+      return;
+    }
+    const ready = this.#options.stillTexts.filter((text) => text && (!this.#hooks.ready || this.#hooks.ready(text)));
+    const text = pickFiller(ready, this.#stillSaid, this.#options.random);
+    if (!text) return;
+    this.#stillSaid = [...this.#stillSaid, text].slice(-this.#options.stillTexts.length);
     this.#hooks.play(text);
   }
 }

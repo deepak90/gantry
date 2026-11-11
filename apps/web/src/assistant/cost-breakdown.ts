@@ -89,7 +89,11 @@ function topGroup(task: TaskModel): TaskModel | null {
 }
 
 function crewsOn(task: TaskModel): string[] {
-  const names = ((task.assignments ?? []) as { resource?: { name?: string } | null }[]).map((assignment) => assignment.resource?.name?.trim() ?? '').filter(Boolean);
+  // A machine on rent is no crew: it takes no share of the task's budget (its rental is billed apart).
+  const names = ((task.assignments ?? []) as { resource?: { name?: string; kind?: string } | null }[])
+    .filter((assignment) => assignment.resource?.kind !== 'equipment')
+    .map((assignment) => assignment.resource?.name?.trim() ?? '')
+    .filter(Boolean);
   // By name, so the same task always splits the same way.
   return [...new Set(names)].sort((a, b) => a.localeCompare(b));
 }
