@@ -243,27 +243,21 @@
   color: var(--hero-text);
 }
 
+/* A footnote to the claim, under a faint rule: the two names a shade brighter, nothing that looks pressable. */
 .hero-built {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-sm);
-  margin: var(--space-md) 0 0;
+  justify-self: stretch;
+  max-width: 32rem;
+  margin: var(--space-sm) 0 0;
+  padding-top: var(--space-md);
+  border-top: 1px solid rgb(244 246 251 / 0.12);
   color: var(--hero-faint);
-  font-size: var(--fs-xs);
-  font-stretch: 112%;
-  font-weight: var(--fw-strong);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
 }
 
-.hero-pill {
-  padding: 0.4rem 0.8rem 0.36rem;
-  border: 1px solid rgb(244 246 251 / 0.22);
-  border-radius: 999px;
-  color: var(--hero-text);
-  background: rgb(255 255 255 / 0.04);
-  letter-spacing: 0.06em;
+.hero-built b {
+  color: var(--hero-soft);
+  font-weight: var(--fw-strong);
 }
 
 /* The stage: the model as a sheet turned toward the claim, the odds board behind it, the cards in front. */
