@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { renderPage, SITE_PAGES } from '../../site-pages';
+import { markDrawing } from '../../src/assistant/RemyMark';
 import { START_SESSION_LABEL } from '../../src/site/site-config';
 
 const web = fileURLToPath(new URL('../..', import.meta.url));
@@ -19,8 +20,12 @@ describe('the landing page', () => {
   it('opens on the claim, one way in, and the model of the building', () => {
     const hero = /<section class="hero"[\s\S]*?<\/section>/.exec(landing)?.[0] ?? '';
     expect(hero).toMatch(/<h1 id="hero-title"><span>Pay the crew\.<\/span> <span>Pour the slab\.<\/span><\/h1>/);
-    expect(hero).toMatch(/Remy, an AI coordinator/);
-    expect(hero).toMatch(/PayPal/);
+    expect(hero).toMatch(/where plans become <span class="hero-concrete">concrete<\/span>\./);
+    // Remy's mark beside her name is the one the app draws (assistant/RemyMark.tsx).
+    expect(hero).toContain(
+      `<span class="hero-remy"><svg class="hero-remy-mark" viewBox="0 0 120 120" aria-hidden="true" focusable="false">${markDrawing('hero-remy')}</svg>Remy</span>, your AI&nbsp;coordinator,`,
+    );
+    expect(hero).toMatch(/pay the crews with PayPal\./);
     expect(hero.match(/class="button is-primary is-xl"/g)).toHaveLength(1);
     expect(hero).toContain(`>${START_SESSION_LABEL}</a>`);
     expect(hero).toMatch(/<div class="model" data-model><\/div>/);

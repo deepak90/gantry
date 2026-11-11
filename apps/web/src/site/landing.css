@@ -174,6 +174,167 @@
   text-wrap: pretty;
 }
 
+/*
+ * "concrete": the one warm word on the blue sheets, where the plan turns real. Orange and yellow drift through the
+ * letters, the aurora-text idea in plain CSS; the letters themselves never move, so the line reads as it sits.
+ */
+.hero-concrete {
+  color: oklch(0.82 0.16 72);
+  font-weight: 650;
+  background: linear-gradient(
+      115deg,
+      oklch(0.72 0.19 48) 0%,
+      oklch(0.8 0.17 68) 18%,
+      oklch(0.93 0.14 98) 34%,
+      oklch(0.78 0.18 60) 52%,
+      oklch(0.72 0.19 48) 68%,
+      oklch(0.87 0.16 86) 84%,
+      oklch(0.72 0.19 48) 100%
+    )
+    0% 50% / 300% 300%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/*
+ * Remy's mark beside her name: the drawing in assistant/RemyMark.tsx (test/site/landing.test.ts keeps them the same).
+ * The ring draws itself in once, then breathes as on the app's Talk to Remy button: it rocks a little and, every few
+ * seconds, the spark turns.
+ */
+.hero-remy {
+  color: var(--hero-text);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.hero-remy-mark {
+  display: inline-block;
+  width: 1.2em;
+  height: 1.2em;
+  margin-right: 0.2em;
+  vertical-align: -0.27em;
+  overflow: visible;
+  filter: drop-shadow(0 0 0.3em rgb(66 127 247 / 0.6));
+}
+
+.hero-remy-mark .remy-ring {
+  transform-box: view-box;
+  transform-origin: 60px 60px;
+  /* The open ring is three quarters of a circle of radius 44: about 207 long. */
+  stroke-dasharray: 210 230;
+}
+
+.hero-remy-mark .remy-spark {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-concrete {
+    animation: hero-aurora 12s linear infinite;
+  }
+
+  .hero-remy-mark .remy-ring {
+    animation:
+      hero-remy-draw 1.1s var(--ease-out) 0.5s both,
+      hero-remy-rock 7.5s ease-in-out -3.75s infinite alternate;
+  }
+
+  .hero-remy-mark .remy-spark {
+    animation:
+      hero-remy-pop 0.7s var(--ease-out) 1.2s both,
+      hero-remy-turn 7.5s 4s infinite;
+  }
+}
+
+/* High contrast: the words in the text color, and Remy's mark drawn in it too rather than left out. */
+@media (forced-colors: active) {
+  :is(.hero-track, .hero-concrete) {
+    background: none;
+    -webkit-text-fill-color: currentColor;
+  }
+
+  .hero-remy-mark {
+    forced-color-adjust: none;
+    filter: none;
+  }
+
+  .hero-remy-mark .remy-ring {
+    stroke: CanvasText;
+  }
+
+  .hero-remy-mark .remy-spark path {
+    fill: CanvasText;
+  }
+}
+
+@keyframes hero-aurora {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  25% {
+    background-position: 50% 100%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  75% {
+    background-position: 50% 0%;
+  }
+}
+
+@keyframes hero-remy-draw {
+  from {
+    stroke-dashoffset: 211;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes hero-remy-pop {
+  from {
+    rotate: -90deg;
+    scale: 0;
+  }
+}
+
+/* As remy-rock and remy-turn in styles/remy.css, which this page doesn't load. */
+@keyframes hero-remy-rock {
+  from {
+    rotate: -10deg;
+  }
+
+  to {
+    rotate: 10deg;
+  }
+}
+
+@keyframes hero-remy-turn {
+  0% {
+    rotate: 0deg;
+    scale: 1;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  16% {
+    rotate: 90deg;
+    scale: 1.2;
+  }
+
+  30%,
+  100% {
+    rotate: 90deg;
+    scale: 1;
+  }
+}
+
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
