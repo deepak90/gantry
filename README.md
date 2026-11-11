@@ -1,8 +1,16 @@
+<p align="center">
+  <img src="docs/images/gantry-cover.jpg" width="880" alt="Gantry. Pay the crew. Pour the slab. Keep the plan on track. The app's 3D site view with Remy on the call, the on-time odds board, a crane rental with $6,000 saved, and a $37,800 PayPal sandbox payment to two trade partners.">
+</p>
+
 # Gantry
 
-Gantry is a construction schedule that a general contractor's team plans in, talks through and pays from. When a trade partner's work is done, the team pays the firm through PayPal from the chart, and the work that was waiting for that payment can start. A rented machine is paid for the days its rental dates cover, and the tenant gets a PayPal invoice for the changes it asks for. Remy, an AI assistant on Claude, works in the same plan with the team, in the chat and on their calls: she reads the plan, works out dates and money with tools, drafts plan changes and invoices, and shows things on screen with her own cursor. Money moves only when a person presses the button.
+> **Pay the crew. Pour the slab. Keep the plan on track.**
+>
+> Late pay stops construction work. Gantry puts the payment in the schedule: when a trade partner's work is done, the general contractor's team pays the firm through PayPal right from the Gantt chart, and the work that was waiting for that money can start. Remy, an AI coordinator on Claude, works the plan with the team in the chat and on their calls. She reads the plan, works out dates and money, drafts changes and invoices, and points things out with her own cursor. Money moves only when a person presses the button.
 
-Built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/), Oct and Nov 2026. Every payment runs in PayPal's sandbox. Open source under the MIT license.
+**[Watch the film (2:59)](https://www.youtube.com/watch?v=4hT78jg0IE8)** · **[Try it from Devpost](https://devpost.com/software/gantry-talk-build-pay)** · **[Run it yourself](#run-it-yourself)** · **[How it's built](#how-its-built)**
+
+Built with PayPal and Bryntum for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/), Oct and Nov 2026. Rented machines are paid by the day their dates cover, and the tenant gets a PayPal invoice for the changes it asks for. Every payment runs in PayPal's sandbox. Open source under the MIT license.
 
 ## Start here
 
@@ -265,7 +273,7 @@ A hosted build (`VITE_GANTRY_HOSTED=1`, see [How it's built](#the-hosted-build-a
 - "Start over" resets the session for everyone in it and signs this tab out, so a fresh session takes a new anonymous sign-in and a new Turnstile check: each sign-in gets one session, ever. One network can start a session every 2 minutes, 5 an hour and 15 a day, and hold 2 at once.
 - The chart opens where the film does: on the footings' payment hold, with the slab it holds hatched and tagged "held until paid", the plan's today and the week the city inspector is away. A local build opens at the plan's start, and the walkthroughs set the chart themselves. Each visit's library starts with the film's light fixtures package, and whatever a visitor saves there goes when the session is reset.
 - "Try these", on the counter in the header, has eight things to do, in any order, and ticks each off when it happens: call Remy, invite a teammate, drag a library package onto Level 1, open the 3D view, ask Remy about paying on Friday, check the on-time odds, send the tenant's invoice, and pay the footings with PayPal (a second person approves it from a teammate tab). The crane's rental stays off the list until the rental suppliers have sandbox accounts of their own.
-- Three switches in the database (live AI, calls, payments) decide whether the call is offered and which items the list shows. Each session also has its own allowance of Remy's turns, calls and PayPal payments ([limits](#security-permissions-and-payments)). The walkthroughs and touch to talk are not in a hosted build.
+- Three switches in the database (live AI, calls, payments) decide whether the call is offered and which items the list shows. Each session also has its own allowance of Remy's turns, calls and PayPal payments ([limits](#security-permissions-and-payments)). The walkthroughs are not in a hosted build.
 
 Code: `apps/web/src/copy/`, `apps/web/src/onboarding/try-these.ts`, `apps/web/src/gantt/opening-view.ts`, `supabase/migrations/20261110120100_flags_and_quotas.sql`, `supabase/migrations/20261110120200_copy_pool.sql`, `supabase/migrations/20261111010000_session_codes_and_names.sql`, `supabase/migrations/20261111040000_visitor_limits.sql`, `supabase/migrations/20261111120000_copy_library.sql`.
 
@@ -439,68 +447,38 @@ These are plans, not features.
 
 ### Technology
 
-- Web app (`apps/web`): React 19, Vite 8 and TypeScript. Bryntum Gantt 7.3.8 for the chart and its scheduling engine, with Scheduler Pro for the crew schedule, the resource histogram and the version grid. three.js for the 3D view and the marble board, Rapier for the marbles' physics in a web worker, Motion for animation, supabase-js, livekit-client and zod.
-- Assistant service (`apps/agent`): Node with the Anthropic TypeScript SDK and mathjs for exact decimal math. It talks to the database with the service role and to browsers over Realtime.
-- Remy's call worker (`apps/remy-call`): LiveKit Agents for Node 1.9.3 with Silero voice activity detection, OpenAI's realtime transcription (one session per person), and OpenAI's gpt-4o-mini-tts for her voice, or an ElevenLabs voice (Flash v2.5) when one is set up.
-- Database and server (`supabase/`): Postgres 17 with row-level security, SQL functions for every write, Realtime private channels authorized by row-level security, Storage for documents, and Deno Edge Functions for PayPal and placement, with pdf-lib for receipts.
-- Shared code (`packages/shared`): zod schemas for every contract, money in integer cents, progress-payment math, rental-day rules, watch rules and the seed projects.
-- Video (`apps/clip-studio`): Remotion 4 cuts the how-to clips.
-- Public site: plain pages built by Vite beside the app, with Vercel Web Analytics and Speed Insights in the hosted build only.
-- The hosted site runs on Vercel (the pages and the call's routes in `api/`), Supabase (the database and the Edge Functions), Fly.io (the assistant service, `apps/agent/fly.toml`) and LiveKit Cloud (Remy's call worker, `apps/remy-call`).
-- Tests: Vitest, Playwright and pgTAP.
+- **Web app** (`apps/web`): React 19, Vite 8 and TypeScript. Bryntum Gantt 7.3.8 for the chart and its scheduling engine; the same bundle carries Scheduler Pro, used for the crew schedule, the resource histogram and the version grid. three.js for the 3D view and the marble board, Rapier for the marbles' physics in a web worker, Motion for animation, supabase-js, livekit-client and zod.
+- **Assistant service** (`apps/agent`): Node with the Anthropic TypeScript SDK, and mathjs for exact decimal math. It talks to the database with the service role and to browsers over Realtime, and reads PayPal itself, read only, for `check_with_paypal`: invoices through PayPal's Agent Toolkit, payout batches and orders with GET requests.
+- **Remy's call worker** (`apps/remy-call`): LiveKit Agents for Node 1.9.3 with Silero voice activity detection, OpenAI's realtime transcription (one session per person), and OpenAI's gpt-4o-mini-tts for her voice, or an ElevenLabs voice (Flash v2.5) when one is set up. Whisper checks her short filler lines before she uses them.
+- **Database and server** (`supabase/`): Postgres 17 with row-level security. SQL functions handle the plan, payments, approvals, invoices, documents and messages; the task library and each tab's session row are written to their tables under row-level security. Realtime private channels are authorized by row-level security, Storage holds documents and receipts, pg_cron sweeps the hosted site's copies, and Deno Edge Functions handle PayPal and placement, with pdf-lib for receipts.
+- **PayPal**: Payouts, Invoicing and Orders through PayPal's REST APIs, from shared code in `supabase/functions/_shared` that the Edge Functions, the dev server and the assistant service all use; PayPal's JS SDK v6 for its own checkout window on a local build; and PayPal's Agent Toolkit for Remy's reads.
+- **Shared code** (`packages/shared`): zod schemas for every contract, money in integer cents, progress-payment math, rental-day rules, watch rules and the seed projects.
+- **Public site**: a landing page and plain Privacy, Terms, Credits and 404 pages, each its own Vite entry beside the app. The landing page replays the app's 3D building and odds board, and plays the film from YouTube's no-cookie player. Vercel Web Analytics and Speed Insights run in the hosted build only.
+- **Hosting**: Vercel (the pages, and the call's routes in `api/` with livekit-server-sdk and supabase-js), Supabase (the database, Auth with anonymous sign-in behind a Cloudflare Turnstile check, and the Edge Functions), Fly.io (the assistant service, `apps/agent/fly.toml`) and LiveKit Cloud (Remy's call worker, `apps/remy-call`).
+- **Video** (`apps/clip-studio`): Remotion 4 cuts the how-to clips.
+- **Tests**: Vitest, Playwright and pgTAP.
 
-Bryntum Gantt is a commercial component used here through its public trial package from npm (`@bryntum/gantt` is an alias of `@bryntum/gantt-trial@7.3.8`, with the public React wrapper `@bryntum/gantt-react@7.3.8`); the Gantt bundle already contains Grid, so no Grid package is installed, and nothing is vendored.
+Bryntum Gantt is a commercial component used here through its public trial package from npm (`@bryntum/gantt` is an alias of `@bryntum/gantt-trial@7.3.8`, with the public React wrapper `@bryntum/gantt-react@7.3.8`). The Gantt bundle already contains Grid and Scheduler Pro, so no other Bryntum package is installed, and nothing is vendored.
 
 ### Architecture
 
-On a local build the dev server hands out call tokens and makes and captures the PayPal orders for the crews; on the hosted site the call's routes are Vercel functions, and the crews are paid through the `paypal-progress-payout` function.
+<p align="center">
+  <img src="docs/images/architecture.svg" width="100%" alt="How Gantry fits together. Each person's browser runs the Gantt and its scheduling engine and talks to Supabase: Auth, Postgres, Realtime, Storage and Edge Functions. The assistant service on Fly.io works through Supabase, runs a tool loop with Claude and reads PayPal. Edge Functions pay the crews and send invoices through PayPal. The call runs on LiveKit: Vercel functions hand out tokens and bring Remy in, and her call worker hears each person through OpenAI and speaks through OpenAI or ElevenLabs.">
+</p>
 
-```mermaid
-flowchart LR
-  subgraph browsers["Each person's browser"]
-    app["Gantt, side panel, 3D view, odds board<br/>(Bryntum's engine runs here)"]
-    ppbutton["PayPal's button and window"]
-  end
-  vite["Vite dev server (local) or Vercel functions (hosted)<br/>call tokens; PayPal's button for the crews (local)"]
-  subgraph supa["Supabase"]
-    db[("Postgres<br/>row-level security, SQL functions, revision log")]
-    realtime["Realtime<br/>private channels per project"]
-    storage["Storage<br/>documents and receipts"]
-    functions["Edge Functions<br/>PayPal and placement"]
-  end
-  agent["Assistant service<br/>apps/agent"]
-  claude["Claude<br/>Anthropic API"]
-  livekit["LiveKit server<br/>one room per project"]
-  worker["Remy's call worker<br/>apps/remy-call"]
-  openai["OpenAI<br/>transcription, Remy's voice"]
-  eleven["ElevenLabs<br/>optional voice"]
-  paypal["PayPal sandbox<br/>Orders, Payouts, Invoicing"]
+The same pieces run on the hosted site and on your machine. Locally, the Vite dev server stands in for Vercel: it hands out call tokens and, with `PAYPAL_MODE=live`, makes and captures the PayPal orders behind PayPal's own button. On the hosted site the call's routes are Vercel functions, and the crews are paid as one Payouts batch through the `paypal-progress-payout` Edge Function.
 
-  app -->|"submit_revision, reads"| db
-  db -->|"numbered changes"| realtime
-  realtime -->|"changes, pointers, Remy's stream"| app
-  agent <-->|"messages, plan, commands"| db
-  agent -->|"Remy's stream"| realtime
-  agent <--> claude
-  app -->|"invoices, payouts, placement"| functions
-  functions --> paypal
-  functions --> storage
-  functions -->|"placement"| claude
-  app -->|"call token, crew payment"| vite
-  vite -->|"orders, capture"| paypal
-  ppbutton -->|"sign in, approve"| paypal
-  app <-->|"audio"| livekit
-  livekit <-->|"audio, heard lines, lines to say"| worker
-  worker --> openai
-  worker -.-> eleven
-```
+- **The plan:** each browser writes revisions through `submit_revision` and gets everyone's changes back over Realtime, in order. Pointers, selections and follow views go over a separate presence channel.
+- **Remy:** the assistant service hears new messages, revisions and presence over Realtime, reads the plan from Postgres, and runs a streaming tool loop with Claude. Questions for the scheduling engine go to the asker's browser as commands and come back as results.
+- **Money:** a person's press sends a payout or an invoice through an Edge Function, which calls PayPal and files the receipt in Storage. Remy reads PayPal, read only, to say where a payment or an invoice stands; she can't approve, pay or send.
+- **The call:** the browser gets a token from `api/call`, which checks membership and limits and brings Remy in. Her call worker hears each person on their own track through OpenAI, and speaks through OpenAI or ElevenLabs. Her answers go from the assistant service over Realtime to the host's tab (whoever has been on the call longest), which hands them, signed, to the worker over LiveKit. The two services never connect directly, and the hosted worker says only what the service signed.
 
 ### How a plan change travels between people
 
 1. Chris drags a bar. Bryntum's engine moves what depends on it and records the whole thing as one revision.
-2. His browser puts the revision in its outbox and calls `submit_revision`. Postgres checks he is a member and that this is his session, accepts only the stores a client may change, swaps temporary ids for real ones, gives the revision the next number and stores it.
-3. A trigger sends the stored revision on the project's private Realtime channel.
-4. Every open browser, Chris's included, feeds the numbered revisions to Bryntum's `applyRevisions` in order. A browser that sees a gap fetches the missing rows. A revision the engine refuses stops that browser and asks for a reload rather than letting it drift.
+2. His browser puts the revision in its outbox and calls `submit_revision`. Postgres checks he is a member and that this is his session, accepts only the stores a client may change, swaps temporary ids for real ones, gives the revision the next number and stores it. A revision over 256 KB is refused, and so is one that changes work while PayPal is paying for it.
+3. A trigger sends the stored revision on the project's private Realtime channel, to every browser and to the assistant service.
+4. Every open browser, Chris's included, feeds the numbered revisions to Bryntum's `applyRevisions` in order. A browser that sees a gap fetches the missing rows, and every 30 seconds it reads the log again in case it missed one. A revision the engine refuses stops that browser and asks for a reload rather than letting it drift.
 5. Undo is a new revision, so it reaches everyone the same way.
 
 Pointers, selections and follow views take another path: broadcasts on a separate presence channel, checked on arrival and never stored.
@@ -509,33 +487,34 @@ Pointers, selections and follow views take another path: broadcasts on a separat
 
 1. A person writes to Remy, or says something to her on a call. On a call, her worker has already decided the line is addressed to her, and the speaker's tab posts it as their message.
 2. The message is stored, and a trigger tells the assistant service, which runs one agent per project, one turn at a time.
-3. The service works out who reads the conversation and whether amounts may be said, then starts a streaming tool loop with Claude: the plan as it stands, the last messages, and the definitions of her 45 tools and 14 cards. Her first words go out through `reply` while she keeps working.
+3. The service works out who reads the conversation and whether amounts may be said, then starts a streaming tool loop with Claude. The turn carries the person's words with what they have selected and on screen, the last messages, and her 45 tools and 14 cards. Tools read the plan, which the service keeps current from the revision log. Her first words go out through `reply` while she keeps working.
 4. Tools read the plan and do the arithmetic. Engine questions (the odds, a late payment) go to the asker's browser as a command, run on Bryntum's engine there, and come back as results.
-5. Cards are checked against the tool results, then streamed on the project's channel, or on the conversation's own channel when it is private. The reply is stored.
-6. A drafted change waits for Apply, or applies itself if the person chose that. On a call, the first person's tab hands her words to the call worker, which speaks them.
+5. Cards stream as drafts while she writes them. Each is checked against the tool results when it is complete and replaces its draft, or is dropped. They go out on the project's channel, or on the conversation's own channel when it is private. The reply is stored.
+6. A drafted change waits for Apply, or applies itself if the person chose that. On a call, the host's tab (whoever has been on the call longest) hands her words, with the service's signature, to the call worker over LiveKit. The hosted worker checks the signature and says only what the service wrote.
 
 ### Repository layout
 
 | Folder | What it holds |
 | --- | --- |
-| `apps/web` | The web app, the public site's pages, and the dev server's routes for the call, touch to talk and crew payments |
+| `apps/web` | The web app, the public site's pages, the dev server's routes for the call and the crews' PayPal payments, and the call code the hosted routes share (`call-server.ts`, `call-hosted.ts`) |
 | `apps/agent` | The assistant service (Remy's thinking) |
 | `apps/remy-call` | Remy's call worker for LiveKit |
 | `apps/clip-studio` | Remotion: the how-to clips Remy shows |
 | `api/call` | The hosted site's call routes (Vercel functions): a call token and who is on the call, for members only |
 | `packages/shared` | Types, schemas, money, payment math, the seed projects |
 | `supabase/migrations`, `supabase/tests` | The schema, row-level security, SQL functions, pgTAP tests |
-| `supabase/functions` | Edge Functions: `paypal-invoice`, `paypal-execute-payout`, `paypal-progress-payout`, `paypal-reconcile`, `paypal-webhook`, `place-snippet` |
-| `scripts` | Demo reset, simulated teammates, the site deploy |
+| `supabase/functions` | Edge Functions: `paypal-invoice`, `paypal-execute-payout`, `paypal-progress-payout`, `paypal-reconcile`, `paypal-webhook`, `place-snippet`; `_shared` holds the PayPal client the dev server and the assistant service use too |
+| `scripts` | Demo reset, seeds and seed documents, simulated teammates, local Realtime limits, the site deploy |
 | `tests/e2e`, `tests/clips` | Playwright: end-to-end tests and the how-to clip recorder |
-| `docs` | [Setup](docs/SETUP.md), [design system](docs/DESIGN.md), [Bryntum workarounds](docs/bryntum-workarounds.md), [library scenarios](docs/library-scenarios.md), [bar language](docs/design/bar-language.md) |
+| `docs` | [Setup](docs/SETUP.md), [design system](docs/DESIGN.md), [Bryntum workarounds](docs/bryntum-workarounds.md), [library scenarios](docs/library-scenarios.md), [bar language](docs/design/bar-language.md), and the images on this page |
 
 ### The hosted build and its deploy
 
 - `VITE_GANTRY_HOSTED=1` builds the hosted version: a landing page at `/`, the app at `/app` with a private copy of Harbor for each visitor (see [above](#a-private-session-on-harbor-for-each-visitor-the-hosted-build)), and Privacy, Terms and Credits pages. It adds Vercel Web Analytics and Speed Insights, which set no cookies and record each page by its route alone. A local build keeps the app at `/` and the landing page at `/landing.html`, with no analytics.
 - `pnpm deploy:site` runs a hosted build and scans every built file for secrets: API keys, Supabase service-role keys, private keys, paths from the build machine, the demo passwords, and the value of every secret in the env files. Any hit stops it. It then builds again with Vercel's CLI, scans that output the same way, and uploads only the prebuilt output to Vercel. `pnpm deploy:site --check` builds and scans, and stops before anything is uploaded.
-- The call asks the site's own `/api/call/token` and `/api/call/room` routes (Vercel functions in [api/](api/)), which check that the caller is a signed-in member of the session's project, from a tab of their own. A progress payment goes out through the `paypal-progress-payout` function. Touch to talk and PayPal's own button for the crews stay on the dev server (see [What's missing today](#whats-missing-today)).
-- The assistant service deploys to Fly.io from the repo root (`fly deploy . --config apps/agent/fly.toml --dockerfile apps/agent/Dockerfile --ha=false`), and Remy's call worker to LiveKit Cloud from `apps/remy-call` (`lk agent deploy`). Their keys are set as secrets on those services, never in the repository; [apps/agent/README.md](apps/agent/README.md) and [apps/remy-call/README.md](apps/remy-call/README.md) have the steps.
+- The call asks the site's own `/api/call/token` and `/api/call/room` routes (Vercel functions in [api/](api/)), which check that the caller is a signed-in member of the session's project, from a tab of their own. Vercel's Production environment gives them `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `LIVEKIT_URL`, `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET`. A progress payment goes out through the `paypal-progress-payout` function. PayPal's own button for the crews stays on the dev server (see [What's missing today](#whats-missing-today)).
+- The database: `supabase db push --remote` applies the migrations, `seed_snapshot.sql` seeds the projects and the pool of copies, pg_cron and anonymous sign-ins are switched on, and the PayPal Edge Functions go up with `supabase functions deploy <name>` once their secrets are set with `supabase secrets set` ([supabase/README.md](supabase/README.md)).
+- The assistant service deploys to Fly.io from the repo root (`fly deploy . --config apps/agent/fly.toml --dockerfile apps/agent/Dockerfile --ha=false`), and Remy's call worker to LiveKit Cloud from `apps/remy-call` (`lk agent deploy`). Their keys are set as secrets on those services, never in the repository. `REMY_LINE_SECRET` goes on both: the service signs Remy's lines and the hosted worker says only signed ones. [apps/agent/README.md](apps/agent/README.md) and [apps/remy-call/README.md](apps/remy-call/README.md) have the steps.
 
 Code: `apps/web/site-pages.ts`, `apps/web/src/site/`, `apps/web/src/analytics.ts`, `apps/web/call-hosted.ts`, `scripts/deploy-site.ts`, `vercel.json`. One-time Vercel setup: [docs/SETUP.md](docs/SETUP.md#the-hosted-build-and-deploy).
 
@@ -630,7 +609,7 @@ On one computer, both tabs' microphones hear you. Mute one of them from the call
 | `PAYPAL_SANDBOX_PAYEE_EMAIL`, `PAYPAL_SANDBOX_TENANT_EMAIL`, `PAYPAL_SANDBOX_<FIRM>_EMAIL` | seed, dev server, Edge Functions | who receives each sandbox payment and invoice |
 | `PAYPAL_INVOICER_NAME`, `PAYPAL_WEBHOOK_ID`, `PAYPAL_CAPTURE` | Edge Functions, dev server | the invoice's sender, webhooks, a dry run: PayPal approves, nothing is captured |
 | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `VITE_LIVEKIT_URL` | dev server, call worker | the call |
-| `OPENAI_API_KEY` | call worker, dev server, film captions | the call (Remy's ears and default voice), touch to talk |
+| `OPENAI_API_KEY` | call worker | the call: Remy's ears, her default voice, and the check on her short filler lines |
 | `ELEVEN_LABS_API_KEY`, `ELEVEN_LABS_VOICE_REMY_KEY` | call worker | optional: an ElevenLabs voice for Remy instead of OpenAI's |
 | `REMY_*` | call worker | optional: transcription model, voice checks, fillers |
 | `VITE_PLAN_DATE`, `GANTRY_PLAN_DATE` | the browser, the assistant service | optional: the plan's today, as `YYYY-MM-DD` ([the hosted site's date](#the-hosted-sites-date)) |
@@ -670,7 +649,7 @@ Remy's tool inputs, presence messages and the assistant's stream events are vali
 
 ## What's missing today
 
-- Touch to talk and paying the crews with PayPal's own button (Orders) run only on the Vite dev server; the hosted site pays the crews as one Payouts batch.
+- Paying the crews with PayPal's own button (Orders) runs only on the Vite dev server; the hosted site pays the crews as one Payouts batch.
 - On the hosted site, rentals can't be paid until each rental supplier has a sandbox account of its own; until then their payouts are refused rather than sent to the wrong account.
 - Payments are sandbox only, and no real money has moved. Going live needs PayPal's approvals (see [What going live would take](#what-going-live-would-take)): the platform program for paying several firms in one order, Payouts access, and partner onboarding so invoices don't go out with the app's own API key.
 - Remy reads PayPal only when someone asks her to check, and only status. What she reads doesn't update the app's record (the invoice card catches up when it asks PayPal itself), and she can't send the tenant a reminder.
@@ -777,7 +756,7 @@ Services and platforms:
 - [Bryntum](https://bryntum.com/) for Gantt, its scheduling engine and Scheduler Pro (a commercial component, used through its public npm trial package). Font Awesome Free icons come bundled with it.
 - [PayPal](https://developer.paypal.com/) for Orders, Payouts, Invoicing, the JS SDK, the Agent Toolkit and the sandbox. PayPal and its logo are trademarks of PayPal. PayPal's button is drawn by PayPal's own SDK, and its mark appears only beside payments and invoices PayPal has handled.
 - [Anthropic](https://www.anthropic.com/) for Claude, through the Anthropic TypeScript SDK.
-- [OpenAI](https://openai.com/) for realtime transcription, Remy's default voice, touch to talk, the film's captions, and the generated firm logos.
+- [OpenAI](https://openai.com/) for realtime transcription, Remy's default voice, the film's captions, and the generated firm logos.
 - [ElevenLabs](https://elevenlabs.io/) for Remy's voice, in the film and on the hosted site. It's optional when you run Gantry yourself; without it she speaks with OpenAI's voice.
 - [LiveKit](https://livekit.io/) for the call: LiveKit server, livekit-client, and LiveKit Agents for Node with the Silero plugin, and LiveKit Cloud for the hosted site's calls.
 - [Supabase](https://supabase.com/) for Postgres, Auth, Realtime, Storage and Edge Functions.

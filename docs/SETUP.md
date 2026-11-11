@@ -238,8 +238,8 @@ In the hosted app there is no sign-in screen: a visitor passes Cloudflare Turnst
 site's own `/api/call/token` and `/api/call/room` (Vercel functions in `api/call/`, built and deployed
 with the site; `apps/remy-call/README.md` lists what they read); `VITE_LIVEKIT_URL` names the call
 server. A progress payment goes out through the `paypal-progress-payout` function as one Payouts
-batch. Touch to talk, the walkthroughs and the dev server's crew payment routes (PayPal's own button)
-are not in a hosted build.
+batch. The walkthroughs and the dev server's crew payment routes (PayPal's own button) are not in a
+hosted build.
 
 ```sh
 pnpm deploy:site --check   # hosted build and secret scan only: nothing is uploaded

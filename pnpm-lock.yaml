@@ -164,9 +164,6 @@ importers:
       motion:
         specifier: 12.38.0
         version: 12.38.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      qrcode.react:
-        specifier: 4.2.0
-        version: 4.2.0(react@19.3.1)
       react:
         specifier: 19.3.1
         version: 19.3.1
@@ -3399,11 +3396,6 @@ packages:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
 
-  qrcode.react@4.2.0:
-    resolution: {integrity: sha512-QpgqWi8rD9DsS9EP3z7BT+5lY5SFhsqGjpgW5DY/i3mK4M9DTBNz3ErMi8BWYEfI3L0d8GIbGmcdFAS1uIRGjA==}
-    peerDependencies:
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-
   qs@6.17.1:
     resolution: {integrity: sha512-jd3COkaKVgGUW+ZHyEHCG9bH7RoaaiWuMgzsIBjUMVjLAaWGWpoUAVwljVvBHxRu/2qEHnadLGZrkutYUBPQJA==}
     engines: {node: '>=0.6'}
@@ -5178,13 +5170,13 @@ snapshots:
       '@remotion/timeline-utils': 4.0.534(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@rspack/core': 1.7.11
       '@rspack/plugin-react-refresh': 1.6.1(react-refresh@0.18.0)
-      css-loader: 7.1.4(@rspack/core@1.7.11)(webpack@5.105.0(esbuild@0.28.1)(postcss@8.5.31))
+      css-loader: 7.1.4(@rspack/core@1.7.11)(webpack@5.105.0(postcss@8.5.31))
       esbuild: 0.28.1
       react: 19.3.1
       react-dom: 19.3.1(react@19.3.1)
       react-refresh: 0.18.0
       remotion: 4.0.534(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      style-loader: 4.0.0(webpack@5.105.0(esbuild@0.28.1)(postcss@8.5.31))
+      style-loader: 4.0.0(webpack@5.105.0(postcss@8.5.31))
       webpack: 5.105.0(esbuild@0.28.1)(postcss@8.5.31)
     transitivePeerDependencies:
       - '@minify-html/node'
@@ -6102,7 +6094,7 @@ snapshots:
       shebang-command: 2.0.0
       which: 2.0.2
 
-  css-loader@7.1.4(@rspack/core@1.7.11)(webpack@5.105.0(esbuild@0.28.1)(postcss@8.5.31)):
+  css-loader@7.1.4(@rspack/core@1.7.11)(webpack@5.105.0(postcss@8.5.31)):
     dependencies:
       icss-utils: 5.1.0(postcss@8.5.31)
       postcss: 8.5.31
@@ -7258,10 +7250,6 @@ snapshots:
 
   punycode@2.3.1: {}
 
-  qrcode.react@4.2.0(react@19.3.1):
-    dependencies:
-      react: 19.3.1
-
   qs@6.17.1:
     dependencies:
       es-define-property: 1.0.1
@@ -7568,7 +7556,7 @@ snapshots:
 
   strip-json-comments@5.0.3: {}
 
-  style-loader@4.0.0(webpack@5.105.0(esbuild@0.28.1)(postcss@8.5.31)):
+  style-loader@4.0.0(webpack@5.105.0(postcss@8.5.31)):
     dependencies:
       webpack: 5.105.0(esbuild@0.28.1)(postcss@8.5.31)
 
