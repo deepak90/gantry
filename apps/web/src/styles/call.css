@@ -19,6 +19,108 @@
   display: none;
 }
 
+/*
+ * Remy's minutes for the session (call/RemyMinutes.tsx): an orb filled with her cobalt to what's left, its surface
+ * moving while a call runs them down, amber in the last thirty seconds, an empty rim once they're used up. Beside the
+ * call button before a call, with "4:12 left"; on the call bar's clock during one.
+ */
+.remy-minutes {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--header-ink-soft);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.remy-orb {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  overflow: visible;
+}
+
+.call-time .remy-orb {
+  margin-right: 0.4rem;
+  vertical-align: -0.3rem;
+}
+
+.remy-orb-well {
+  fill: oklch(0.2 0.03 262);
+}
+
+.remy-orb-rim {
+  fill: none;
+  stroke: oklch(0.8 0.1 245 / 0.7);
+  stroke-width: 1.25;
+}
+
+.remy-orb-shine {
+  fill: rgb(255 255 255 / 0.3);
+}
+
+.remy-orb-top {
+  stop-color: oklch(0.82 0.1 238);
+}
+
+.remy-orb-deep {
+  stop-color: oklch(0.5 0.18 262);
+}
+
+/* The level falls a second at a time, smoothly. */
+.remy-orb-level {
+  transition: transform 1s linear;
+}
+
+.remy-orb.is-draining {
+  filter: drop-shadow(0 0 0.25rem oklch(0.62 0.19 262 / 0.6));
+}
+
+.remy-orb.is-ending {
+  filter: drop-shadow(0 0 0.25rem oklch(0.8 0.14 80 / 0.55));
+}
+
+.remy-orb.is-ending .remy-orb-rim {
+  stroke: oklch(0.86 0.12 85 / 0.8);
+}
+
+.remy-orb.is-ending .remy-orb-top {
+  stop-color: oklch(0.9 0.12 88);
+}
+
+.remy-orb.is-ending .remy-orb-deep {
+  stop-color: oklch(0.72 0.16 60);
+}
+
+.remy-orb.is-empty .remy-orb-rim {
+  stroke: oklch(0.8 0.05 245 / 0.4);
+}
+
+.remy-orb.is-empty .remy-orb-shine {
+  fill: rgb(255 255 255 / 0.12);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .remy-orb.is-draining .remy-orb-liquid {
+    animation: remy-orb-wave 2.4s linear infinite;
+  }
+}
+
+/* One period of the surface's wave: it slides on without a seam. */
+@keyframes remy-orb-wave {
+  to {
+    transform: translateX(12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .remy-orb-level {
+    transition: none;
+  }
+}
+
 .call-note {
   color: var(--header-ink-soft);
   font-size: var(--fs-xs);

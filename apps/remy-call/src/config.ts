@@ -125,17 +125,16 @@ export const BUDGET_SPENT_LINE = 'I’ve hit my talking limit for this call. My 
 /** Said 30 seconds before a call's time runs out (limits.ts: hosted calls only, unless REMY_CALL_MAX_S is set). */
 export const WRAP_UP_LINE = 'Heads up, I have to drop off in thirty seconds.';
 /** Said when nobody has spoken for the silence limit, before she leaves (REMY_SILENCE_S). */
-export const GOODBYE_LINE = "It's gone quiet, so I'll drop off. Call me back anytime.";
+export const GOODBYE_LINE = "It's gone quiet, so I'll hang up. Call me back anytime.";
 /** The goodbye gets this long to play before she leaves anyway. */
 export const GOODBYE_MAX_MS = 10_000;
 
 /**
- * Leave once the last person has been gone this long. On the hosted worker (`GANTRY_HOSTED=1`) she waits a minute, so
- * someone who hangs up and calls back finds her still on the same call, with its time left, and nobody is sent again:
- * a new Remy sent within seconds of the last one leaving can be ended by LiveKit at once. The call's own
- * limits still end it: the silence limit counts while she waits.
+ * Leave once the last person has been gone this long. On the hosted worker (`GANTRY_HOSTED=1`) she waits ten seconds:
+ * long enough for a reloaded page to find her still on the call, and no longer, since the visit's minutes run while
+ * she waits. The call's own limits still end it: the silence limit counts while she waits.
  */
-export const EMPTY_ROOM_LEAVE_MS = process.env.GANTRY_HOSTED?.trim() === '1' ? 60_000 : 5000;
+export const EMPTY_ROOM_LEAVE_MS = process.env.GANTRY_HOSTED?.trim() === '1' ? 10_000 : 5000;
 /** Leave a room nobody joins. */
 export const NOBODY_CAME_LEAVE_MS = 20_000;
 /** Keep a leaving person's transcriber this long, so their last words still arrive. */

@@ -96,6 +96,13 @@ describe('requestRoom', () => {
     expect(fetcher).toHaveBeenCalledWith('/api/call/room?projectId=p-1', { headers: { Authorization: 'Bearer jwt-abc' } });
   });
 
+  it('reads the session’s minutes with Remy, when the route sends them whole', async () => {
+    const endpoints = callEndpoints({ hosted: true, accessToken: async () => 'jwt-abc' });
+    const minutes = { totalMs: 300_000, leftMs: 90_000, going: true };
+    expect(await requestRoom(endpoints, 'p-1', async () => reply(200, { up: true, people: [], remy: true, minutes }))).toEqual({ up: true, people: [], remy: true, minutes });
+    expect(await requestRoom(endpoints, 'p-1', async () => reply(200, { up: true, people: [], remy: false, minutes: { totalMs: 300_000 } }))).toEqual({ up: true, people: [], remy: false });
+  });
+
   it('says nothing when the route refuses or can’t be reached', async () => {
     await expect(requestRoom(callEndpoints({ hosted: true }), 'p-1', async () => reply(403, { error: 'No.' }))).resolves.toBeNull();
     await expect(requestRoom(callEndpoints({ hosted: false }), 'p-1', async () => Promise.reject(new TypeError('Failed to fetch')))).resolves.toBeNull();

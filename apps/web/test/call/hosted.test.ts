@@ -2,13 +2,14 @@
 /**
  * The hosted call routes (api/call/ through call-hosted.ts): who may join, who they are on the call, which room they
  * join (their visit's), what is tidied first, and when Remy is brought in: calls switched on, the copy's joins, fewer
- * than MAX_CALLS rooms with her, the copy's allowance (spent only when she is, and not again within ten minutes), and
- * the site's spend.
+ * than MAX_CALLS rooms with her, her turns left, the copy's allowance (spent only when she is, and not again within ten
+ * minutes), the site's spend, and the visit's minutes with her: one pool, set aside call by call, counted until she is
+ * seen gone, and the end of each call's share sent with her.
  */
 import { createClient } from '@supabase/supabase-js';
 import * as livekit from 'livekit-server-sdk';
 import { describe, expect, it } from 'vitest';
-import { CallServer, newsOf, remyGone, remyHere, STARTING_GRACE_MS, type LiveKitSdk, type Person, type RemyNeed, type RoomLimits } from '../../call-server';
+import { CallServer, dispatchMetadata, newsOf, remyGone, remyHere, STARTING_GRACE_MS, type LiveKitSdk, type Person, type RemyNeed, type RoomLimits } from '../../call-server';
 import {
   bearerOf,
   DISPATCH_SPEND,
@@ -18,6 +19,9 @@ import {
   MAX_CONNECTED_MS,
   maxCallsOf,
   MESSAGES,
+  MIN_CALL_MS,
+  MIN_TURNS_FOR_CALL,
+  minutesFrom,
   roomAnswer,
   roomResponse,
   ROOM_LIMITS,
@@ -57,7 +61,17 @@ interface DirectoryState {
   lastStart?: number | null;
   /** What record_spend answers. */
   spendOpen?: boolean;
+  /**
+   * The visit's minutes with Remy (remy_minutes, as the database keeps them): its size and what is used, and the call
+   * set aside for, if one is going. Left out: a database without them.
+   */
+  pool?: { totalMs?: number; usedMs?: number; call?: { from: number; until: number } | null };
+  /** quota_left('ai_turn'): null for no limit. */
+  turns?: number | null;
 }
+
+/** How long after she was sent Remy may still be on her way (remy_minutes_join_grace). */
+const JOIN_GRACE_MS = 20_000;
 
 /** An in-memory directory: one user, a member of PROJECT, with one tab, calls on, 3 call starts and 20 joins. */
 function directory(state: DirectoryState = {}) {
@@ -69,6 +83,16 @@ function directory(state: DirectoryState = {}) {
   let joins = state.joins ?? 20;
   let lastStart = state.lastStart ?? null;
   let charged = 0;
+  const pool = state.pool ? { totalMs: state.pool.totalMs ?? 300_000, usedMs: state.pool.usedMs ?? 0, call: state.pool.call ?? null } : null;
+  // What remy_minutes_settled does: a call whose time ran out counts in full; one she is seen gone from, until now.
+  const settle = (gone: boolean) => {
+    if (!pool?.call) return;
+    const end = pool.call.until <= NOW ? pool.call.until : gone && pool.call.from <= NOW - JOIN_GRACE_MS ? NOW : null;
+    if (end === null) return;
+    pool.usedMs += end - pool.call.from;
+    pool.call = null;
+  };
+  const minutes = () => pool && { totalMs: pool.totalMs, usedMs: pool.usedMs, leftMs: pool.call ? pool.call.until - NOW : pool.totalMs - pool.usedMs, endsAt: pool.call?.until ?? null };
   const asked: string[] = [];
   const fail = () => {
     if (state.failing) throw new Error('the database did not answer');
@@ -129,8 +153,29 @@ function directory(state: DirectoryState = {}) {
       charged += 1;
       return state.spendOpen ?? true;
     },
+    async minutesOf(_projectId, _lease, gone) {
+      asked.push(`minutesOf ${gone ? 'gone' : 'here'}`);
+      fail();
+      settle(gone);
+      return minutes();
+    },
+    async startMinutes() {
+      asked.push('startMinutes');
+      if (!pool) return 'unlimited';
+      settle(false);
+      if (pool.call && pool.call.from > NOW - JOIN_GRACE_MS) return { endsAt: pool.call.until };
+      settle(true);
+      const left = pool.totalMs - pool.usedMs;
+      if (left < MIN_CALL_MS) return 'spent';
+      pool.call = { from: NOW, until: NOW + left };
+      return { endsAt: pool.call.until };
+    },
+    async turnsLeft() {
+      asked.push('turnsLeft');
+      return state.turns ?? null;
+    },
   };
-  return { impl, asked, allowance: () => allowance, joins: () => joins, charged: () => charged };
+  return { impl, asked, allowance: () => allowance, joins: () => joins, charged: () => charged, pool: () => pool };
 }
 
 const person = (identity: string, joinedAtMs: number, extra: Partial<Person> = {}): Person => ({ identity, kind: 0, joinedAtMs: BigInt(joinedAtMs), attributes: { name: identity }, ...extra });
@@ -151,6 +196,8 @@ function rooms(state: RoomsState = {}) {
   const live = new Map(Object.entries(state.rooms ?? {}).map(([name, room]) => [name, { people: [...room.people], createdAtMs: room.createdAtMs ?? NOW - 60_000 }]));
   const minted: { request: TokenRequest; remy: boolean; limits?: RoomLimits; room?: string }[] = [];
   const dispatched: string[] = [];
+  /** When each dispatch said the call runs out (null: no end). */
+  const dispatchedEnds: (number | null)[] = [];
   const deleted: string[] = [];
   const removed: string[] = [];
   const asked: string[] = [];
@@ -191,15 +238,16 @@ function rooms(state: RoomsState = {}) {
       const sent = state.sentAt?.[room];
       return sent !== undefined && now - sent < STARTING_GRACE_MS ? 'starting' : 'dispatch';
     },
-    async dispatchRemy(room) {
+    async dispatchRemy(room, _projectId, endsAt = null) {
       dispatched.push(room);
+      dispatchedEnds.push(endsAt);
     },
     async callsWithRemy() {
       asked.push('callsWithRemy');
       return state.calls ?? 0;
     },
   };
-  return { impl, minted, dispatched, deleted, removed, asked, live };
+  return { impl, minted, dispatched, dispatchedEnds, deleted, removed, asked, live };
 }
 
 function service(dir = directory(), call = rooms(), maxCalls = 5) {
@@ -461,6 +509,108 @@ describe('POST /api/call/token: bringing Remy', () => {
   });
 });
 
+describe('POST /api/call/token: Remy’s minutes, one pool a visit', () => {
+  /** The visit's call going without Remy: Deepak's tab on it a minute. */
+  const WITHOUT_HER = { [ROOM]: { people: [person(SESSION, NOW - 60_000)] } };
+
+  it('sets aside what is left of the visit’s minutes for the call, and tells her worker when it runs out', async () => {
+    const created = service(directory({ pool: {} }), rooms());
+    expect((await ask(created.hosted, JOIN)).body.remy).toBe('on-create');
+    // A new room: the token's own dispatch carries the end.
+    expect(created.call.minted[0]).toMatchObject({ remy: true, endsAt: NOW + 300_000 });
+    expect(created.dir.pool()).toMatchObject({ usedMs: 0, call: { from: NOW, until: NOW + 300_000 } });
+
+    const sent = service(directory({ pool: { usedMs: 180_000 } }), rooms({ rooms: WITHOUT_HER }));
+    expect((await ask(sent.hosted, JOIN)).body.remy).toBe('dispatched');
+    // Three minutes used: the call gets the two that are left, whoever started the earlier ones.
+    expect(sent.call.dispatchedEnds).toEqual([NOW + 120_000]);
+    expect(sent.call.minted[0]).toMatchObject({ remy: false, endsAt: null });
+  });
+
+  it('counts a call she was seen gone from until then, and gives the next call the rest', async () => {
+    // Sent four minutes ago with five set aside; she is no longer on the call.
+    const dir = directory({ pool: { usedMs: 0, call: { from: NOW - 60_000, until: NOW + 240_000 } } });
+    const { hosted, call } = service(dir, rooms({ rooms: WITHOUT_HER }));
+    expect((await ask(hosted, JOIN)).body.remy).toBe('dispatched');
+    expect(dir.pool()).toMatchObject({ usedMs: 60_000, call: { from: NOW, until: NOW + 240_000 } });
+    expect(call.dispatchedEnds).toEqual([NOW + 240_000]);
+  });
+
+  it('lets anyone join a call she is on, whatever is left: the call ends when its share runs out', async () => {
+    const dir = directory({ pool: { usedMs: 0, call: { from: NOW - 200_000, until: NOW + 100_000 } } });
+    const { hosted, call } = service(dir, rooms({ rooms: GOING }));
+    const answer = await ask(hosted, { ...JOIN, sessionId: SESSION });
+    expect(answer.status).toBe(200);
+    expect(answer.body.remy).toBe('present');
+    expect(call.dispatched).toEqual([]);
+    expect(dir.pool()).toMatchObject({ usedMs: 0, call: { until: NOW + 100_000 } });
+  });
+
+  it('is refused with 403 when under 15 seconds are left and no call is going, before a join is counted or anyone is sent', async () => {
+    for (const usedMs of [300_000, 300_000 - MIN_CALL_MS + 1]) {
+      const { hosted, dir, call } = service(directory({ pool: { usedMs } }), rooms({ rooms: WITHOUT_HER }));
+      const answer = await ask(hosted, JOIN);
+      expect(answer).toEqual({ status: 403, body: { error: MESSAGES.minutesSpent, code: 'minutes_spent' } });
+      expect(dir.joins()).toBe(20);
+      expect(dir.allowance()).toBe(3);
+      expect(dir.charged()).toBe(0);
+      expect(call.dispatched).toEqual([]);
+      expect(call.minted).toEqual([]);
+    }
+    // Fifteen seconds is a call.
+    const enough = service(directory({ pool: { usedMs: 300_000 - MIN_CALL_MS } }), rooms({ rooms: WITHOUT_HER }));
+    expect((await ask(enough.hosted, JOIN)).status).toBe(200);
+    expect(enough.call.dispatchedEnds).toEqual([NOW + MIN_CALL_MS]);
+  });
+
+  it('refuses a call without her too once the minutes are spent, and allows one while hers is going', async () => {
+    const spent = service(directory({ pool: { usedMs: 300_000 } }), rooms());
+    expect((await ask(spent.hosted, { ...JOIN, remy: false })).body).toEqual({ error: MESSAGES.minutesSpent, code: 'minutes_spent' });
+
+    const going = service(directory({ pool: { usedMs: 0, call: { from: NOW - 30_000, until: NOW + 270_000 } } }), rooms({ rooms: GOING }));
+    expect((await ask(going.hosted, { ...JOIN, remy: false })).status).toBe(200);
+  });
+
+  it('counts a call that ran out in full, and then there is nothing left', async () => {
+    const dir = directory({ pool: { usedMs: 60_000, call: { from: NOW - 300_000, until: NOW - 60_000 } } });
+    const { hosted } = service(dir, rooms({ rooms: WITHOUT_HER }));
+    expect((await ask(hosted, JOIN)).body.code).toBe('minutes_spent');
+    expect(dir.pool()).toMatchObject({ usedMs: 300_000, call: null });
+  });
+
+  it('doesn’t send her with too few of her turns left, and sets nothing aside', async () => {
+    const { hosted, dir, call } = service(directory({ pool: {}, turns: MIN_TURNS_FOR_CALL - 1 }), rooms({ rooms: WITHOUT_HER }));
+    expect(await ask(hosted, JOIN)).toEqual({ status: 403, body: { error: MESSAGES.allowanceSpent, code: 'allowance_spent' } });
+    expect(call.dispatched).toEqual([]);
+    expect(dir.allowance()).toBe(3);
+    expect(dir.pool()).toMatchObject({ call: null });
+    const enough = service(directory({ pool: {}, turns: MIN_TURNS_FOR_CALL }), rooms({ rooms: WITHOUT_HER }));
+    expect((await ask(enough.hosted, JOIN)).body.remy).toBe('dispatched');
+  });
+
+  it('sets nothing aside when the spend or the allowance says no', async () => {
+    const broke = service(directory({ pool: {}, spendOpen: false }), rooms({ rooms: WITHOUT_HER }));
+    expect((await ask(broke.hosted, JOIN)).body.code).toBe('calls_off');
+    expect(broke.dir.pool()).toMatchObject({ call: null });
+    const spent = service(directory({ pool: {}, allowance: 0, lastStart: null }), rooms({ rooms: WITHOUT_HER }));
+    expect((await ask(spent.hosted, JOIN)).body.code).toBe('allowance_spent');
+    expect(spent.dir.pool()).toMatchObject({ call: null });
+  });
+
+  it('sends her with no end where the database keeps no minutes', async () => {
+    const { hosted, call } = service(directory(), rooms({ rooms: WITHOUT_HER }));
+    expect((await ask(hosted, JOIN)).body.remy).toBe('dispatched');
+    expect(call.dispatchedEnds).toEqual([null]);
+  });
+
+  it('answers 503 when the minutes can’t be read, minting nothing', async () => {
+    const { hosted, call } = service(directory({ pool: {}, failing: false }), rooms({ rooms: WITHOUT_HER }));
+    hosted.directory = { ...hosted.directory!, minutesOf: async () => Promise.reject(new Error('the database did not answer')) };
+    expect((await ask(hosted, JOIN)).status).toBe(503);
+    expect(call.minted).toEqual([]);
+  });
+});
+
 describe('every room, looked over at most once a minute', () => {
   it('closes copies’ rooms from earlier visits, takes people off calls over six minutes, and leaves the rest', async () => {
     const otherNow = `project-${OTHER_PROJECT}-${LEASE}`;
@@ -498,6 +648,31 @@ describe('GET /api/call/room', () => {
     expect(await look(hosted)).toEqual({ status: 200, body: { up: true, people: ['Chris Hale'], remy: true } });
     const leaving = service(directory(), rooms({ rooms: { [ROOM]: { people: [person(SESSION, NOW - 60_000, { attributes: { name: 'Chris Hale' } }), remy({ 'remy.leaving': '1' })] } } }));
     expect((await look(leaving.hosted)).body).toEqual({ up: true, people: ['Chris Hale'], remy: false });
+  });
+
+  it('says what is left of the visit’s minutes, counting a call she is gone from, and whether one is going', async () => {
+    const quiet = service(directory({ pool: { usedMs: 90_000 } }), rooms());
+    expect((await look(quiet.hosted)).body).toEqual({ up: true, people: [], remy: false, minutes: { totalMs: 300_000, leftMs: 210_000, going: false } });
+
+    // A call going: what is left runs down to its end, for whoever looks.
+    const going = service(directory({ pool: { usedMs: 0, call: { from: NOW - 30_000, until: NOW + 270_000 } } }), rooms({ rooms: GOING }));
+    expect((await look(going.hosted)).body.minutes).toEqual({ totalMs: 300_000, leftMs: 270_000, going: true });
+
+    // She left the call a while ago: it's counted, and the rest is back.
+    const ended = service(directory({ pool: { usedMs: 0, call: { from: NOW - 100_000, until: NOW + 200_000 } } }), rooms({ rooms: { [ROOM]: { people: [person(SESSION, NOW - 60_000)] } } }));
+    expect((await look(ended.hosted)).body.minutes).toEqual({ totalMs: 300_000, leftMs: 200_000, going: false });
+
+    // Sent a moment ago and not there yet: still on her way, nothing counted.
+    const starting = service(directory({ pool: { usedMs: 0, call: { from: NOW - 5_000, until: NOW + 295_000 } } }), rooms({ rooms: { [ROOM]: { people: [person(SESSION, NOW - 60_000)] } }, sentAt: { [ROOM]: NOW - 5_000 } }));
+    expect((await look(starting.hosted)).body.minutes).toEqual({ totalMs: 300_000, leftMs: 295_000, going: true });
+  });
+
+  it('leaves the minutes out where the database keeps none, or they can’t be read', async () => {
+    const none = service(directory(), rooms());
+    expect((await look(none.hosted)).body).toEqual({ up: true, people: [], remy: false });
+    const { hosted } = service(directory({ pool: {} }), rooms());
+    hosted.directory = { ...hosted.directory!, minutesOf: async () => Promise.reject(new Error('the database did not answer')) };
+    expect((await look(hosted)).body).toEqual({ up: true, people: [], remy: false });
   });
 
   it('never shows the call of the copy’s earlier visit, and closes it', async () => {
@@ -609,6 +784,8 @@ function fakeSupabase(state: {
   quota?: boolean;
   /** record_spend's answer, or an error code for it. */
   spend?: boolean | { code: string; message: string };
+  /** What other functions answer, by name. */
+  answers?: Record<string, { data: unknown; error: { code?: string; message: string } | null }>;
   broken?: string;
 }) {
   const calls: { rpc: string; args: unknown }[] = [];
@@ -644,6 +821,8 @@ function fakeSupabase(state: {
       rpc: async (name: string, args: unknown) => {
         calls.push({ rpc: name, args });
         if (state.broken === name) return { data: null, error: { message: 'function does not exist' } };
+        const canned = state.answers?.[name];
+        if (canned) return canned;
         if (name === 'record_spend') {
           const spend = state.spend ?? true;
           return typeof spend === 'boolean' ? { data: spend, error: null } : { data: null, error: spend };
@@ -760,6 +939,52 @@ describe('the directory over Supabase', () => {
     await expect(supabaseDirectory(fakeSupabase({ rows, spend: { code: '57014', message: 'canceling statement' } }).client).chargeDispatch()).rejects.toThrow(/record_spend/);
   });
 
+  it('reads the visit’s minutes, sets them aside for a call, and reads Remy’s turns left, through the database’s functions', async () => {
+    const minutes = { total_ms: 300_000, used_ms: 60_000, left_ms: 240_000, ends_at_ms: null, now_ms: NOW };
+    const { client, calls } = fakeSupabase({
+      rows,
+      answers: {
+        remy_minutes_now: { data: minutes, error: null },
+        remy_minutes_start: { data: { ...minutes, ok: true, ends_at_ms: NOW + 240_000 }, error: null },
+        quota_left: { data: 12, error: null },
+      },
+    });
+    const dir = supabaseDirectory(client);
+    expect(await dir.minutesOf(PROJECT, LEASE, true)).toEqual({ totalMs: 300_000, usedMs: 60_000, leftMs: 240_000, endsAt: null });
+    expect(await dir.startMinutes(PROJECT, LEASE, ROOM)).toEqual({ endsAt: NOW + 240_000 });
+    expect(await dir.turnsLeft(PROJECT)).toBe(12);
+    // A project that isn't a copy keeps its minutes under visit 0.
+    await dir.minutesOf(PROJECT, null, false);
+    expect(calls).toEqual([
+      { rpc: 'remy_minutes_now', args: { p_project: PROJECT, p_lease: LEASE, p_gone: true } },
+      { rpc: 'remy_minutes_start', args: { p_project: PROJECT, p_lease: LEASE, p_room: ROOM, p_min_ms: MIN_CALL_MS } },
+      { rpc: 'quota_left', args: { p_kind: 'ai_turn', p_project: PROJECT } },
+      { rpc: 'remy_minutes_now', args: { p_project: PROJECT, p_lease: 0, p_gone: false } },
+    ]);
+  });
+
+  it('says spent when too little is left, has none to run out of where the database keeps no minutes, and throws otherwise', async () => {
+    const spent = fakeSupabase({ rows, answers: { remy_minutes_start: { data: { ok: false, total_ms: 300_000, used_ms: 295_000, left_ms: 5_000, ends_at_ms: null, now_ms: NOW }, error: null } } });
+    expect(await supabaseDirectory(spent.client).startMinutes(PROJECT, LEASE, ROOM)).toBe('spent');
+
+    const missing = { data: null, error: { code: 'PGRST202', message: 'Could not find the function' } };
+    const none = supabaseDirectory(fakeSupabase({ rows, answers: { remy_minutes_now: missing, remy_minutes_start: missing, quota_left: missing } }).client);
+    expect(await none.minutesOf(PROJECT, LEASE, false)).toBeNull();
+    expect(await none.startMinutes(PROJECT, LEASE, ROOM)).toBe('unlimited');
+    expect(await none.turnsLeft(PROJECT)).toBeNull();
+
+    const failing = { data: null, error: { code: '57014', message: 'canceling statement' } };
+    const broken = supabaseDirectory(fakeSupabase({ rows, answers: { remy_minutes_now: failing, remy_minutes_start: failing, quota_left: failing } }).client);
+    await expect(broken.minutesOf(PROJECT, LEASE, false)).rejects.toThrow(/remy_minutes_now/);
+    await expect(broken.startMinutes(PROJECT, LEASE, ROOM)).rejects.toThrow(/remy_minutes_start/);
+    await expect(broken.turnsLeft(PROJECT)).rejects.toThrow(/quota_left/);
+    // An answer that isn't the minutes is no answer.
+    const odd = supabaseDirectory(fakeSupabase({ rows, answers: { remy_minutes_now: { data: { total_ms: 'five' }, error: null } } }).client);
+    await expect(odd.minutesOf(PROJECT, LEASE, false)).rejects.toThrow(/not an answer/);
+    expect(minutesFrom({ total_ms: 300_000, used_ms: 0, left_ms: 300_000, ends_at_ms: NOW })).toEqual({ totalMs: 300_000, usedMs: 0, leftMs: 300_000, endsAt: NOW });
+    expect(minutesFrom([1, 2])).toBeNull();
+  });
+
   it('throws when a table or the quota function is missing', async () => {
     await expect(supabaseDirectory(fakeSupabase({ rows, broken: 'app_flags' }).client).callsOn()).rejects.toThrow(/app_flags/);
     await expect(supabaseDirectory(fakeSupabase({ rows, broken: 'use_quota' }).client).useCallStart(PROJECT)).rejects.toThrow(/use_quota/);
@@ -801,5 +1026,12 @@ describe('the token the call server mints', () => {
     const dev = claimsOf(await server.mint(request, { remy: true }));
     expect(dev.roomConfig.agents).toHaveLength(1);
     expect(dev.roomConfig.maxParticipants ?? 0).toBe(0);
+  });
+
+  it('tells Remy’s worker when the call’s share of the visit’s minutes runs out, when it has one', async () => {
+    const timed = claimsOf(await server.mint(request, { remy: true, limits: ROOM_LIMITS, room: ROOM, endsAt: NOW + 240_000 }));
+    expect(timed.roomConfig.agents).toMatchObject([{ agentName: 'remy', metadata: JSON.stringify({ projectId: PROJECT, endsAt: NOW + 240_000 }) }]);
+    expect(dispatchMetadata(PROJECT)).toBe(JSON.stringify({ projectId: PROJECT }));
+    expect(JSON.parse(dispatchMetadata(PROJECT, NOW))).toEqual({ projectId: PROJECT, endsAt: NOW });
   });
 });

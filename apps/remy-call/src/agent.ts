@@ -50,7 +50,7 @@ import { hostOf } from './host.ts';
 import { HopFeeder, HumGate, type HumGateEvent } from './hum-gate.ts';
 import { bufferedLine } from './jitter-buffer.ts';
 import { leaveCall } from './leaving.ts';
-import { CallLimits, limitsFromEnv, type CallLimitsConfig } from './limits.ts';
+import { callEndOf, CallLimits, limitsFromEnv, type CallLimitsConfig } from './limits.ts';
 import { judgeLine } from './line-gate.ts';
 import { LineBudget, lineLimitsFromEnv } from './line-limits.ts';
 import { errorText, logEvent } from './log.ts';
@@ -262,12 +262,15 @@ class Call {
     this.#ticker = setInterval(() => this.#tick(), 1000);
     this.#publishState();
     logEvent('ready', { msSinceJob: Date.now() - startedAt, people: this.#people().map((p) => p.identity) });
-    this.#limits.start();
+    const siteEnd = callEndOf(this.#ctx.job.metadata);
+    this.#limits.start(siteEnd);
     this.#publishEndsAt();
     const lines = this.#budget.config;
     logEvent('limits', {
       maxS: this.#limitsConfig.maxMs / 1000,
+      ...(siteEnd !== null ? { siteEnd: new Date(siteEnd).toISOString() } : {}),
       silenceS: this.#limitsConfig.silenceMs / 1000,
+      silenceEndsCall: this.#limitsConfig.silenceEndsCall,
       lineChars: lines.maxLineChars,
       ...(Number.isFinite(lines.maxCallChars) ? { callChars: lines.maxCallChars, linesPerMinute: lines.linesPerMinute, pending: lines.maxPending } : {}),
       signedLines: config.LINE_SECRET !== null,
@@ -640,13 +643,18 @@ class Call {
     await this.#leaveNow('time limit', { deleteRoom: true, fields: { maxS: this.#limitsConfig.maxMs / 1000 } });
   }
 
-  /** Nobody has spoken for a while: Remy says goodbye and leaves. The people can stay, and call her back. */
+  /**
+   * Nobody has spoken for a while: Remy says goodbye and leaves. On the hosted worker the room goes with her, ending the
+   * call for everyone, so a call nobody is using doesn't run down the visit's minutes; elsewhere the people can stay.
+   * Either way they can call her back.
+   */
   async #quietGoodbye(): Promise<void> {
-    logEvent('limit_silence', { silenceS: this.#limitsConfig.silenceMs / 1000 });
+    const ends = this.#limitsConfig.silenceEndsCall;
+    logEvent('limit_silence', { silenceS: this.#limitsConfig.silenceMs / 1000, endsCall: ends });
     let timer: ReturnType<typeof setTimeout> | undefined;
     await Promise.race([this.#sayNotice(config.GOODBYE_LINE), new Promise<void>((resolve) => (timer = setTimeout(resolve, config.GOODBYE_MAX_MS)))]);
     clearTimeout(timer);
-    await this.#leaveNow('silence');
+    await this.#leaveNow('silence', { deleteRoom: ends });
   }
 
   /**

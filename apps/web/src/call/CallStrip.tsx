@@ -3,9 +3,10 @@
  *
  * - Before the call, in the header (`CallEntry`): the spark button with Remy's mark, the same one voice mode
  *   starts its call with. "Call Remy", or "Join" when someone is on the call; "Joining…" while it joins. It bows
- *   out once you are on.
+ *   out once you are on. On the hosted site, the session's minutes with Remy beside it (RemyMinutes.tsx): an orb and
+ *   "4:12 left"; once they're used up, "No Remy minutes left" in the button's place.
  * - On the call, on the call bar with Remy and everyone's tiles (`CallBarControls`): the time left on a call with a
- *   limit ("4:12 left", amber in the last 30 seconds), your microphone, captions (CC) and Leave, quiet like voice mode's
+ *   limit (the orb and "4:12 left", amber in the last 30 seconds), your microphone, captions (CC) and Leave, quiet like voice mode's
  *   Live switch, and "Turn on sound" if the browser kept the sound off. Remy's seat on the bar (`RemySeat`) is the
  *   spark button again while she isn't on the call: "Remy is joining…" while she is on her way, "Call Remy" if she
  *   doesn't come.
@@ -17,6 +18,8 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { ASSISTANT_NAME } from '../assistant/identity';
 import { SparkShell } from '../talk/controls';
+import type { HeardMinutes } from './minutes';
+import { RemyMinutesChip, RemyOrb } from './RemyMinutes';
 import type { CallSession, CallSnapshot } from './session';
 import { formatTimeLeft, isEnding, msLeft, spokenTimeLeft } from './time-left';
 import type { StripView } from './view';
@@ -38,21 +41,27 @@ export interface CallEntryProps {
   view: StripView;
   /** How many are on the call before you join it. */
   waiting: number;
+  /** The session's minutes with Remy, where the site keeps them. */
+  minutes?: HeardMinutes | null;
+  /** A line about the call this tab just left on its own (away.ts), in place of the view's. */
+  notice?: { text: string; title: string } | null;
   onStart(): void;
 }
 
 /** Before the call, in the header: "Call Remy" or "Join", the spark button with Remy's mark. */
-export function CallEntry({ snapshot, view, waiting, onStart }: CallEntryProps) {
+export function CallEntry({ snapshot, view, waiting, minutes = null, notice = null, onStart }: CallEntryProps) {
   const reduce = useReducedMotion();
   const shown = view.start !== null || view.joining;
   const joinCount = view.start?.label === 'Join' && waiting > 0 ? waiting : 0;
+  const note = notice ?? view.note;
   return (
     <div className="call-entry" {...(view.inCall ? {} : stripData(snapshot))}>
-      {view.note && !view.inCall && (
-        <span className="call-note" role="status" title={view.note.title} data-testid="call-note">
-          {view.note.text}
+      {note && !view.inCall && (
+        <span className="call-note" role="status" title={note.title} data-testid="call-note">
+          {note.text}
         </span>
       )}
+      {minutes && !view.inCall && <RemyMinutesChip minutes={minutes} />}
       <AnimatePresence initial={false}>
         {shown && (
           <motion.span
@@ -139,24 +148,27 @@ function useCountdownNow(endsAt: number | null): number {
 }
 
 /**
- * The time left on a call with a limit: "4:12 left", calm, then amber in the last 30 seconds, when Remy says she has to
- * drop off. Every tab counts down to the moment her worker set (session.ts), so everyone on the call sees the same.
- * Nothing on a call without a limit.
+ * The time left on a call with a limit: the orb running down and "4:12 left", calm, then amber in the last 30 seconds,
+ * when Remy says she has to drop off. Every tab counts down to the moment her worker set (session.ts), so everyone on
+ * the call sees the same; on the hosted site that is when the session's minutes with her run out, and the orb is full
+ * to what's left of them (`totalMs`). Nothing on a call without a limit.
  */
-export function CallClock({ endsAt }: { endsAt: number | null }) {
+export function CallClock({ endsAt, totalMs = null }: { endsAt: number | null; totalMs?: number | null }) {
   const now = useCountdownNow(endsAt);
   if (endsAt === null) return null;
   const left = msLeft(endsAt, now);
   const ending = isEnding(left);
+  const whole = totalMs !== null && totalMs > 0 ? totalMs : null;
   return (
     <span
       className={`call-time${ending ? ' is-ending' : ''}`}
       role="timer"
       aria-label={spokenTimeLeft(left)}
-      title="Time left on this call, the same for everyone on it"
+      title={whole ? "Time left on this call: the session's minutes with Remy, the same for everyone on it" : 'Time left on this call, the same for everyone on it'}
       data-testid="call-time"
       data-ending={ending}
     >
+      {whole && <RemyOrb fullness={Math.min(1, left / whole)} draining={left > 0} ending={ending} />}
       {formatTimeLeft(left)}
     </span>
   );
@@ -166,13 +178,15 @@ export interface CallBarControlsProps {
   session: CallSession;
   captions: boolean;
   onCaptions(on: boolean): void;
+  /** The session's minutes with Remy in all, for the clock's orb; none where the site keeps none. */
+  minutesTotalMs?: number | null;
 }
 
 /**
  * On the call, on the call bar: your microphone, captions and Leave. It reads the call itself, so it is right even
  * while the bar is on its way out after you leave.
  */
-export function CallBarControls({ session, captions, onCaptions }: CallBarControlsProps) {
+export function CallBarControls({ session, captions, onCaptions, minutesTotalMs = null }: CallBarControlsProps) {
   const snapshot = useSyncExternalStore(session.subscribe, () => session.snapshot);
   const onCall = snapshot.status === 'connected' || snapshot.status === 'reconnecting';
   const micOn = snapshot.mic === 'on';
@@ -184,7 +198,7 @@ export function CallBarControls({ session, captions, onCaptions }: CallBarContro
           Reconnecting…
         </span>
       )}
-      <CallClock endsAt={onCall ? snapshot.endsAt : null} />
+      <CallClock endsAt={onCall ? snapshot.endsAt : null} totalMs={minutesTotalMs} />
       {snapshot.audioBlocked && (
         <button type="button" className="call-control" onClick={() => void session.enableAudio()} title="The browser kept the call's sound off" data-testid="call-sound">
           <i className="fa fa-volume-high" aria-hidden="true" />

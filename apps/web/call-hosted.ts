@@ -16,14 +16,20 @@
  *   again within ten minutes of the copy's last start, she costs no new one), while fewer than MAX_CALLS rooms have her
  *   (default 5), and while the site's daily spend allows it (`record_spend`, where the database has it: each time she is
  *   sent, $0.25 of OpenAI, $0.10 of ElevenLabs and $0.10 of LiveKit).
+ * - Remy's minutes: a visit has five minutes with Remy on calls in all (the database's remy_minutes), shared by everyone
+ *   on it. Sending her sets aside what is left for that call and tells her worker when it runs out; she ends the call
+ *   for everyone then. A call counts until a route finds her off it (it asks the call server), or in full once its
+ *   time ran out. With under 15 seconds left and no call going with her, no one gets a place on a call, and the room
+ *   route says so (`minutes`), so the page can put the button away. She isn't sent with fewer than six of her turns
+ *   left for the copy or the day (use_quota('ai_turn')): she would only say she has reached her limit.
  * - Remy on her way out (`remy.leaving`), or with no state to show 15 seconds after she joined, counts as gone: the next
  *   join sends her again.
  * - A room a hosted join creates holds 4 at most (three people and Remy) and closes if nobody joins it within a minute.
  *
  * `POST /api/call/token` `{ projectId, sessionId, remy? }` → `{ url, token, remy }`
- * `GET /api/call/room?projectId=` → `{ up, people, remy }`
- * A refusal is `{ error }` in plain words: 400, 401, 403 (not a member, not their tab, calls off, the allowance spent),
- * 409 (Remy is on as many calls as she takes), 503 (not set up, or a service didn't answer).
+ * `GET /api/call/room?projectId=` → `{ up, people, remy, minutes? }`, `minutes` being `{ totalMs, leftMs, going }`
+ * A refusal is `{ error }` in plain words: 400, 401, 403 (not a member, not their tab, calls off, the allowance or the
+ * minutes spent), 409 (Remy is on as many calls as she takes), 503 (not set up, or a service didn't answer).
  */
 import type { SupabaseClient, createClient } from '@supabase/supabase-js';
 import { CallServer, isRemy, joinedAtMsOf, newsOf, UUID, type LiveKitSdk, type Person, type RemyNeed, type RoomInfo, type RoomLimits, type RoomNews } from './call-server.ts';
@@ -38,6 +44,10 @@ export const MAX_CONNECTED_MS = 6 * 60_000;
 export const FREE_AGAIN_MS = 10 * 60_000;
 /** How often a route looks over every room on the call server. */
 export const SITE_SWEEP_MS = 60_000;
+/** A call needs this much of the visit's minutes left to start (remy_minutes_start's p_min_ms). */
+export const MIN_CALL_MS = 15_000;
+/** Remy isn't sent with fewer of her turns left than this (quota_left('ai_turn')): she'd only say she reached her limit. */
+export const MIN_TURNS_FOR_CALL = 6;
 /** What each time Remy is sent is charged to the site's daily spend (record_spend), in millionths of a dollar. */
 export const DISPATCH_SPEND: Readonly<Record<string, number>> = { openai: 250_000, elevenlabs: 100_000, livekit: 100_000 };
 /** LiveKit Cloud is across the internet, not on this machine. */
@@ -51,6 +61,7 @@ export const MESSAGES = {
   notYourTab: 'This tab is no longer signed in to this project. Reload the page to join the call.',
   callsOff: 'Calls are switched off right now. The rest of the app still works.',
   allowanceSpent: 'Calls with Remy have reached their limit for now. The rest of the app still works.',
+  minutesSpent: "This session's minutes with Remy are used up. The rest of the app still works.",
   joinsSpent: 'Calls have reached their limit for now. The rest of the app still works.',
   remyBusy: 'Remy is on as many calls as she can take right now. Try again in a few minutes.',
   notSetUp: 'Calls are not set up on this site.',
@@ -64,6 +75,38 @@ export interface Member {
   role: string;
   name: string;
   color: string;
+}
+
+/** A visit's minutes with Remy (remy_minutes): its size, what's used, what's left now, and the end of the call she's on. */
+export interface RemyMinutes {
+  totalMs: number;
+  usedMs: number;
+  /** Left now: the rest of the minutes, or, while a call is going, of the time set aside for it. */
+  leftMs: number;
+  /** When the call she is on runs out (ms); null when no call is going. */
+  endsAt: number | null;
+}
+
+/** The minutes as the room route answers them: the page counts `leftMs` down from when it heard it while `going`. */
+export interface ShownMinutes {
+  totalMs: number;
+  leftMs: number;
+  going: boolean;
+}
+
+export const shownMinutes = (minutes: RemyMinutes): ShownMinutes => ({ totalMs: minutes.totalMs, leftMs: minutes.leftMs, going: minutes.endsAt !== null });
+
+/** The database's answer about a visit's minutes (remy_minutes_json); null when it isn't one. */
+export function minutesFrom(data: unknown): RemyMinutes | null {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+  const value = data as Record<string, unknown>;
+  const ms = (x: unknown): number | null => (typeof x === 'number' && Number.isFinite(x) && x >= 0 ? x : null);
+  const totalMs = ms(value.total_ms);
+  const usedMs = ms(value.used_ms);
+  const leftMs = ms(value.left_ms);
+  if (totalMs === null || usedMs === null || leftMs === null) return null;
+  const endsAt = value.ends_at_ms === null || value.ends_at_ms === undefined ? null : ms(value.ends_at_ms);
+  return { totalMs, usedMs, leftMs, endsAt };
 }
 
 /** What the functions read in the database, with the service role. Each throws when the database doesn't answer. */
@@ -90,13 +133,25 @@ export interface CallDirectory {
   lastCallStart(projectId: string): Promise<number | null>;
   /** Charges Remy being sent to the site's daily spend: false when the budget says no; true where there is no ledger. */
   chargeDispatch(): Promise<boolean>;
+  /**
+   * The visit's minutes with Remy (remy_minutes_now), a call that is over counted first; `gone`: the call server says
+   * she isn't on the visit's call. Null where the database keeps no minutes.
+   */
+  minutesOf(projectId: string, lease: number | null, gone: boolean): Promise<RemyMinutes | null>;
+  /**
+   * Remy is being sent to the visit's call (remy_minutes_start): the rest of the minutes is set aside for it, and this
+   * says when they run out; `spent` when too little is left, `unlimited` where the database keeps no minutes.
+   */
+  startMinutes(projectId: string, lease: number | null, room: string): Promise<{ endsAt: number } | 'spent' | 'unlimited'>;
+  /** How many of Remy's turns are left for the copy, the day's limit included (quota_left('ai_turn')); null: no limit. */
+  turnsLeft(projectId: string): Promise<number | null>;
 }
 
 /** What the functions ask the call server (a CallServer; a fake in tests). Each throws when it doesn't answer. */
 export interface CallRooms {
   /** The address browsers connect to. */
   readonly url: string;
-  mint(request: TokenRequest, options: { remy: boolean; limits?: RoomLimits; room?: string }): Promise<string>;
+  mint(request: TokenRequest, options: { remy: boolean; limits?: RoomLimits; room?: string; endsAt?: number | null }): Promise<string>;
   /** Every room on the call server. */
   listRooms(): Promise<RoomInfo[]>;
   /** Who is in a room; null when there is no such room. */
@@ -105,7 +160,7 @@ export interface CallRooms {
   deleteRoom(room: string): Promise<void>;
   /** What bringing Remy to the room takes, given who is in it (null: no room yet). */
   remyNeedIn(room: string, people: readonly Person[] | null, now?: number): Promise<RemyNeed>;
-  dispatchRemy(room: string, projectId: string): Promise<void>;
+  dispatchRemy(room: string, projectId: string, endsAt?: number | null): Promise<void>;
   callsWithRemy(): Promise<number>;
 }
 
@@ -124,7 +179,7 @@ export interface Answer {
 }
 
 /** A refusal, in plain words; the ones about bringing Remy in also say why (`code`), so the page can hold its button. */
-const refuse = (status: number, error: string, code?: 'remy_busy' | 'allowance_spent' | 'calls_off'): Answer => ({ status, body: code ? { error, code } : { error } });
+const refuse = (status: number, error: string, code?: 'remy_busy' | 'allowance_spent' | 'minutes_spent' | 'calls_off'): Answer => ({ status, body: code ? { error, code } : { error } });
 const NO_CALL: RoomNews = { up: false, people: [], remy: false };
 
 /** The access token in an `Authorization: Bearer …` header. */
@@ -248,19 +303,28 @@ export async function tokenAnswer(call: HostedCall, input: { authorization: stri
     return refuse(503, MESSAGES.noAnswer);
   }
   const sweeping = sweepRooms(call, tidied.all, room, now);
-  const answer = await place(call, { directory, rooms }, request, room, tidied.people, now);
+  const answer = await place(call, { directory, rooms }, request, { room, lease }, tidied.people, now);
   await sweeping;
   return answer;
 }
 
 /**
- * A place on the call, once the person may have one. Remy: nothing to do when she is on the call or on her way. Otherwise
- * she is brought in, by this join's own dispatch when it creates the room or by one sent now: within the number of calls
- * she takes at once, the copy's allowance (unless she was started for the copy in the last ten minutes) and the site's
- * spend. Only a token that brought her carries her dispatch, so one minted while she was on the call can't bring her
- * back later for nothing. Every token minted counts against the copy's joins.
+ * A place on the call, once the person may have one. First the visit's minutes with Remy: with too few left, and no call
+ * going with her, there is no place. Remy: nothing to do when she is on the call or on her way. Otherwise she is brought
+ * in, by this join's own dispatch when it creates the room or by one sent now: within the number of calls she takes at
+ * once, her turns left, the copy's allowance (unless she was started for the copy in the last ten minutes) and the
+ * site's spend; then the rest of the minutes is set aside for the call, and her dispatch says when they run out. Only a
+ * token that brought her carries her dispatch, so one minted while she was on the call can't bring her back later for
+ * nothing. Every token minted counts against the copy's joins.
  */
-async function place(call: HostedCall, { directory, rooms }: { directory: CallDirectory; rooms: CallRooms }, request: TokenRequest, room: string, people: Person[] | null, now: number): Promise<Answer> {
+async function place(
+  call: HostedCall,
+  { directory, rooms }: { directory: CallDirectory; rooms: CallRooms },
+  request: TokenRequest,
+  { room, lease }: { room: string; lease: number | null },
+  people: Person[] | null,
+  now: number,
+): Promise<Answer> {
   const { projectId } = request;
   let need: RemyNeed | null = null;
   if (request.remy) {
@@ -271,13 +335,22 @@ async function place(call: HostedCall, { directory, rooms }: { directory: CallDi
       return refuse(503, MESSAGES.noAnswer);
     }
   }
+  let endsAt: number | null = null;
   try {
+    const minutes = await directory.minutesOf(projectId, lease, bringing(need));
+    const going = need === 'present' || need === 'starting' || (need === null && minutes?.endsAt != null);
+    if (minutes && !going && minutes.leftMs < MIN_CALL_MS) return refuse(403, MESSAGES.minutesSpent, 'minutes_spent');
     if (!(await directory.useCallJoin(projectId))) return refuse(403, MESSAGES.joinsSpent, 'allowance_spent');
     if (bringing(need)) {
+      const turns = await directory.turnsLeft(projectId);
+      if (turns !== null && turns < MIN_TURNS_FOR_CALL) return refuse(403, MESSAGES.allowanceSpent, 'allowance_spent');
       const last = await directory.lastCallStart(projectId);
       const again = last !== null && now - last < FREE_AGAIN_MS;
       if (!again && !(await directory.useCallStart(projectId))) return refuse(403, MESSAGES.allowanceSpent, 'allowance_spent');
       if (!(await directory.chargeDispatch())) return refuse(403, MESSAGES.callsOff, 'calls_off');
+      const started = await directory.startMinutes(projectId, lease, room);
+      if (started === 'spent') return refuse(403, MESSAGES.minutesSpent, 'minutes_spent');
+      if (started !== 'unlimited') endsAt = started.endsAt;
     }
   } catch {
     return refuse(503, MESSAGES.cantCheck);
@@ -285,14 +358,28 @@ async function place(call: HostedCall, { directory, rooms }: { directory: CallDi
   let remyNow: string = need ?? 'not-asked';
   if (need === 'dispatch') {
     try {
-      await rooms.dispatchRemy(room, projectId);
+      await rooms.dispatchRemy(room, projectId, endsAt);
     } catch {
       return refuse(503, MESSAGES.noAnswer);
     }
     remyNow = 'dispatched';
   }
-  const token = await rooms.mint(request, { remy: need === 'on-create', limits: ROOM_LIMITS, room });
+  const token = await rooms.mint(request, { remy: need === 'on-create', limits: ROOM_LIMITS, room, endsAt: need === 'on-create' ? endsAt : null });
   return { status: 200, body: { url: rooms.url, token, remy: remyNow } };
+}
+
+/**
+ * The visit's minutes for the room route, a call that is over counted first: Remy counts as gone when bringing her would
+ * take a dispatch (she isn't on the call and wasn't just sent). Null when there are none to show, or they can't be read.
+ */
+async function minutesNow(directory: CallDirectory, rooms: CallRooms, projectId: string, { room, lease }: { room: string; lease: number | null }, people: Person[] | null, now: number): Promise<ShownMinutes | null> {
+  try {
+    const gone = bringing(await rooms.remyNeedIn(room, people, now));
+    const minutes = await directory.minutesOf(projectId, lease, gone);
+    return minutes ? shownMinutes(minutes) : null;
+  } catch {
+    return null;
+  }
 }
 
 /** `GET /api/call/room?projectId=`. Calls switched off, or no call server, read as a call server that is down. */
@@ -318,7 +405,8 @@ export async function roomAnswer(call: HostedCall, input: { authorization: strin
   try {
     const { people, all } = await tidyCall(directory, rooms, projectId, room, now);
     await sweepRooms(call, all, room, now);
-    return { status: 200, body: { ...newsOf(people ?? [], now) } };
+    const minutes = await minutesNow(directory, rooms, projectId, { room, lease }, people, now);
+    return { status: 200, body: { ...newsOf(people ?? [], now), ...(minutes ? { minutes } : {}) } };
   } catch {
     return { status: 200, body: { ...NO_CALL } };
   }
@@ -452,6 +540,35 @@ export function supabaseDirectory(client: SupabaseClient): CallDirectory {
         if (answer.data === false) open = false;
       }
       return open;
+    },
+    async minutesOf(projectId, lease, gone) {
+      const result = (await client.rpc('remy_minutes_now', { p_project: projectId, p_lease: lease ?? 0, p_gone: gone })) as Row<unknown>;
+      if (result.error) {
+        // No minutes in this database: calls have none to run out of.
+        if (missingFunction(result.error)) return null;
+        throw new Error(`remy_minutes_now: ${result.error.message}`);
+      }
+      const minutes = minutesFrom(result.data);
+      if (!minutes) throw new Error('remy_minutes_now: not an answer');
+      return minutes;
+    },
+    async startMinutes(projectId, lease, room) {
+      const result = (await client.rpc('remy_minutes_start', { p_project: projectId, p_lease: lease ?? 0, p_room: room, p_min_ms: MIN_CALL_MS })) as Row<unknown>;
+      if (result.error) {
+        if (missingFunction(result.error)) return 'unlimited';
+        throw new Error(`remy_minutes_start: ${result.error.message}`);
+      }
+      const ok = (result.data as { ok?: unknown } | null)?.ok === true;
+      const minutes = minutesFrom(result.data);
+      return ok && minutes?.endsAt != null ? { endsAt: minutes.endsAt } : 'spent';
+    },
+    async turnsLeft(projectId) {
+      const result = (await client.rpc('quota_left', { p_kind: 'ai_turn', p_project: projectId })) as Row<number | null>;
+      if (result.error) {
+        if (missingFunction(result.error)) return null;
+        throw new Error(`quota_left: ${result.error.message}`);
+      }
+      return typeof result.data === 'number' ? result.data : null;
     },
   };
 }

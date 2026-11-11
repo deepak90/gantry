@@ -111,7 +111,11 @@ export interface CallServerOptions {
   timeoutMs: number;
 }
 
-const dispatchMetadata = (projectId: string) => JSON.stringify({ projectId });
+/**
+ * What Remy's worker is sent with: the project, and on the hosted site the moment the call's share of the visit's
+ * minutes runs out (`endsAt`, ms), when she ends the call for everyone (remy-call's limits.ts).
+ */
+export const dispatchMetadata = (projectId: string, endsAt: number | null = null) => JSON.stringify(endsAt === null ? { projectId } : { projectId, endsAt });
 const notFound = (error: unknown) => (error as { status?: number }).status === 404;
 
 export class CallServer {
@@ -136,10 +140,10 @@ export class CallServer {
   /**
    * A token that joins `room` (the project's: roomFor) as the person in `request`, whose identity is their tab's presence
    * session id: it publishes the microphone only, subscribes, sends data, and carries name, color and role (and sim) as
-   * attributes the person can't change. `remy` sends her worker when this join creates the room; `limits` are what that
-   * new room is made with.
+   * attributes the person can't change. `remy` sends her worker when this join creates the room, with `endsAt` when the
+   * call has an end set by the visit's minutes; `limits` are what that new room is made with.
    */
-  mint(request: TokenRequest, { remy, limits, room = roomFor(request.projectId) }: { remy: boolean; limits?: RoomLimits; room?: string }): Promise<string> {
+  mint(request: TokenRequest, { remy, limits, room = roomFor(request.projectId), endsAt = null }: { remy: boolean; limits?: RoomLimits; room?: string; endsAt?: number | null }): Promise<string> {
     const { AccessToken, RoomAgentDispatch, RoomConfiguration, TrackSource } = this.#sdk;
     const token = new AccessToken(this.#key, this.#secret, { identity: request.sessionId, name: request.name, attributes: attributesOf(request), ttl: TOKEN_TTL });
     token.addGrant({
@@ -155,7 +159,7 @@ export class CallServer {
     if (remy || limits) {
       token.roomConfig = new RoomConfiguration({
         ...(limits ? { maxParticipants: limits.maxParticipants, emptyTimeout: limits.emptyTimeoutS } : {}),
-        ...(remy ? { agents: [new RoomAgentDispatch({ agentName: REMY, metadata: dispatchMetadata(request.projectId) })] } : {}),
+        ...(remy ? { agents: [new RoomAgentDispatch({ agentName: REMY, metadata: dispatchMetadata(request.projectId, endsAt) })] } : {}),
       });
     }
     return token.toJwt();
@@ -220,9 +224,9 @@ export class CallServer {
     return this.remyNeedIn(room, await this.peopleIn(room));
   }
 
-  /** Sends Remy's worker to a room that is going without her. */
-  async dispatchRemy(room: string, projectId: string): Promise<void> {
-    await this.#timed(this.#dispatches.createDispatch(room, REMY, { metadata: dispatchMetadata(projectId) }));
+  /** Sends Remy's worker to a room that is going without her; `endsAt`: when the call's share of the visit's minutes runs out. */
+  async dispatchRemy(room: string, projectId: string, endsAt: number | null = null): Promise<void> {
+    await this.#timed(this.#dispatches.createDispatch(room, REMY, { metadata: dispatchMetadata(projectId, endsAt) }));
   }
 
   /**

@@ -41,8 +41,8 @@ pnpm --filter @collab/remy-call test
 | `ELEVEN_LABS_API_KEY`, `ELEVEN_LABS_VOICE_REMY_KEY` | optional: her ElevenLabs voice instead of OpenAI's. The hosted worker uses them |
 | `GANTRY_HOSTED` | `1` on the hosted worker (the Dockerfile sets it): turns the call limits below, and the limits on her lines, on |
 | `REMY_LINE_SECRET` | optional: the secret the assistant service signs her replies with (the same value as the service's). Set, she says only signed lines. Hosted: a LiveKit secret, set after the site and the service sign |
-| `REMY_CALL_MAX_S` | a call's length in seconds: a wrap-up line 30 seconds before, then she leaves and the room is deleted, ending the call for everyone. Her `remy.ends_at` attribute tells every tab when, for the time left on the call bar. Default 300 hosted, 0 (unlimited) otherwise |
-| `REMY_SILENCE_S` | seconds nobody speaks before she says goodbye and leaves (the people may stay). Default 60 hosted, 0 (never) otherwise |
+| `REMY_CALL_MAX_S` | a call's length in seconds: a wrap-up line 30 seconds before, then she leaves and the room is deleted, ending the call for everyone. Her `remy.ends_at` attribute tells every tab when, for the time left on the call bar. Default 300 hosted, 0 (unlimited) otherwise. The hosted site also sends her with `endsAt` (ms) in the dispatch's metadata, when the call's share of the visit's minutes runs out; the call ends at whichever comes first |
+| `REMY_SILENCE_S` | seconds nobody speaks before she says goodbye and leaves. Default 30 hosted, where the room goes with her and the call ends for everyone; 0 (never) otherwise, where the people may stay |
 
 A value set for `REMY_CALL_MAX_S` or `REMY_SILENCE_S` applies on any machine; without `GANTRY_HOSTED=1` and without
 them, calls run as long as people stay.

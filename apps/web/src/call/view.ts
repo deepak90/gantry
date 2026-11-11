@@ -7,6 +7,7 @@
 import { initialsOf, readableInkOn } from '../presence/peers';
 import { ASSISTANT_NAME } from '../assistant/identity';
 import type { CallHold } from './hold';
+import type { RoomMinutes } from './minutes';
 import { REMY } from './protocol';
 
 /** Someone in the room, as the call session reads them from LiveKit. */
@@ -133,6 +134,8 @@ export interface RoomNews {
   /** The names of the people on the call now. */
   people: readonly string[];
   remy: boolean;
+  /** The session's minutes with Remy, where the site keeps them (hosted). */
+  minutes?: RoomMinutes | null;
 }
 
 export interface StripView {
@@ -203,6 +206,8 @@ export function stripOf({
   const off = hosted
     ? { text: 'Calls unavailable', title: 'The call server isn’t answering right now. The plan and the chat still work.' }
     : { text: 'Call server off', title: 'The call server is not running on this machine (livekit-server --dev).' };
+  // The session's minutes with her are used up: there is no call to start or join, and the header says so instead.
+  if (hold?.code === 'minutes_spent') return { start: null, joining: false, inCall: false, callRemy: false, seat: null, note: null, held };
   // Held: with people on a call, they can still be joined (without her), and a line says why she isn't coming;
   // with nobody on one, the button itself says she is unavailable, and nothing else needs saying.
   if (held) {

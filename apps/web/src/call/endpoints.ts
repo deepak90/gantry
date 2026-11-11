@@ -7,6 +7,7 @@
  * On the hosted site, a refusal (403 or 409, with `{ error }` in plain words) comes back as a CallRefusedError carrying
  * those words; the dev server's answers stay plain errors, as they always were.
  */
+import { roomMinutesOf } from './minutes';
 import type { TokenRequest } from './protocol';
 import type { CallToken } from './session';
 import type { RoomNews } from './view';
@@ -97,8 +98,14 @@ export async function requestRoom(endpoints: CallEndpoints, projectId: string, f
   try {
     const response = await fetcher(endpoints.roomUrl(projectId), { headers: await endpoints.headers() });
     if (!response.ok) return null;
-    const answer = (await response.json()) as Partial<RoomNews>;
-    return { up: answer.up === true, people: Array.isArray(answer.people) ? answer.people.filter((name): name is string => typeof name === 'string') : [], remy: answer.remy === true };
+    const answer = (await response.json()) as Partial<RoomNews> & { minutes?: unknown };
+    const minutes = roomMinutesOf(answer.minutes);
+    return {
+      up: answer.up === true,
+      people: Array.isArray(answer.people) ? answer.people.filter((name): name is string => typeof name === 'string') : [],
+      remy: answer.remy === true,
+      ...(minutes ? { minutes } : {}),
+    };
   } catch {
     return null;
   }

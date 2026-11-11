@@ -41,10 +41,10 @@ describe('a room everyone has left', () => {
     vi.resetModules();
   });
 
-  it('keeps the hosted Remy a minute, so whoever hangs up and calls back finds her on the same call', async () => {
+  it('keeps the hosted Remy ten seconds, enough for a reloaded page to find her, and no longer: the minutes run while she waits', async () => {
     vi.stubEnv('GANTRY_HOSTED', '1');
     vi.resetModules();
-    expect((await import('../src/config.ts')).EMPTY_ROOM_LEAVE_MS).toBe(60_000);
+    expect((await import('../src/config.ts')).EMPTY_ROOM_LEAVE_MS).toBe(10_000);
   });
 
   it('lets her go after five seconds anywhere else', async () => {

@@ -11,6 +11,12 @@
  *
  * Once she is on the call, a short strip over the call bar says what to ask her and how (CallTip.tsx); a call with a
  * time limit shows the time left on the bar (CallStrip.tsx).
+ *
+ * On the hosted site the session has five minutes with Remy on calls in all, kept by the site (minutes.ts): the header
+ * shows them as an orb beside the call button, and puts the button away once they're used up. A call is for the tab in
+ * front (away.ts): a tab left in the background leaves its call. When a call ends, the tab asks the site about the room
+ * again at once and once Remy has had time to leave, even from the background, so the site counts the call's minutes
+ * as soon as she is off it.
  */
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { mirrorCall } from '../assistant/attention';
@@ -26,10 +32,12 @@ import { useCaptionsShown } from './captions';
 import { CallBarControls, CallEntry, RemySeat } from './CallStrip';
 import { CallTiles } from './CallTiles';
 import { CallTip } from './CallTip';
+import { awayNote, watchAway, type AwayReason } from './away';
 import { callEndpoints, CallRefusedError, requestCallToken, requestRoom } from './endpoints';
 import { followRemy } from './face';
 import { glowSpeakers } from './glow';
-import { holdOf, holdReason, refusalCode, type CallHold, type Refusal } from './hold';
+import { holdOf, holdReason, minutesHold, refusalCode, type CallHold, type Refusal } from './hold';
+import { minutesSpent, type HeardMinutes } from './minutes';
 import type { CallNotice } from '../rails/RailCall';
 import { liveCall } from './live';
 import { HOSTED_LINE_CHARS } from './protocol';
@@ -75,6 +83,13 @@ export function noticeOf(refusal: { message: string; status: number; code?: stri
   const code = refusalCode({ status: refusal.status, code: refusal.code ?? null });
   return code ? { title: UNAVAILABLE_NOW, detail: holdReason(code) } : { title: "The call couldn't start", detail: refusal.message };
 }
+
+/** After a call ends, the tab asks about the room again this long after (ms): at once, and once Remy has left an empty room. */
+export const AFTER_CALL_LOOKS_MS = [1_000, 12_000] as const;
+/** How long the header says the tab left its call on its own. */
+const AWAY_NOTE_MS = 30_000;
+/** The whole of a session's minutes, when the site hasn't said yet (call-hosted.ts: five minutes). */
+const MINUTES_TOTAL_MS = 300_000;
 
 /** The call bar's notice after the server refused a place on the call, for a few seconds. Null once it has been said. */
 export function useRefusalNotice(refusal: { message: string; status: number; code?: string | null; n: number } | null): CallNotice | null {
@@ -188,8 +203,19 @@ export default function CallLayer({ projectId, sessionId, name, color, role, sim
     };
   }, [session]);
 
-  // Before joining: is a call going, and who is on it?
+  // Before joining: is a call going, and who is on it? And the session's minutes with Remy, where the site keeps them.
   const [room, setRoom] = useState<RoomNews | null>(null);
+  const [minutes, setMinutes] = useState<HeardMinutes | null>(null);
+  // On the hosted site the button waits for the site's first word on the room, so a session whose minutes are used up
+  // never shows a call button that then goes away.
+  const [heard, setHeard] = useState(!HOSTED);
+  const heardRoom = (news: RoomNews | null) => {
+    setRoom(news);
+    setHeard(true);
+    if (news?.minutes) setMinutes({ ...news.minutes, at: Date.now() });
+  };
+  const heardRoomRef = useRef(heardRoom);
+  heardRoomRef.current = heardRoom;
   const inCall = snapshot.status === 'connected' || snapshot.status === 'reconnecting';
   // On the call, what this person does in the plan is answered out loud.
   useEffect(() => {
@@ -213,7 +239,7 @@ export default function CallLayer({ projectId, sessionId, name, color, role, sim
     const look = async () => {
       if (document.hidden) return;
       const news = await requestRoom(endpoints, projectId);
-      if (alive) setRoom(news);
+      if (alive) heardRoomRef.current(news);
     };
     void look();
     const timer = window.setInterval(() => void look(), endpoints.pollMs);
@@ -222,6 +248,47 @@ export default function CallLayer({ projectId, sessionId, name, color, role, sim
       window.clearInterval(timer);
     };
   }, [endpoints, projectId, inCall, snapshot.status]);
+
+  // The call ended: ask about the room again at once and once Remy has had time to leave, from a tab in the background
+  // too, so the site counts the call's minutes as soon as she's off it, and the orb shows what's left.
+  const wasInCall = useRef(false);
+  useEffect(() => {
+    if (inCall) {
+      wasInCall.current = true;
+      return undefined;
+    }
+    if (!wasInCall.current || !HOSTED) return undefined;
+    wasInCall.current = false;
+    let alive = true;
+    const timers = AFTER_CALL_LOOKS_MS.map((ms) =>
+      window.setTimeout(() => {
+        void requestRoom(endpoints, projectId).then((news) => {
+          if (alive) heardRoomRef.current(news);
+        });
+      }, ms),
+    );
+    return () => {
+      alive = false;
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, [inCall, endpoints, projectId]);
+
+  // A call is for the tab in front: in the background too long, or too often, and this tab leaves it.
+  const [away, setAway] = useState<AwayReason | null>(null);
+  useEffect(() => {
+    if (!HOSTED || !inCall) return undefined;
+    setAway(null);
+    return watchAway(document, (why) => {
+      setAway(why);
+      session.record('call_left_away', { why });
+      void session.leave();
+    });
+  }, [inCall, session]);
+  useEffect(() => {
+    if (!away) return undefined;
+    const timer = window.setTimeout(() => setAway(null), AWAY_NOTE_MS);
+    return () => window.clearTimeout(timer);
+  }, [away]);
 
   // On the call without Remy for a while: offer to call her in. Called in, she has a while to come first.
   const [remyLate, setRemyLate] = useState(false);
@@ -242,7 +309,13 @@ export default function CallLayer({ projectId, sessionId, name, color, role, sim
 
   // A Remy who is leaving, or stuck without a state (her worker hung), is no Remy: "Call Remy" sends her again.
   const remyHere = snapshot.remy !== null && !snapshot.remyStuck;
-  const view = stripOf({ status: snapshot.status, error: snapshot.error, room, remyHere, remyLate: remyLate || snapshot.remyStuck, hosted: HOSTED, hold });
+  // Used-up minutes hold the button for the rest of the visit, as the site's refusal would.
+  const held = minutesSpent(minutes) ? minutesHold(minutes!.totalMs) : hold;
+  const view = stripOf({ status: snapshot.status, error: snapshot.error, room, remyHere, remyLate: remyLate || snapshot.remyStuck, hosted: HOSTED, hold: held });
+  // Until the site has said anything about the room, nothing to press.
+  const entryView = heard || view.inCall || view.joining ? view : { ...view, start: null };
+  // The orb in the header: what the site said, or, refused for used-up minutes before it said, an empty one.
+  const entryMinutes = minutes ?? (held?.code === 'minutes_spent' ? { totalMs: MINUTES_TOTAL_MS, leftMs: 0, going: false, at: 0 } : null);
   const people = humansOf(snapshot.people);
   const callRemy = () => {
     setRemyCalls((calls) => calls + 1);
@@ -252,7 +325,14 @@ export default function CallLayer({ projectId, sessionId, name, color, role, sim
   const tip = !rail ? <CallTip call={session} remyHere={snapshot.remy !== null && snapshot.remy !== 'joining'} /> : null;
   return (
     <>
-      <CallEntry snapshot={snapshot} view={view} waiting={room?.people.length ?? 0} onStart={() => void session.join({ remy: hold === null })} />
+      <CallEntry
+        snapshot={snapshot}
+        view={entryView}
+        waiting={room?.people.length ?? 0}
+        minutes={entryMinutes}
+        notice={away ? awayNote(away) : null}
+        onStart={() => void session.join({ remy: held === null })}
+      />
       <RailCall
         call={call}
         hand={hand}
@@ -272,7 +352,7 @@ export default function CallLayer({ projectId, sessionId, name, color, role, sim
           inCall ? (
             <>
               {tip}
-              <CallBarControls session={session} captions={captions} onCaptions={setCaptions} />
+              <CallBarControls session={session} captions={captions} onCaptions={setCaptions} minutesTotalMs={minutes?.totalMs ?? null} />
             </>
           ) : undefined
         }

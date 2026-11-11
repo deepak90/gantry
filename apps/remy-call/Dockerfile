@@ -27,7 +27,8 @@ WORKDIR /app
 COPY --from=build --chown=appuser:appuser /app /app
 USER appuser
 ENV NODE_ENV=production
-# The hosted worker: a call ends after five minutes, or after a minute nobody speaks (src/limits.ts). Remy speaks with
+# The hosted worker: a call ends when its share of the visit's minutes runs out (five minutes at most), or after 30
+# seconds nobody speaks, for everyone (src/limits.ts). Remy speaks with
 # OpenAI's voice; ELEVEN_LABS_* secrets are optional and switch her to ElevenLabs.
 ENV GANTRY_HOSTED=1
 CMD ["node", "src/main.ts", "start"]

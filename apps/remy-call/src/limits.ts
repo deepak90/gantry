@@ -1,11 +1,16 @@
 /**
- * How long Remy stays on a call. Two limits, both off on a local run:
+ * How long Remy stays on a call. Two limits, both off on a local run, and the site's end for the call:
  *
  * - The call's length (`REMY_CALL_MAX_S`): she says a short wrap-up line 30 seconds before the end, and at the end she
  *   leaves and the room is deleted, which ends the call for everyone.
- * - Silence (`REMY_SILENCE_S`): when nobody has spoken for that long, she says goodbye and leaves; the people may stay.
+ * - The visit's minutes: the hosted site sends her with the moment the call's share of the visit's five minutes with
+ *   her runs out (`endsAt` in the dispatch's metadata: callEndOf). The call ends then, the same way, if that comes
+ *   first.
+ * - Silence (`REMY_SILENCE_S`): when nobody has spoken for that long, she says goodbye and leaves. On the hosted worker
+ *   that ends the call for everyone (`silenceEndsCall`), so a call nobody is using doesn't run the minutes down;
+ *   elsewhere the people may stay.
  *
- * With `GANTRY_HOSTED=1` (the hosted worker) they default to 300 and 60 seconds; without it, to 0, which is unlimited,
+ * With `GANTRY_HOSTED=1` (the hosted worker) they default to 300 and 30 seconds; without it, to 0, which is unlimited,
  * so local runs have no limits. A value set in the environment applies either way.
  */
 
@@ -16,10 +21,12 @@ export interface CallLimitsConfig {
   wrapUpMs: number;
   /** How long nobody may speak before she says goodbye; 0: never. */
   silenceMs: number;
+  /** Her goodbye after a silence ends the call for everyone, not just her part in it. */
+  silenceEndsCall: boolean;
 }
 
 export const HOSTED_CALL_MAX_S = 300;
-export const HOSTED_SILENCE_S = 60;
+export const HOSTED_SILENCE_S = 30;
 export const WRAP_UP_BEFORE_MS = 30_000;
 
 /** The limits from the environment, and any value that was set but isn't a number of seconds (it is ignored). */
@@ -39,9 +46,21 @@ export function limitsFromEnv(env: Record<string, string | undefined> = process.
       maxMs: Math.round(seconds('REMY_CALL_MAX_S', hosted ? HOSTED_CALL_MAX_S : 0) * 1000),
       wrapUpMs: WRAP_UP_BEFORE_MS,
       silenceMs: Math.round(seconds('REMY_SILENCE_S', hosted ? HOSTED_SILENCE_S : 0) * 1000),
+      silenceEndsCall: hosted,
     },
     ignored,
   };
+}
+
+/** When the site says the call must end (ms): the dispatch metadata's `endsAt`; null when it sets none. */
+export function callEndOf(metadata: string): number | null {
+  try {
+    const parsed: unknown = metadata ? JSON.parse(metadata) : null;
+    const endsAt = parsed && typeof parsed === 'object' && 'endsAt' in parsed ? (parsed as { endsAt: unknown }).endsAt : null;
+    return typeof endsAt === 'number' && Number.isFinite(endsAt) && endsAt > 0 ? endsAt : null;
+  } catch {
+    return null;
+  }
 }
 
 export interface CallLimitsHooks {
@@ -83,22 +102,30 @@ export class CallLimits {
     return this.#endsAt;
   }
 
-  start(): void {
+  /**
+   * Remy is ready: the clocks start. `deadline` (ms) is the site's end for the call (callEndOf); the call ends then or
+   * at its own length, whichever comes first.
+   */
+  start(deadline: number | null = null): void {
     if (this.#started || this.#over) return;
     this.#started = true;
+    const now = Date.now();
     const { maxMs, wrapUpMs } = this.#config;
-    if (maxMs > 0) {
-      this.#endsAt = Date.now() + maxMs;
-      if (wrapUpMs > 0 && maxMs > wrapUpMs) {
+    const ends = [maxMs > 0 ? now + maxMs : null, deadline !== null && Number.isFinite(deadline) ? deadline : null].filter((at): at is number => at !== null);
+    if (ends.length > 0) {
+      const endsAt = Math.min(...ends);
+      const spanMs = Math.max(0, endsAt - now);
+      this.#endsAt = endsAt;
+      if (wrapUpMs > 0 && spanMs > wrapUpMs) {
         this.#wrapUpTimer = setTimeout(() => {
           this.#wrapUpTimer = null;
           if (!this.#over) this.#hooks.wrapUp();
-        }, maxMs - wrapUpMs);
+        }, spanMs - wrapUpMs);
       }
       this.#endTimer = setTimeout(() => {
         this.#endTimer = null;
         this.#finish(() => this.#hooks.timeUp());
-      }, maxMs);
+      }, spanMs);
     }
     this.#listen();
   }

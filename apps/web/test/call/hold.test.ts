@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { HOLD_MS, holdOf, refusalCode, UNAVAILABLE, type Refusal } from '../../src/call/hold';
+import { HOLD_MS, holdOf, minutesHold, refusalCode, UNAVAILABLE, type Refusal } from '../../src/call/hold';
+import { spentTitle } from '../../src/call/minutes';
 import { stripOf } from '../../src/call/view';
 
 const AT = 1_000_000;
@@ -37,6 +38,24 @@ describe('what a refusal holds', () => {
   it('is nothing without a refusal, or for one that isn’t about bringing her in', () => {
     expect(holdOf(null, AT)).toBeNull();
     expect(holdOf(refused(403, null), AT)).toBeNull();
+  });
+});
+
+describe('used-up minutes', () => {
+  it('hold the button for the rest of the visit, and say so on it, whether the site refused a call or said so first', () => {
+    expect(refusalCode({ status: 403, code: 'minutes_spent' })).toBe('minutes_spent');
+    expect(HOLD_MS.minutes_spent).toBe(Infinity);
+    const hold = holdOf(refused(403, 'minutes_spent'), AT + 10 * 3_600_000);
+    expect(hold).toMatchObject({ code: 'minutes_spent', text: 'No Remy minutes left', until: Infinity });
+    expect(hold!.title).toMatch(/minutes with Remy on calls are used up/);
+    expect(minutesHold(300_000)).toEqual({ code: 'minutes_spent', text: 'No Remy minutes left', title: spentTitle(300_000), until: Infinity });
+  });
+
+  it('leave nothing to start or join, even with a call going without her', () => {
+    for (const people of [[], ['Chris Hale']]) {
+      const view = stripOf({ status: 'idle', error: null, room: { up: true, people, remy: false }, remyHere: false, remyLate: false, hosted: true, hold: minutesHold(300_000) });
+      expect(view).toMatchObject({ start: null, joining: false, note: null, held: { text: 'No Remy minutes left' } });
+    }
   });
 });
 
