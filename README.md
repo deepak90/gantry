@@ -8,13 +8,13 @@
 >
 > Late pay stops construction work. Gantry puts the payment in the schedule: when a trade partner's work is done, the general contractor's team pays the firm through PayPal right from the Gantt chart, and the work that was waiting for that money can start. Remy, an AI coordinator on Claude, works the plan with the team in the chat and on their calls. She reads the plan, works out dates and money, drafts changes and invoices, and points things out with her own cursor. Money moves only when a person presses the button.
 
-**[Watch the film (2:59)](https://www.youtube.com/watch?v=4hT78jg0IE8)** · **[Try it from Devpost](https://devpost.com/software/gantry-talk-build-pay)** · **[Run it yourself](#run-it-yourself)** · **[How it's built](#how-its-built)**
+**[Watch the film (2:59)](https://www.youtube.com/watch?v=dtjWu35chMo)** · **[Try it from Devpost](https://devpost.com/software/gantry-talk-build-pay)** · **[Run it yourself](#run-it-yourself)** · **[How it's built](#how-its-built)**
 
 Built with PayPal and Bryntum for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/), Oct and Nov 2026. Rented machines are paid by the day their dates cover, and the tenant gets a PayPal invoice for the changes it asks for. Every payment runs in PayPal's sandbox. Open source under the MIT license.
 
 ## Start here
 
-- **Watch the film (2:59):** https://www.youtube.com/watch?v=4hT78jg0IE8. One recorded call on the demo project: a crane rental with idle days is cut back, a change order goes to the tenant as a PayPal invoice, and $37,800 goes to two trade partners through PayPal once a second person approves. [How it was made](#how-it-was-made).
+- **Watch the film (2:59):** https://www.youtube.com/watch?v=dtjWu35chMo. One recorded call on the demo project: a crane rental with idle days is cut back, a change order goes to the tenant as a PayPal invoice, and $37,800 goes to two trade partners through PayPal once a second person approves. [How it was made](#how-it-was-made).
 - **Try it online:** the live demo is linked from Gantry's [Devpost entry](https://devpost.com/software/gantry-talk-build-pay), under "Try it out". Press "Start a session" (or "Join with a code" if a teammate gave you one): a private copy of the demo project for your visit, with no sign-up, sandbox money only, wiped afterwards. "Try these", on the counter in the header, lists things to do, from calling Remy to paying the footings with PayPal. To be both people in a payment, open Invite, then "Open a teammate in a new tab", and approve from that tab. On this site the crews are paid as one PayPal Payouts batch; the film's PayPal button runs on a local build ([why](#paying-the-crews-two-routes)).
 - **The site's date:** it runs on the film's day, Tue, Nov 10, 2026, so the forecast and the odds match the film. Times on messages, calls and payments are real. [More on the date](#the-hosted-sites-date).
 - **Run it on your machine:** eight commands and no outside API keys, since Remy and PayPal each have a mock mode. [Run it yourself](#run-it-yourself).
@@ -77,7 +77,7 @@ What Gantry does that we did not find on the pages of the products under [Prior 
 
 ## The film
 
-[Watch it on YouTube](https://www.youtube.com/watch?v=4hT78jg0IE8).
+[Watch it on YouTube](https://www.youtube.com/watch?v=dtjWu35chMo).
 
 The film (2:59) is one recorded call on Harbor Street Offices, the demo project. Deepak and Chris, from the general contractor's team, go through three things with Remy:
 
