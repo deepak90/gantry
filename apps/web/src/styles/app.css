@@ -1,0 +1,840 @@
+/*
+ * Shell styles. Bryntum widgets fill their parent, so the chain html > body > #root > .app-shell >
+ * .app-body carries a real height all the way down.
+ */
+/* Tokens live in tokens.css, shared components in ui.css. */
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Header: one quiet line on a solid ink bar ------------------------------------------------- */
+
+.app-header {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm) var(--space-xl);
+  position: relative;
+  /* Above the side panel's head (2) and the guide's sheet (5), so the header's menus open over them; below the
+     popovers and cursors (30), the 3D view (41) and the dialogs. */
+  z-index: 9;
+  min-height: 3.625rem;
+  padding: var(--space-xs) var(--space-lg);
+  box-sizing: border-box;
+  color: var(--header-ink-soft);
+  background: linear-gradient(to bottom, var(--header-raised), var(--header));
+  border-bottom: 1px solid var(--header-line);
+  box-shadow: var(--shadow-sm);
+}
+
+/* While the 3D view is up beside the rows (fixed at 40 and 41), the header's menus and the steps' sheet open over it. */
+html.fx3d-inset .app-header {
+  z-index: 42;
+}
+
+.app-brand {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+/* The brand mark: hi-vis on ink, on a tile of its own on the login and status screens. */
+.app-logo {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-md);
+  background: var(--header);
+}
+
+.app-logo svg {
+  width: 86%;
+  height: 86%;
+}
+
+/* In the header it stands straight on the dark bar. */
+.app-header .app-logo {
+  background: transparent;
+}
+
+.app-header .app-logo svg {
+  width: 106%;
+  height: 106%;
+}
+
+/* The product's name, beside its mark. */
+.app-wordmark {
+  flex: 0 0 auto;
+  color: var(--header-ink);
+  font-size: calc(var(--fs-md) * 1.5);
+  font-weight: 760;
+  letter-spacing: -0.015em;
+  line-height: 1;
+}
+
+.app-brand-rule {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 1.625rem;
+  margin-inline: var(--space-2xs);
+  background: var(--header-line);
+}
+
+/* "SANDBOX": a warning-toned label that reads on ink. */
+.pill.app-sandbox {
+  border-color: color-mix(in oklch, var(--warning-fill) 45%, transparent);
+  color: var(--warning-fill);
+  background: transparent;
+  letter-spacing: 0.08em;
+}
+
+.app-header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+@media (max-width: 720px) {
+  .app-wordmark,
+  .app-brand-rule {
+    display: none;
+  }
+}
+
+.app-note {
+  color: var(--header-ink-soft);
+  font-size: var(--fs-sm);
+}
+
+/* "Plan date: Tue, Nov 10, 2026" (PlanDate.tsx): quiet text on the bar, a card with the why when pressed. */
+.plan-date {
+  position: relative;
+}
+
+.plan-date-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: var(--control-sm);
+  padding: 0 var(--space-sm);
+  box-sizing: border-box;
+  border: 0;
+  border-radius: var(--radius-pill);
+  color: var(--header-ink-soft);
+  background: transparent;
+  font: inherit;
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.plan-date-button:hover,
+.plan-date-button.is-open {
+  color: var(--header-ink);
+  background: var(--header-raised);
+}
+
+.plan-date-button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.plan-date-short {
+  display: none;
+}
+
+/* Under 1280px the guide's counter and the project's name need the room: "Nov 10", and the card has the whole date. */
+@media (max-width: 1279px) {
+  .plan-date-long {
+    display: none;
+  }
+
+  .plan-date-short {
+    display: inline;
+  }
+}
+
+.plan-date-card {
+  position: absolute;
+  top: calc(100% + var(--space-sm));
+  right: 0;
+  z-index: 50;
+  display: grid;
+  gap: var(--space-xs);
+  width: min(19rem, calc(100vw - 2rem));
+  padding: var(--space-md);
+  box-sizing: border-box;
+}
+
+.plan-date-title {
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+}
+
+.plan-date-words {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+
+/* Project headline and overview ------------------------------------------------------------- */
+
+.project-summary {
+  position: relative;
+  min-width: 0;
+}
+
+.project-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-md);
+  min-width: 0;
+  max-width: 100%;
+  padding: var(--space-2xs) var(--space-sm);
+  border: 0;
+  border-radius: var(--radius-md);
+  color: inherit;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.project-title:hover,
+.project-title.is-open {
+  background: var(--header-raised);
+}
+
+.project-title-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.project-title-name h1 {
+  margin: 0;
+  overflow: hidden;
+  color: var(--header-ink);
+  font-size: var(--fs-lg);
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-title-name .fa-chevron-down {
+  color: var(--header-ink-soft);
+  font-size: var(--fs-2xs);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.project-title.is-open .fa-chevron-down {
+  transform: rotate(180deg);
+}
+
+.project-headline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--header-ink-soft);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* After the rule above, so that it wins: a narrow header keeps the project's name and the guide's counter. */
+@media (max-width: 1100px) {
+  .project-headline {
+    display: none;
+  }
+}
+
+/* With the plan date in the header (PlanDate.tsx), the headline makes room a little sooner; the card still has it. */
+@media (max-width: 1199px) {
+  .app-header:has(.plan-date) .project-headline {
+    display: none;
+  }
+}
+
+.project-headline-alert {
+  color: var(--header-ink);
+  font-weight: var(--fw-strong);
+}
+
+.project-headline-alert > .fa {
+  color: var(--danger-line);
+}
+
+.project-headline-alert[role='link']:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.project-overview {
+  position: absolute;
+  top: calc(100% + var(--space-sm));
+  left: 0;
+  z-index: 50;
+  display: grid;
+  gap: var(--space-md);
+  width: 24rem;
+  padding: var(--space-lg);
+}
+
+.po-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+}
+
+.po-fact {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
+.po-fact > span:last-child {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.po-icon,
+.po-ring {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+}
+
+.po-icon {
+  color: var(--ink-soft);
+  background: var(--gray-100);
+}
+
+/* Progress as a ring: the accent marks how far along it is. */
+.po-ring {
+  --po-progress: 0%;
+  background: conic-gradient(var(--accent) var(--po-progress), var(--line) 0);
+}
+
+.po-ring > span {
+  display: grid;
+  place-items: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 50%;
+  background: var(--surface-sunken);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-heavy);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.po-label {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.po-value {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+}
+
+.po-section h3 {
+  margin: 0 0 var(--space-xs);
+}
+
+.po-money {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-xs);
+  margin: 0;
+}
+
+.po-money > div {
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+}
+
+.po-money dt {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.po-money dd {
+  display: flex;
+  flex-direction: column;
+  margin: var(--space-3xs) 0 0;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-heavy);
+  font-variant-numeric: tabular-nums;
+}
+
+.po-delta {
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+}
+
+.po-delta.is-over {
+  color: var(--danger);
+}
+
+.po-delta.is-under {
+  color: var(--success);
+}
+
+.po-empty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0;
+  color: var(--success);
+  font-size: var(--fs-sm);
+}
+
+/* User menu ---------------------------------------------------------------------------------- */
+
+.app-user-menu {
+  position: relative;
+}
+
+.app-user {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: var(--space-3xs) var(--space-xs) var(--space-3xs) var(--space-3xs);
+  border: 0;
+  border-radius: var(--radius-pill);
+  color: var(--header-ink-soft);
+  background: transparent;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.app-user:hover,
+.app-user.is-open {
+  background: var(--header-raised);
+}
+
+.app-user-dot {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-heavy);
+  letter-spacing: 0.02em;
+}
+
+.app-user-caret {
+  font-size: var(--fs-2xs);
+}
+
+.app-user-popover {
+  position: absolute;
+  top: calc(100% + var(--space-sm));
+  right: 0;
+  z-index: 50;
+  display: grid;
+  gap: var(--space-3xs);
+  min-width: 13rem;
+}
+
+.app-user-who {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+  margin: 0 0 var(--space-2xs);
+  padding: var(--space-xs) var(--space-sm) var(--space-sm);
+  border-bottom: 1px solid var(--line-soft);
+  font-size: var(--fs-sm);
+}
+
+.app-user-who strong {
+  font-stretch: var(--stretch-display);
+  font-weight: var(--fw-heavy);
+}
+
+.app-user-who span {
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+}
+
+.app-user-email {
+  font-family: var(--font-mono);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.app-banner {
+  margin: 0;
+  padding: var(--space-xs) var(--space-lg);
+  font-size: var(--fs-md);
+}
+
+.app-banner-error {
+  border-bottom: 1px solid var(--danger-line);
+  color: var(--danger-strong);
+  background: var(--danger-soft);
+}
+
+.app-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+/* Sync badge (in the ink header) -------------------------------------------------------------- */
+
+.sync-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: var(--control-sm);
+  padding: 0 var(--space-sm);
+  box-sizing: border-box;
+  border: 1px solid var(--header-line);
+  border-radius: var(--radius-pill);
+  color: var(--header-ink-soft);
+  background: transparent;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sync-badge-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.sync-badge-ok .sync-badge-dot {
+  background: var(--success-fill);
+}
+
+.sync-badge-busy .sync-badge-dot {
+  background: var(--accent-line);
+  animation: sync-pulse 1s var(--ease-in-out) infinite;
+}
+
+.sync-badge-warn {
+  color: var(--warning-fill);
+}
+
+.sync-badge-error {
+  border-color: var(--danger);
+  color: var(--danger-line);
+  background: color-mix(in oklch, var(--danger) 22%, var(--header));
+}
+
+.sync-badge-retry.button {
+  min-height: 1.25rem;
+  margin-right: calc(-1 * var(--space-2xs));
+  padding: 0 var(--space-xs);
+}
+
+@keyframes sync-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sync-badge-busy .sync-badge-dot {
+    animation: none;
+  }
+}
+
+/* Login and status screens: a card with an ink title block, like a drawing's ------------------- */
+
+.status-screen,
+.login-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: var(--space-lg);
+  box-sizing: border-box;
+  background: var(--canvas);
+}
+
+.status-card,
+.login-card {
+  --card-pad: var(--space-xl);
+
+  width: min(28rem, 100%);
+  padding: var(--card-pad);
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.login-heading,
+.status-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin: calc(-1 * var(--card-pad)) calc(-1 * var(--card-pad)) var(--card-pad);
+  padding: var(--space-lg) var(--card-pad);
+  border-bottom: 1px solid var(--header-line);
+  color: var(--header-ink);
+  background: var(--header);
+}
+
+.status-card h1,
+.login-card h1 {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  color: var(--header-ink);
+  font-size: var(--fs-xl);
+  line-height: 1.25;
+}
+
+.status-card-error {
+  border-color: var(--danger-line);
+}
+
+.status-message {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-md);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.status-card-error .status-message {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--danger-line);
+  border-radius: var(--radius-md);
+  color: var(--danger-strong);
+  background: var(--danger-soft);
+  font-size: var(--fs-sm);
+}
+
+.status-actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+}
+
+/* Shown on the ink title block while the shell boots. */
+.status-spinner {
+  display: block;
+  flex: 0 0 auto;
+  width: 1.25rem;
+  height: 1.25rem;
+  box-sizing: border-box;
+  border: 2px solid var(--gray-600);
+  border-top-color: var(--header-ink);
+  border-radius: 50%;
+  animation: status-spin 0.9s linear infinite;
+}
+
+@keyframes status-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+/* Login -------------------------------------------------------------------------------------- */
+
+.login-lead {
+  margin: 0 0 var(--space-lg);
+  color: var(--ink-soft);
+  font-size: var(--fs-md);
+}
+
+.login-card .field {
+  margin-bottom: var(--space-md);
+}
+
+.login-card .input {
+  min-height: var(--control-lg);
+  font-size: var(--fs-md);
+}
+
+.login-error {
+  margin: 0 0 var(--space-md);
+}
+
+.login-demo {
+  margin-top: var(--space-xl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--line);
+}
+
+.login-demo p {
+  margin: 0 0 var(--space-sm);
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+}
+
+.login-demo p.login-demo-tip {
+  display: flex;
+  gap: var(--space-sm);
+  margin: var(--space-md) 0 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+}
+
+.login-demo-tip > .fa {
+  margin-top: 0.2em;
+}
+
+.login-demo-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+}
+
+/* Each demo account is a button that reads like a small card: who, then the email. */
+.login-demo-buttons .button {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3xs);
+  padding: var(--space-sm) var(--space-md);
+  text-align: left;
+}
+
+.login-demo-buttons strong {
+  font-stretch: var(--stretch-display);
+  font-weight: var(--fw-heavy);
+}
+
+.login-demo-buttons code {
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-regular);
+}
+
+@media (max-width: 480px) {
+  .login-demo-buttons {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* The project switcher at the top of the project menu. */
+.po-project-list {
+  display: grid;
+  gap: var(--space-3xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.po-project {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  width: 100%;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  background: transparent;
+  font: inherit;
+  font-weight: var(--fw-medium);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+
+.po-project i {
+  color: var(--ink-soft);
+}
+
+.po-project:hover:not(:disabled),
+.po-project:focus-visible {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  outline: none;
+}
+
+.po-project.is-current {
+  cursor: default;
+  font-weight: var(--fw-strong);
+}
+
+.po-project.is-current i {
+  color: var(--success);
+}
+
+.po-project-here {
+  margin-left: auto;
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-regular);
+}
+
+/* All saved needs no words: the dot says it. */
+.sync-badge-ok .sync-badge-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

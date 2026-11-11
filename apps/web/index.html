@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gantry</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- Before the app's modules: keeps zod from trying `Function` under the Content-Security-Policy (see the file). -->
+    <script src="/zod-jitless.js"></script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

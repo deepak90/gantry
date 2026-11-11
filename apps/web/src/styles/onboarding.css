@@ -1,0 +1,424 @@
+/*
+ * The steps on a project, and the things to try in a hosted session: the counter in the header, its drum, "Start
+ * here", and the coach that points at the next thing to do.
+ */
+
+/* Hugs the counter, so what is laid over it (the sheet, "Start here") lines up with the button itself. */
+.story-rail {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* A counter wheel: rows on a drum behind a window. Only the transform moves. */
+.story-wheel {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  height: var(--drum-row);
+  perspective: 240px;
+}
+
+.story-face {
+  position: absolute;
+  top: var(--drum-window, 50%);
+  right: 0;
+  left: 0;
+  height: var(--drum-row);
+  margin-top: calc(var(--drum-row) / -2);
+  line-height: var(--drum-row);
+  white-space: nowrap;
+  backface-visibility: hidden;
+}
+
+/* The counter in the header --------------------------------------------------------------------- */
+
+.story-rail-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  max-width: 100%;
+  height: 30px;
+  padding: 0 var(--space-xs) 0 var(--space-sm);
+  border: 1px solid var(--header-line);
+  border-radius: var(--radius-md);
+  color: var(--header-ink);
+  background: transparent;
+  font: inherit;
+  font-size: var(--fs-xs);
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease-out);
+}
+
+.story-rail-button:hover,
+.story-rail-button[aria-expanded='true'] {
+  background: var(--header-raised);
+}
+
+.story-rail-button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.story-rail-count {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  color: var(--header-ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.story-rail-digit {
+  color: var(--header-ink);
+  text-align: right;
+}
+
+.story-rail-of {
+  overflow: hidden;
+  max-width: 3ch;
+  transition: max-width var(--dur) var(--ease-out), opacity var(--dur) var(--ease-out);
+}
+
+.story-rail-count.is-complete .story-rail-of {
+  max-width: 0;
+  opacity: 0;
+}
+
+.story-rail-count.is-complete .story-rail-digit {
+  color: var(--success-fill);
+}
+
+.story-rail-label {
+  flex: 0 1 auto;
+  min-width: 0;
+  transition: width var(--dur-slow) var(--ease-in-out);
+}
+
+/* Only a name standing still can be cut short: one on the move just passes the edge of the window. */
+.story-rail-label:not(.is-turning) .story-face {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.story-rail-label.is-turning .story-face {
+  right: auto;
+}
+
+/* Sets the width of the name's window, and is never seen. */
+.story-rail-sizer {
+  position: absolute;
+  visibility: hidden;
+  white-space: nowrap;
+}
+
+.story-rail-chevron {
+  flex: none;
+  width: 10px;
+  height: 6px;
+  fill: none;
+  stroke: var(--header-ink-soft);
+  stroke-width: 1.5;
+  transition: transform var(--dur) var(--ease-out);
+}
+
+.story-rail-button[aria-expanded='true'] .story-rail-chevron {
+  transform: rotate(180deg);
+}
+
+.story-check {
+  display: block;
+  width: 12px;
+  height: 100%;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.75;
+}
+
+/* The drum, opened ------------------------------------------------------------------------------ */
+
+.story-rail-sheet {
+  position: absolute;
+  top: calc(100% + var(--space-xs));
+  left: 0;
+  z-index: 5;
+  box-sizing: border-box;
+  display: grid;
+  gap: var(--space-sm);
+  width: 340px;
+  padding: var(--space-md) var(--space-md) 0;
+  color: var(--ink);
+  box-shadow: var(--shadow-md);
+}
+
+.story-rail-pitch {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
+/* The window sits high on the drum: what is next matters more than what is done. */
+.story-drum {
+  --drum-window: 62px;
+  position: relative;
+  height: 150px;
+  margin-inline: calc(var(--space-md) * -1);
+  cursor: ns-resize;
+  transition: height var(--dur-slow) var(--ease-out), margin-bottom var(--dur-slow) var(--ease-out);
+}
+
+/* At the start nothing lies above the window, so it sits right under the pitch. */
+.story-drum.is-first {
+  --drum-window: 28px;
+  height: 116px;
+}
+
+/* At the end nothing lies below the window, so the drum closes up and the window's rule meets the foot's. */
+.story-drum.is-complete {
+  height: 78px;
+  margin-bottom: calc(var(--space-sm) * -1 - 1px);
+}
+
+.story-drum-rows {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  perspective: 1600px;
+  perspective-origin: 50% var(--drum-window);
+}
+
+.story-drum-rows:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--accent-line);
+}
+
+.story-row {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: var(--space-xs);
+  align-items: baseline;
+  padding-inline: calc(var(--space-md) + var(--space-xs)) var(--space-md);
+  color: var(--ink-faint);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  transition: color var(--dur) var(--ease-out), top var(--dur-slow) var(--ease-out);
+}
+
+.story-row.is-done {
+  color: var(--ink-soft);
+}
+
+.story-row.is-current,
+.story-row.is-picked {
+  color: var(--ink);
+}
+
+.story-row-mark {
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.story-row-mark .story-check {
+  display: inline-block;
+  height: 12px;
+  vertical-align: -2px;
+}
+
+.story-row.is-done .story-row-mark {
+  color: var(--success);
+}
+
+.story-row-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The window never moves: two rules, and an index mark for where you are. */
+.story-drum-window {
+  position: absolute;
+  top: var(--drum-window);
+  right: 0;
+  left: 0;
+  box-sizing: border-box;
+  height: calc(var(--drum-row) + 2px);
+  margin-top: calc((var(--drum-row) + 2px) / -2);
+  border-block: 1px solid var(--line);
+  pointer-events: none;
+  transition: top var(--dur-slow) var(--ease-out);
+}
+
+.story-drum-window::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: var(--space-sm);
+  width: 5px;
+  height: 8px;
+  margin-top: -4px;
+  background: var(--accent);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+.story-rail-hint {
+  min-height: 2lh;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+}
+
+.story-rail-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  margin-inline: calc(var(--space-md) * -1);
+  padding: var(--space-2xs) var(--space-md) var(--space-2xs) var(--space-xs);
+  border-top: 1px solid var(--line-soft);
+}
+
+/* "Start here", the first time a session opens (StartHere.tsx) --------------------------------------- */
+
+/* Over the counter; presses go through to it. */
+.start-here-cue {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.start-here-ring {
+  position: absolute;
+  inset: -4px;
+  border: 2px solid var(--accent-line);
+  border-radius: calc(var(--radius-md) + 4px);
+}
+
+.start-here {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + var(--space-md));
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  height: 1.5rem;
+  margin-top: -0.75rem;
+  padding: 0 var(--space-sm) 0 var(--space-xs);
+  border-radius: var(--radius-pill);
+  color: var(--accent-ink);
+  background: var(--accent);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+}
+
+.start-here-arrow {
+  flex: none;
+  width: 14px;
+  height: 10px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The check that goes up to the counter ---------------------------------------------------------- */
+
+/* Spans fill the disc, so the check inside stays centered. */
+.story-flight > span {
+  display: grid;
+  place-items: center;
+}
+
+.story-flight .story-check {
+  height: 12px;
+}
+
+.story-flight {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 61;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: var(--ink-inverse);
+  background: var(--success-fill);
+  offset-rotate: 0deg;
+  pointer-events: none;
+}
+
+/* The coach: thin marks around the next thing to do, and a note beside it (fixed on the window). */
+
+.story-coach {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.story-coach-mark {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  border: 0 solid var(--accent);
+}
+
+.story-coach-mark.is-top-left {
+  border-width: 2px 0 0 2px;
+}
+
+.story-coach-mark.is-top-right {
+  border-width: 2px 2px 0 0;
+}
+
+.story-coach-mark.is-bottom-left {
+  border-width: 0 0 2px 2px;
+}
+
+.story-coach-mark.is-bottom-right {
+  border-width: 0 2px 2px 0;
+}
+
+.story-coach-note {
+  position: fixed;
+  box-sizing: border-box;
+  display: grid;
+  gap: var(--space-3xs);
+  width: 284px;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--fs-sm);
+  box-shadow: var(--shadow-md);
+  pointer-events: auto;
+}
+
+.story-coach-note > span:not(.story-coach-kicker):not(.story-coach-actions) {
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+}
+
+.story-coach-kicker {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+}
+
+.story-coach-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2xs);
+  margin-top: var(--space-2xs);
+}

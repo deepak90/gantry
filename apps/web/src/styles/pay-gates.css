@@ -1,0 +1,157 @@
+/*
+ * A payment gate in the task panel (inspector/task/PayGateCard.tsx): what it holds, each firm's progress payment, and
+ * Review payment, which opens the payment window (styles/pay-modal.css).
+ */
+
+.pay-gate-card.card {
+  display: grid;
+  gap: var(--space-sm);
+  margin: var(--space-sm) var(--space-md) 0;
+  padding: var(--space-md);
+  border: 1px solid color-mix(in oklch, var(--paypal-blue) 35%, var(--line));
+  background: linear-gradient(180deg, color-mix(in oklch, var(--paypal-blue) 5%, var(--surface)), var(--surface) 70%);
+}
+
+.pay-gate-card.is-paid {
+  border-color: color-mix(in oklch, var(--paypal-blue) 55%, var(--line));
+}
+
+.pay-gate-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.pay-gate-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.pay-gate-title > .fa {
+  color: var(--ink-soft);
+}
+
+.pay-gate-lede {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+
+.pay-gate-lede .fa-lock {
+  color: var(--warning);
+}
+
+.pay-gate-lede .fa-lock-open {
+  color: var(--paypal-navy);
+}
+
+.pay-gate-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.pay-gate-table th,
+.pay-gate-table td {
+  padding: 0.3rem 0.2rem;
+  white-space: nowrap;
+  text-align: right;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.pay-gate-table th:first-child {
+  text-align: left;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: normal;
+}
+
+.pay-gate-table thead th {
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.pay-gate-table tfoot th,
+.pay-gate-table tfoot td {
+  border-bottom: 0;
+  font-weight: 600;
+}
+
+.pay-gate-table .is-due {
+  color: var(--paypal-navy);
+  font-weight: 600;
+}
+
+/* What each firm's money is for: its tasks, under its name. */
+.pay-gate-for {
+  display: block;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-regular);
+}
+
+.pay-gate-empty {
+  text-align: left !important;
+  color: var(--ink-faint);
+}
+
+.pay-gate-note {
+  margin: 0;
+  font-size: var(--fs-xs);
+  color: var(--ink-faint);
+}
+
+.pay-gate-paid,
+.pay-gate-paying {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--ink);
+}
+
+.pay-gate-paid .paypal-mark {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* "Sent with PayPal Payouts · batch …", under the paid line, in line with its words. */
+.pay-gate-batch {
+  flex-basis: 100%;
+  padding-inline-start: 1.35rem;
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+}
+
+.pay-gate-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.pay-gate-secondary {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.note.pay-gate-held {
+  margin: var(--space-sm) var(--space-md) 0;
+}
+
+.note.pay-gate-held .fa-lock {
+  color: var(--warning);
+}

@@ -1,0 +1,783 @@
+/*
+ * The odds: the panel beside the chart (odds/OddsPanel.tsx) and its marks on the chart (odds/chart-odds.ts). Colors,
+ * type and space are tokens; the panel's parts are ui.css's (panel head, section labels, notes, buttons, segmented).
+ * Teal and amber are the two sides of the contract date, and nothing else.
+ */
+
+/* The chart and the panel side by side (GanttWorkspace). ---------------------------------------- */
+
+.collab-gantt-body {
+  /* Positioned: the odds' side by side covers all of it for a few seconds (odds/odds-board.ts). */
+  position: relative;
+  display: flex;
+  flex: 1 1 0%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.collab-gantt-body > .collab-gantt-main {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+/* The panel ------------------------------------------------------------------------------------ */
+
+.odds-panel {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  width: clamp(360px, 27vw, 480px);
+  min-height: 0;
+  border-left: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.odds-head {
+  flex: 0 0 auto;
+}
+
+.odds-body {
+  display: grid;
+  flex: 1 1 auto;
+  align-content: start;
+  gap: var(--space-lg);
+  min-height: 0;
+  padding: var(--space-lg);
+  overflow-y: auto;
+}
+
+/* The headline: one big figure, and what it is in words. */
+.odds-headline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.odds-figure {
+  flex: 0 0 auto;
+  min-width: 2.6ch;
+  margin: 0;
+  color: var(--ink);
+  font-size: calc(var(--fs-3xl) * 2);
+  font-stretch: var(--stretch-display);
+  font-weight: var(--fw-heavy);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.odds-figure-unit {
+  margin-left: 0.04em;
+  color: var(--ink-soft);
+  font-size: 0.42em;
+  font-weight: var(--fw-strong);
+  letter-spacing: 0;
+}
+
+.odds-headline-text {
+  display: grid;
+  gap: var(--space-3xs);
+  min-width: 0;
+}
+
+.odds-count {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--fs-md);
+  line-height: 1.35;
+}
+
+.odds-count strong {
+  font-weight: var(--fw-heavy);
+}
+
+.odds-spread,
+.odds-moved {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+  line-height: 1.35;
+}
+
+.odds-spread strong {
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+}
+
+.odds-moved {
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.odds-note {
+  margin: 0;
+}
+
+/* Progress, while the runs go and while the ways forward are tried. */
+.odds-progress {
+  display: grid;
+  gap: var(--space-2xs);
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+}
+
+.odds-progress-track {
+  display: block;
+  height: 3px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--gray-100);
+}
+
+.odds-progress-bar {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ink-soft);
+  transition: width var(--dur) linear;
+}
+
+.odds-progress.is-searching .odds-progress-bar {
+  background: var(--ink-faint);
+}
+
+/* The dot plot. */
+.odds-plot {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+}
+
+.odds-plot-frame {
+  position: relative;
+}
+
+/* The runs as the 3D board (the default) or the dots, and the quiet switch between them (odds/OddsPlot.tsx). */
+.odds-plot-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2xs);
+}
+
+.odds-view-switch > button {
+  min-height: 1.5rem;
+  padding: 0 var(--space-sm);
+  font-size: var(--fs-xs);
+}
+
+.odds-view-switch > button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.odds-plot-frame[hidden],
+.odds-board-frame[hidden] {
+  display: none;
+}
+
+/* As tall as the dot plot, so switching moves nothing else in the panel. */
+.odds-board-frame {
+  position: relative;
+  height: 320px;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.odds-board {
+  width: 100%;
+  height: 100%;
+}
+
+.odds-board-away {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2xs) var(--space-sm);
+  margin: 0;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-md);
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+}
+
+/* The board over the chart's side, at hero size (odds/odds-board.ts): the grid's columns stay in view, the
+   chart's bars are covered. Its left edge follows the chart side's. */
+.odds-hero {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  border-left: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.odds-hero-back {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+}
+
+/* Two boards side by side, over the whole of the plan's area (the task grid, the chart and the odds panel) while
+   they show; the app's header, the toolbar and the side panels stay. Gone again with one board. */
+.odds-takeover {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  background: var(--surface);
+}
+
+.odds-takeover-back {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+}
+
+/* Piles or towers, just left of the close button. */
+.odds-takeover-stack {
+  position: absolute;
+  top: var(--space-sm);
+  right: calc(var(--space-sm) + var(--control-sm) + var(--space-2xs));
+}
+
+.odds-plot-canvas {
+  display: block;
+  width: 100%;
+  height: 320px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
+  cursor: crosshair;
+}
+
+.odds-plot-canvas:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.odds-plot-readout {
+  position: absolute;
+  top: 0;
+  display: grid;
+  gap: 1px;
+  min-width: 9.5rem;
+  padding: var(--space-2xs) var(--space-sm);
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-md);
+  font-size: var(--fs-xs);
+  pointer-events: none;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.odds-plot-readout-soft {
+  color: var(--ink-soft);
+}
+
+.odds-plot-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-2xs) var(--space-sm);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-md);
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+}
+
+/* Two plain lines on the board (odds/odds-explain.ts): what was run, over it; what it says, under it. */
+.odds-explain {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+/* Its own line under the legend, and the figures stand out as they do in the headline. */
+.odds-explain.is-says {
+  margin-top: var(--space-2xs);
+  color: var(--ink);
+}
+
+.odds-explain strong {
+  font-weight: var(--fw-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.odds-explain .button.is-link {
+  display: inline;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.odds-plot-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2xs) var(--space-md);
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+}
+
+.odds-plot-legend strong {
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+}
+
+.odds-plot-legend-note {
+  color: var(--ink-faint);
+}
+
+.odds-plot-table-toggle {
+  margin-left: auto;
+}
+
+.odds-swatch {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-right: 0.2rem;
+  border-radius: 50%;
+  vertical-align: -0.02rem;
+}
+
+.odds-swatch.is-on-time {
+  background: var(--odds-on-time);
+}
+
+.odds-swatch.is-late {
+  background: var(--odds-late);
+}
+
+.odds-swatch.is-closed {
+  border-radius: 2px;
+  background: var(--surface-sunken);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.odds-plot-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-xs);
+}
+
+.odds-plot-table caption {
+  padding-bottom: var(--space-2xs);
+  text-align: left;
+}
+
+.odds-plot-table th,
+.odds-plot-table td {
+  padding: 2px var(--space-xs);
+  border-bottom: 1px solid var(--line-soft);
+  text-align: left;
+}
+
+.odds-plot-table th {
+  color: var(--ink-faint);
+  font-weight: var(--fw-strong);
+}
+
+.odds-plot-table td.num {
+  text-align: right;
+}
+
+/* How holds are paid. */
+.odds-pay {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.odds-pay-label {
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+}
+
+.odds-segmented > button {
+  min-height: 1.75rem;
+  padding: 0 var(--space-sm);
+  font-size: var(--fs-xs);
+}
+
+.odds-segmented > button:disabled {
+  cursor: progress;
+}
+
+/* Sections: what moves it, the ways forward. */
+.odds-section {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.odds-footnote {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  line-height: 1.45;
+}
+
+.odds-threats {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.odds-threat {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28% 3rem;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  min-height: var(--control-md);
+  padding: 0 var(--space-sm);
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  background: none;
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.odds-threat:hover {
+  background: var(--surface-hover);
+}
+
+.odds-threat.is-hold {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.odds-threat-icon {
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.odds-threat-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.odds-threat-bar {
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--gray-100);
+}
+
+.odds-threat-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--odds-late);
+}
+
+.odds-threat-value {
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* The ladder: each way forward on a rail, its odds on the right, its button beside it. */
+.odds-ladder {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.odds-rung {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.odds-rung-main {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: 0.9rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+
+.odds-rung-main:hover {
+  background: var(--surface-hover);
+}
+
+.odds-rung-main[aria-pressed='true'] {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.odds-rung-mark {
+  position: relative;
+  justify-self: center;
+  width: 0.7rem;
+  height: 0.7rem;
+  border: 2px solid var(--ink-soft);
+  border-radius: 50%;
+  background: var(--surface);
+}
+
+/* The rail between the steps. */
+.odds-rung:not(:last-child) .odds-rung-mark::after {
+  content: '';
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 50%;
+  width: 2px;
+  height: 2.1rem;
+  background: var(--line);
+  translate: -50% 0;
+}
+
+.odds-rung.is-now .odds-rung-mark {
+  border-color: var(--ink);
+  background: var(--ink);
+}
+
+.odds-rung.is-pending {
+  padding: var(--space-xs) var(--space-sm);
+  color: var(--ink-faint);
+}
+
+.odds-rung.is-pending .odds-rung-mark {
+  margin-right: var(--space-xs);
+  border-style: dashed;
+  animation: odds-pending 1.2s var(--ease-in-out) infinite;
+}
+
+.odds-rung-text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.odds-rung-text strong {
+  overflow: hidden;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.odds-rung-text span {
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+}
+
+.odds-rung-odds {
+  color: var(--ink);
+  font-size: var(--fs-lg);
+  font-stretch: var(--stretch-display);
+  font-weight: var(--fw-heavy);
+}
+
+.odds-rung-action {
+  flex: 0 0 auto;
+}
+
+@keyframes odds-pending {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* The assumptions, always on screen. */
+.odds-assumptions {
+  display: grid;
+  gap: var(--space-xs);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--line-soft);
+}
+
+.odds-assumptions-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+}
+
+.odds-truth {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  line-height: 1.45;
+}
+
+.odds-form {
+  display: grid;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
+.odds-form-ranges {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-xs);
+}
+
+.odds-form-ranges th {
+  padding: 2px var(--space-2xs);
+  color: var(--ink-soft);
+  font-weight: var(--fw-strong);
+  text-align: left;
+}
+
+.odds-form-ranges thead th {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.odds-form-ranges td {
+  padding: 2px var(--space-2xs);
+}
+
+.odds-form-percent,
+.odds-form-unit {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.odds-form-percent .input {
+  width: 3.6rem;
+}
+
+.odds-form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+
+.odds-form-row .input {
+  width: 100%;
+  min-width: 0;
+}
+
+.odds-form-actions {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+/* The toolbar's way in. */
+.gt-odds .fa {
+  font-size: 0.95em;
+}
+
+/* On the chart ------------------------------------------------------------------------------------ */
+
+/* A risk tail: a soft fade from the bar's end to where eight runs in ten have finished it. */
+.collab-gantt-workspace .b-indicator.odds-tail {
+  z-index: 0;
+  border-radius: 0 var(--radius-pill) var(--radius-pill) 0;
+  background: linear-gradient(to right, color-mix(in oklch, var(--odds-late) 38%, transparent), color-mix(in oklch, var(--odds-late) 0%, transparent)) left center / 100% 46% no-repeat;
+}
+
+.collab-gantt-workspace .b-indicator.odds-tail::before,
+.collab-gantt-workspace .b-indicator.odds-chip::before {
+  display: none;
+}
+
+/* A chip at the end of the tail of the tasks that move the handover most. */
+.collab-gantt-workspace .b-indicator.odds-chip {
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  margin-left: 0.4rem;
+}
+
+.collab-gantt-workspace .b-indicator.odds-chip::after {
+  content: var(--odds-chip, '');
+  padding: 0 0.45rem;
+  border: 1px solid var(--warning-line);
+  border-radius: var(--radius-pill);
+  color: var(--warning);
+  background: var(--warning-soft);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  line-height: 1.15rem;
+  white-space: nowrap;
+}
+
+/* Under the handover: P10 to P90 as a whisker, P50 as a dot. Bryntum's b-bottom puts it just under the milestone. */
+.collab-gantt-workspace .b-indicator.odds-whisker {
+  --b-indicator-at-bottom-gap: 1px;
+  z-index: 1;
+  box-sizing: border-box;
+  height: 0.5rem !important;
+  border-inline: 1.5px solid var(--ink-soft);
+  background: linear-gradient(var(--ink-soft), var(--ink-soft)) center / 100% 1.5px no-repeat;
+}
+
+.collab-gantt-workspace .b-indicator.odds-whisker::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: var(--odds-p50, 50%);
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow: 0 0 0 2px var(--surface);
+  translate: -50% -50%;
+}
+
+/* The same window across the timeline. */
+.b-sch-time-range.odds-window {
+  --b-time-range-header-background: var(--ink);
+  --b-time-range-color: var(--ink-inverse);
+  --b-time-range-header-font-weight: var(--fw-strong);
+  --b-time-range-background: color-mix(in oklch, var(--odds-late) 8%, transparent);
+}
+
+.b-timeline-sub-grid .b-sch-time-range.odds-window {
+  border-inline: 1px solid color-mix(in oklch, var(--odds-late) 45%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .odds-rung.is-pending .odds-rung-mark {
+    animation: none;
+  }
+
+  .odds-progress-bar {
+    transition: none;
+  }
+}

@@ -1,0 +1,1069 @@
+/*
+ * The task panel (side panel, task tab) and the extra rows of the schedule popup (links it waits
+ * for, the money line). Sections are ui.css cards, labels and hints its fields, states its pills
+ * and notes; this sheet lays them out and themes Bryntum's fields through their variables.
+ */
+
+/* Panel ---------------------------------------------------------------------------------------- */
+
+.task-inspector {
+  --b-primary: var(--accent);
+  --b-widget-font-family: inherit;
+  --b-text-field-border-radius: var(--radius-md);
+  --b-text-field-border-color: var(--line-strong);
+  --b-text-field-focus-border-color: var(--accent);
+  --b-text-field-background: var(--surface);
+  --b-slider-color: var(--accent);
+  --b-slider-thumb-color: var(--accent);
+  --b-slider-value-background: var(--accent);
+  --b-slide-toggle-checked-background: var(--accent);
+  --b-slide-toggle-checked-border-color: var(--accent);
+  font-size: var(--fs-md);
+  color: var(--ink);
+}
+
+.task-inspector .b-field {
+  font-size: var(--fs-md);
+}
+
+.task-inspector *,
+.task-inspector *::before,
+.task-inspector *::after {
+  box-sizing: border-box;
+}
+
+.task-inspector .b-field input {
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Panel stylesheets load before ui.css, so where this sheet adjusts a ui.css component it names
+ * both classes (e.g. .ti-select.input).
+ */
+.task-inspector p.field-hint,
+.task-inspector p.note {
+  margin: 0;
+}
+
+.task-inspector p.field-hint {
+  line-height: 1.45;
+}
+
+/* Header */
+
+.ti-head {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg) var(--space-sm);
+  background: var(--surface);
+}
+
+.ti-head-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+/* The task's own icon, in its phase's color (the color the plan draws the phase in). */
+.ti-head-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklch, var(--look-phase) 14%, var(--surface));
+  color: var(--look-phase);
+  font-size: var(--fs-md);
+}
+
+.ti-head-top > .ti-wbs {
+  flex: 0 0 auto;
+}
+
+.ti-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3xs) var(--space-xs);
+  min-width: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+}
+
+.ti-crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.ti-crumb i {
+  color: var(--ink-faint);
+  font-size: 0.6rem;
+}
+
+/* The name, edited in place: it reads as the panel's title until it is clicked. */
+.ti-name {
+  width: calc(100% + 2 * var(--space-xs));
+  margin: 0 calc(-1 * var(--space-xs));
+  padding: var(--space-3xs) var(--space-xs);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--fs-xl);
+  font-stretch: var(--stretch-display);
+  font-weight: var(--fw-heavy);
+  line-height: 1.3;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+
+.ti-name:hover {
+  border-color: var(--line-strong);
+}
+
+.ti-name:focus {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+
+.ti-pills,
+.ti-head-crew {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+}
+
+.ti-head-crew {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The crew badge sits in the pill where its dot would. */
+.ti-head-crew-chip.pill {
+  padding-left: var(--space-3xs);
+}
+
+/* A PayPal payment: PayPal's mark, and once paid, PayPal's blue. */
+.pill > .paypal-mark {
+  width: auto;
+  height: 0.8rem;
+}
+
+.pill.is-paypal {
+  color: var(--paypal-navy);
+  background: color-mix(in oklch, var(--paypal-blue) 11%, var(--surface));
+}
+
+.ti-crew-badge {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: var(--radius-pill);
+  background: var(--crew);
+  color: var(--ink-inverse);
+  font-size: var(--fs-sm);
+}
+
+.ti-crew-badge.is-sm {
+  width: 1rem;
+  height: 1rem;
+  font-size: 0.55rem;
+}
+
+/* Status line under the header: saving / saved / not saved (a danger note). */
+
+.ti-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: 1.4rem;
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.ti-status.is-saving {
+  color: var(--ink-soft);
+}
+
+.ti-status.is-saved {
+  color: var(--success);
+}
+
+.ti-status.note {
+  align-items: center;
+  padding-block: var(--space-2xs);
+}
+
+.ti-status.note > .fa {
+  margin-top: 0;
+}
+
+.ti-status.note > span {
+  flex: 1 1 auto;
+}
+
+/* Tabs inside the panel */
+
+.ti-tabs {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  /* Onto a second row when the panel is narrow: a tab scrolled out of sight is a tab nobody finds. */
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  padding: 0 var(--space-xs);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.ti-tab {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: var(--space-sm) var(--space-2xs) var(--space-xs);
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.ti-tab:hover {
+  color: var(--ink);
+}
+
+.ti-tab.is-active {
+  color: var(--accent-strong);
+}
+
+.ti-tab.is-active::after {
+  content: '';
+  position: absolute;
+  inset: auto var(--space-2xs) -1px;
+  height: 2px;
+  border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+  background: var(--accent);
+}
+
+.ti-tab:focus-visible {
+  border-radius: var(--radius-sm);
+}
+
+.ti-tab-count {
+  min-width: 1.1rem;
+  padding: 0 var(--space-2xs);
+  border-radius: var(--radius-pill);
+  background: var(--gray-100);
+  color: var(--ink-soft);
+  font-size: var(--fs-2xs);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1rem;
+  text-align: center;
+}
+
+.ti-tab-count.is-dot {
+  width: 0.4rem;
+  min-width: 0.4rem;
+  height: 0.4rem;
+  padding: 0;
+  background: var(--ink-faint);
+  font-size: 0;
+}
+
+.ti-tab.is-active .ti-tab-count {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.ti-tab.is-active .ti-tab-count.is-dot {
+  background: var(--accent);
+}
+
+/* Tab bodies */
+
+.ti-tab-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg) var(--space-xl);
+}
+
+.ti-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  min-height: 1.25rem;
+}
+
+.ti-section-aside {
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.ti-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-md);
+}
+
+.ti-row {
+  min-width: 0;
+}
+
+.ti-control {
+  min-width: 0;
+}
+
+.ti-control > div,
+.ti-control > .ti-select,
+.ti-field {
+  width: 100%;
+}
+
+/* A value the panel shows rather than edits, at the height of a field beside it. */
+.ti-readout {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: var(--control-lg);
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.ti-readout.is-text {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  line-height: 1.4;
+}
+
+.ti-readout.ti-wbs {
+  letter-spacing: 0.02em;
+}
+
+.ti-readout em,
+.ti-facts em {
+  color: var(--warning);
+  font-size: var(--fs-xs);
+  font-style: normal;
+  font-weight: var(--fw-strong);
+}
+
+/* A slide toggle with its label, and the hint under the label. */
+.ti-switch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+  padding-top: var(--space-3xs);
+}
+
+.ti-switch .field-hint {
+  padding-left: 2.4rem;
+}
+
+.ti-switch .b-slide-toggle label {
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+}
+
+/* Color swatches (Bryntum's named task colors: data, shown as they are). */
+.ti-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.ti-swatch {
+  display: inline-grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px oklch(0.21 0.02 255 / 0.12);
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.ti-swatch.is-none {
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+.ti-swatch:hover {
+  transform: scale(1.08);
+}
+
+.ti-swatch.is-active {
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px var(--accent);
+}
+
+.ti-swatch:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.ti-slider {
+  width: 100%;
+}
+
+/* Progress: the slider and the exact number side by side, one value. */
+.ti-progress-edit {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.ti-progress-edit .ti-slider {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ti-progress-number {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-2xs);
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+}
+
+.ti-progress-number .b-field {
+  width: 4.6rem;
+}
+
+/* A short line where a list is empty. */
+.ti-empty-line {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-sm);
+}
+
+.ti-muted {
+  color: var(--ink-faint);
+}
+
+.ti-error-text {
+  color: var(--danger-strong);
+}
+
+/* A native select drawn as a ui.css .input, with its own chevron, as tall as Bryntum's fields. */
+.ti-select.input {
+  min-width: 0;
+  min-height: var(--control-lg);
+  padding-right: 1.8rem;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--ink-faint) 50%),
+    linear-gradient(135deg, var(--ink-faint) 50%, transparent 50%);
+  background-position:
+    right 0.85rem center,
+    right 0.55rem center;
+  background-size: 0.3rem 0.3rem;
+  background-repeat: no-repeat;
+  appearance: none;
+  cursor: pointer;
+}
+
+/* Read-only facts (phases, rental) */
+
+.ti-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm) var(--space-md);
+  margin: 0;
+}
+
+.ti-facts > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+  min-width: 0;
+}
+
+.ti-facts dt {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+}
+
+.ti-facts dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0;
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.ti-facts-list {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ti-facts-list > div {
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--space-md);
+}
+
+.ti-facts-list dt {
+  flex: 0 0 5.6rem;
+}
+
+.ti-facts dd.is-alert {
+  color: var(--danger-strong);
+}
+
+.ti-facts dd.is-ok {
+  color: var(--success);
+}
+
+.ti-facts dd.is-warn {
+  color: var(--warning);
+}
+
+.ti-fix-line {
+  flex-basis: 100%;
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+}
+
+.ti-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.ti-progress .look-progress-track {
+  flex: 1 1 auto;
+}
+
+.ti-progress em {
+  color: var(--ink-faint);
+  font-style: normal;
+  font-weight: var(--fw-medium);
+}
+
+.ti-segments {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ti-segments li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.ti-segment-name {
+  font-weight: var(--fw-strong);
+}
+
+.ti-segments em {
+  color: var(--ink-faint);
+  font-style: normal;
+}
+
+/* Links and crew: one row per link or crew inside the section */
+
+.ti-links,
+.ti-crew-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ti-link,
+.ti-crew {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
+.ti-link {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+}
+
+.ti-link.is-off {
+  opacity: 0.6;
+}
+
+.ti-link-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+}
+
+.ti-link-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 1.625rem;
+  height: 1.625rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: var(--fs-2xs);
+}
+
+.ti-link-name {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: none;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ti-link-name strong {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+  line-height: 1.3;
+}
+
+.ti-link-name:hover:not(:disabled) strong {
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-decoration-color: var(--accent-line);
+  text-underline-offset: 0.18em;
+}
+
+.ti-link-name span {
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ti-link-name:disabled {
+  cursor: default;
+}
+
+.ti-link-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'type type'
+    'lag active';
+  align-items: center;
+  gap: var(--space-xs) var(--space-md);
+}
+
+.ti-link-controls .ti-link-type {
+  grid-area: type;
+}
+
+.ti-link-controls .ti-switch {
+  grid-area: active;
+  padding-top: 0;
+}
+
+.ti-lag {
+  display: flex;
+  grid-area: lag;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.ti-lag-label {
+  flex: 0 0 auto;
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+}
+
+.ti-lag .b-field {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  max-width: 9rem;
+}
+
+.ti-link-sentence {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  line-height: 1.4;
+}
+
+.ti-link-sentence.is-wait {
+  color: var(--ink);
+}
+
+.ti-link-sentence.is-overlap {
+  color: var(--warning);
+}
+
+/* Pickers (Bryntum combo; the list items are rendered as HTML by Picker.tsx) */
+
+.ti-picker {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ti-picker > div {
+  flex: 1 1 auto;
+}
+
+.ti-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+  padding: var(--space-3xs) 0;
+}
+
+.ti-option-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-sm);
+  background: var(--gray-100);
+  color: var(--ink-soft);
+  font-size: var(--fs-2xs);
+}
+
+.ti-option.has-color .ti-option-icon {
+  border-radius: var(--radius-pill);
+  background: var(--crew);
+  color: var(--ink-inverse);
+}
+
+.ti-option-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.ti-option-text strong {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+}
+
+.ti-option-text em {
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-style: normal;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ti-option.is-muted strong {
+  color: var(--ink-soft);
+}
+
+/* Crew */
+
+.ti-crew {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-xs) var(--space-xs) var(--space-sm);
+}
+
+/* A machine on a task: who it is, then its own dates and what they come to. */
+.ti-machines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-sm);
+  padding: 0;
+  list-style: none;
+}
+
+.ti-machine {
+  display: grid;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.ti-machine-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.ti-machine > .button.is-link {
+  justify-self: start;
+}
+
+.ti-machine .field-hint.is-warn {
+  color: var(--amber-700, var(--ink));
+}
+
+/* The parts of a split task. */
+.ti-parts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ti-part {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 6rem;
+  gap: var(--space-2xs) var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
+.ti-part > .ti-segment-name,
+.ti-part > .ti-part-join {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.ti-split-open {
+  justify-self: start;
+}
+
+.ti-split-actions {
+  display: flex;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+}
+
+/* More for a task: what the plan's right-click menu does to it. */
+.ti-actions {
+  position: relative;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.ti-actions-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 30;
+  min-width: 15rem;
+}
+
+.ti-actions-rule {
+  margin: var(--space-2xs) 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+.ti-actions-menu .menu-item:disabled {
+  color: var(--ink-faint);
+  cursor: not-allowed;
+}
+
+.ti-crew-size {
+  display: grid;
+  gap: 1px;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  text-align: right;
+}
+
+.ti-crew-size input {
+  width: 3.25rem;
+  height: var(--control-sm);
+  padding: 0 var(--space-2xs);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.ti-crew-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.ti-crew-text strong {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+}
+
+.ti-crew-text em {
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-style: normal;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Notes (a ui.css textarea.input) */
+
+.ti-notes.input {
+  min-height: 11rem;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--fs-md);
+  line-height: 1.5;
+}
+
+/* Empty and removed states (ui.css .empty-state, with the icon of what goes here) */
+
+.ti-empty > .fa {
+  margin-bottom: var(--space-2xs);
+  color: var(--ink-faint);
+  font-size: var(--fs-xl);
+}
+
+/* Schedule popup: the money line ------------------------------------------------------------- */
+
+.b-popup.look-editor .look-editor-money,
+.b-popup.look-editor .look-editor-footnote {
+  grid-column: 1 / -1;
+}
+
+.look-editor-footnote {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.b-popup.look-editor .look-editor-footnote {
+  padding-block-end: 0.6rem;
+}
+
+.look-editor-problem {
+  color: var(--danger-strong);
+}
+
+.b-popup.look-editor .look-editor-money {
+  display: block;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+}
+
+.look-editor-money-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2xs) var(--space-sm);
+}
+
+.look-editor-money-line > i {
+  color: var(--ink-faint);
+}
+
+.look-editor-money-main {
+  display: inline-flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.look-editor-money-line strong {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.look-editor-money-sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs) var(--space-md);
+  margin-top: var(--space-2xs);
+  padding-left: 1.3rem;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.look-editor-money-sub span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.look-editor-money-sub .paypal-mark {
+  width: auto;
+  height: 0.8rem;
+}
+
+.look-editor-money-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+  margin-top: var(--space-xs);
+  padding-left: 1.3rem;
+}
+
+.b-popup.look-editor .look-editor-open-panel {
+  margin-inline-end: auto;
+}

@@ -1,0 +1,270 @@
+/*
+ * The hosted site's own pieces: the screens before a session (copy/screens.tsx), the invite and the time left in the
+ * ink header (copy/InviteButton.tsx, copy/SessionEnds.tsx) and Start over in the account menu (app/StartOver.tsx).
+ * Tokens and the ui.css components only.
+ */
+
+/* Before a session -------------------------------------------------------------------------------- */
+
+.copy-card .login-lead {
+  line-height: 1.5;
+}
+
+.copy-welcome {
+  display: grid;
+}
+
+.copy-check {
+  display: grid;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+/* Turnstile's widget is 65px tall; the space is kept while its script loads, so the button doesn't jump. */
+.copy-check-widget {
+  min-height: 65px;
+}
+
+/* Who you'll be: the name from the list, and another one on request. */
+.copy-who {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin: 0 0 var(--space-lg);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+  color: var(--ink-soft);
+  background: var(--surface-sunken);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+
+.copy-who p {
+  min-width: 0;
+  margin: 0;
+}
+
+.copy-who-label {
+  display: block;
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.copy-who strong {
+  color: var(--ink);
+  font-size: var(--fs-md);
+  font-stretch: var(--stretch-display);
+  font-weight: var(--fw-heavy);
+}
+
+.copy-who-other {
+  flex: none;
+  margin-left: auto;
+  font-size: var(--fs-xs);
+}
+
+/* The session code, typed as people read it out: "482 917". */
+.copy-code-field {
+  margin-bottom: var(--space-md);
+}
+
+.login-card .copy-code-input {
+  min-height: 3rem;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xl);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.12em;
+}
+
+/* A wait before another session can start from the visitor's network: the time left, counting down. */
+.copy-countdown {
+  margin: 0 0 var(--space-lg);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+  color: var(--ink-soft);
+  background: var(--surface-sunken);
+  font-size: var(--fs-sm);
+}
+
+.copy-countdown strong {
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--fs-md);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-strong);
+}
+
+.copy-aside {
+  margin: var(--space-md) 0 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+/* Gantry needs a wide screen: said where the screen is narrow. */
+.copy-desktop-note {
+  display: none;
+  margin: var(--space-sm) 0 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .copy-desktop-note {
+    display: block;
+  }
+}
+
+/* The invite and the time left, in the ink header ---------------------------------------------- */
+
+.copy-invite {
+  position: relative;
+}
+
+.copy-invite-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: var(--control-sm);
+  padding: 0 var(--space-sm);
+  box-sizing: border-box;
+  border: 1px solid var(--header-line);
+  border-radius: var(--radius-pill);
+  color: var(--header-ink);
+  background: transparent;
+  font: inherit;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.copy-invite-button:hover,
+.copy-invite-button.is-open {
+  background: var(--header-raised);
+}
+
+.copy-invite-button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.copy-invite-card {
+  position: absolute;
+  top: calc(100% + var(--space-sm));
+  right: 0;
+  z-index: 50;
+  display: grid;
+  gap: var(--space-md);
+  width: min(20rem, calc(100vw - 2rem));
+  padding: var(--space-md);
+  box-sizing: border-box;
+}
+
+.copy-invite-title {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-stretch: var(--stretch-display);
+  font-weight: var(--fw-heavy);
+}
+
+.copy-invite-part {
+  display: grid;
+  gap: var(--space-2xs);
+}
+
+.copy-invite-code {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-xs) var(--space-xs) var(--space-md);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
+.copy-invite-digits {
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xl);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.copy-invite-link {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.copy-invite-link .input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--control-sm);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+.copy-invite-link .button,
+.copy-invite-code .button {
+  flex: none;
+}
+
+.copy-invite-alone {
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--line-soft);
+}
+
+/* A link drawn as a button: its padding and border inside its width, as a button's are. */
+.copy-invite-alone .button {
+  box-sizing: border-box;
+}
+
+.copy-invite-line {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+}
+
+.copy-ends {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: var(--control-sm);
+  padding: 0 var(--space-sm);
+  box-sizing: border-box;
+  border: 1px solid var(--header-line);
+  border-radius: var(--radius-pill);
+  color: var(--header-ink);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+}
+
+/* Start over, asked twice, in the account menu (app/StartOver.tsx). */
+.app-user-confirm {
+  display: grid;
+  gap: var(--space-sm);
+  max-width: 15rem;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.app-user-confirm p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+}
+
+.app-user-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-xs);
+}

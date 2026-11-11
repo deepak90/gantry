@@ -1,0 +1,168 @@
+/*
+ * The right-hand sidebar: panel + icon rail. Panel heads are ui.css's .panel-head (kept in view
+ * here while the panel scrolls). Panels mounted inside take the full panel area; their own
+ * side-panel borders and widths give way.
+ */
+
+/* Its container can leave the page and come back (the 3D view); where it stands, it takes up no box of its own. */
+.inspector-spot,
+.inspector-host {
+  display: contents;
+}
+
+.inspector {
+  display: flex;
+  flex: 0 0 auto;
+  min-height: 0;
+  background: var(--surface);
+  border-left: 1px solid var(--line);
+}
+
+.inspector-panel {
+  display: flex;
+  flex-direction: column;
+  width: clamp(340px, 28vw, 430px);
+  min-height: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--line);
+  background: var(--surface-sunken);
+}
+
+/* Panels written as standalone side panels fill the inspector instead. */
+.inspector-panel > .context-panel,
+.inspector-panel > .changelog-panel,
+.inspector-panel > .inspector-body {
+  flex: 1 1 auto;
+  width: auto;
+  min-height: 0;
+  border-left: 0;
+}
+
+.inspector-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Rail ---------------------------------------------------------------------------------------- */
+
+.inspector-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2xs);
+  width: 4.25rem;
+  padding: var(--space-sm) var(--space-xs);
+  background: var(--surface);
+}
+
+.inspector-tab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2xs);
+  width: 100%;
+  padding: var(--space-sm) var(--space-3xs) var(--space-xs);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.inspector-tab i {
+  font-size: var(--fs-lg);
+}
+
+/* Remy's tab wears the crane, in its own colors. */
+.inspector-tab-mark {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.inspector-tab-mark.is-inline {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  vertical-align: -0.2em;
+}
+
+.inspector-tab-label {
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  line-height: 1.15;
+  text-align: center;
+}
+
+.inspector-tab:hover {
+  background: var(--gray-100);
+  color: var(--ink);
+}
+
+.inspector-tab.is-active {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+/* Something waiting for this viewer (an alert that fired, a step that is theirs). */
+.inspector-tab-badge {
+  position: absolute;
+  inset: 0.3rem 0.55rem auto auto;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 var(--space-2xs);
+  border-radius: var(--radius-pill);
+  background: var(--danger);
+  color: var(--ink-inverse);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-heavy);
+  font-variant-numeric: tabular-nums;
+  line-height: 1rem;
+  text-align: center;
+}
+
+/* Panel head ---------------------------------------------------------------------------------- */
+
+.inspector-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  flex: 0 0 auto;
+}
+
+.inspector-head-icon {
+  flex: 0 0 auto;
+  width: 1.25rem;
+  color: var(--ink-faint);
+  font-size: var(--fs-lg);
+  text-align: center;
+}
+
+/* A mark in the icon's place, such as Remy's crane: as wide as an icon, and as tall. */
+.inspector-head-mark {
+  height: 1.25rem;
+}
+
+/* The sidebar is narrow: a one-line context wraps rather than being cut short. */
+.inspector-head .panel-head-sub {
+  white-space: normal;
+}
+
+
+/* Tabs tucked away on a quieter rail */
+.inspector-more {
+  position: relative;
+}
+
+.inspector-more-menu {
+  position: absolute;
+  right: calc(100% + var(--space-2xs));
+  bottom: 0;
+  z-index: 30;
+  min-width: 10rem;
+}

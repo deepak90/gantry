@@ -1,0 +1,24 @@
+{
+  "name": "@collab/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Domain types, zod schemas, exact Money arithmetic, cost math and the seed project shared by the web app, the agent worker and the Edge Functions",
+  "exports": {
+    ".": "./src/index.ts",
+    "./seed": "./src/seed/index.ts",
+    "./library-starter": "./src/library-starter.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vitest": "5.0.5",
+    "@types/node": "26.6.5"
+  }
+}

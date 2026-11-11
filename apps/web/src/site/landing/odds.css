@@ -1,0 +1,115 @@
+/*
+ * The odds on the landing page (landing/odds.ts): the app's Galton board on the page's paper, in the page's ink. The
+ * board reads its colors from here when it is made (odds/galton/odds-galton.ts): its background from --surface, the
+ * runs on time from --odds-on-time and the late ones from --odds-late, the app's green and amber. Its words keep the
+ * app's own sheet (odds/galton/galton.css), on the page's tokens.
+ *
+ * `[data-odds]` is sized by the page. Without a height of its own, the still gives it one (16:9, and 4:3 on phones,
+ * where only the still shows); with one, the still and the board fill it, the still letterboxed on the same paper.
+ */
+
+.odds3d {
+  --surface: var(--paper, #f3f4ef);
+  --line-strong: var(--rule, oklch(0.22 0.02 260 / 0.16));
+  --odds-on-time: var(--success, oklch(0.52 0.12 152));
+  --odds-late: var(--warning, oklch(0.55 0.12 65));
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--paper, #f3f4ef);
+  color: var(--ink, oklch(0.22 0.02 260));
+}
+
+.odds3d-picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.odds3d-still {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: opacity 360ms ease-out;
+}
+
+/* Phones: the narrower still (its <source>, 4:3), whose words read at this width. */
+@media (max-width: 599.98px) {
+  .odds3d-still {
+    aspect-ratio: 4 / 3;
+  }
+}
+
+/* The board over the still: it takes the still's place once its empty board is drawn. */
+.odds3d .odds3d-board {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 360ms ease-out;
+}
+
+.odds3d[data-live] .odds3d-board {
+  opacity: 1;
+}
+
+.odds3d[data-live] .odds3d-still {
+  opacity: 0;
+}
+
+/* Out to the paper before two boards stand side by side, and back in. */
+.odds3d .odds3d-board.is-cut {
+  opacity: 0;
+  transition-duration: 240ms;
+  transition-timing-function: ease-in;
+}
+
+/* What the end shows, in words, for screen readers (the board's words are hidden from them: they move). */
+.odds3d-said {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Pause, Play, Replay: quiet, in the corner the board leaves free. */
+.odds3d-control {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 1;
+  min-width: 4.75rem;
+  padding: 0.4375rem 0.75rem;
+  border: 1px solid var(--rule, oklch(0.22 0.02 260 / 0.16));
+  border-radius: 2px;
+  background: var(--paper, #f3f4ef);
+  color: var(--ink-soft, oklch(0.42 0.02 260));
+  cursor: pointer;
+  font: 600 0.8125rem / 1.2 var(--font-ui, 'Archivo Variable', system-ui, sans-serif);
+  letter-spacing: 0.01em;
+}
+
+.odds3d-control[hidden] {
+  display: none;
+}
+
+.odds3d-control:hover {
+  border-color: color-mix(in oklch, var(--ink, oklch(0.22 0.02 260)) 45%, transparent);
+  color: var(--ink, oklch(0.22 0.02 260));
+}
+
+.odds3d-control:focus-visible {
+  outline: 2px solid var(--accent, oklch(0.52 0.17 260));
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .odds3d-still,
+  .odds3d .odds3d-board {
+    transition: none;
+  }
+}

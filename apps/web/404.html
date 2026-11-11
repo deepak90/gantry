@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en-US" data-route="{{ROUTE}}">
+  <head>
+    <!-- @include head -->
+    <title>Page not found · Gantry</title>
+    <meta name="description" content="There’s no page at this address." />
+    <meta name="robots" content="noindex" />
+  </head>
+  <body>
+    <!-- @include header -->
+    <main id="main" class="doc is-lost" tabindex="-1">
+      <p class="kicker">404</p>
+      <h1>There’s no page here</h1>
+      <p class="doc-lead">The address may be mistyped, or the page has moved.</p>
+      <div class="doc-actions">
+        <a class="button is-primary is-lg" href="/app" data-track="Start a session" data-track-place="404">{{START_SESSION}}</a>
+        <a class="button is-lg" href="/">Go to the home page</a>
+      </div>
+    </main>
+    <!-- @include footer -->
+  </body>
+</html>

@@ -1,0 +1,521 @@
+/*
+ * The payment window (payments/PayModal.tsx) and the second person's request (payments/ApprovalRequests.tsx): in the
+ * middle of the screen, above the plan, below the walkthrough's call bar (so it sits high enough to leave the bar clear).
+ * Our own look in PayPal's Payouts words; PayPal's blue only on what PayPal has paid.
+ */
+
+.pay-modal-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: grid;
+  justify-items: center;
+  align-items: start;
+  padding: max(5vh, 40px) 16px 120px;
+  overflow-y: auto;
+  background: oklch(0.21 0.02 255 / 0.46);
+  animation: pay-modal-fade var(--dur) var(--ease-out);
+}
+
+@keyframes pay-modal-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.pay-modal {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(720px, 100%);
+  max-height: calc(100vh - max(5vh, 40px) - 120px);
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--fs-md);
+  animation: pay-modal-rise var(--dur-slow) var(--ease-out);
+}
+
+@keyframes pay-modal-rise {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+}
+
+.pay-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-xl) var(--space-xl) var(--space-md);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.pay-modal-kicker {
+  margin: 0 0 var(--space-3xs);
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pay-modal-title,
+.pay-modal-title:focus,
+.pay-modal-title:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.pay-modal-title {
+  margin: 0;
+  font-size: var(--fs-2xl);
+  font-stretch: var(--stretch-display);
+  font-weight: var(--fw-strong);
+  line-height: 1.15;
+  outline: none;
+}
+
+.pay-modal-sub {
+  margin: var(--space-2xs) 0 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+}
+
+.pay-modal-body {
+  display: grid;
+  gap: var(--space-lg);
+  padding: var(--space-lg) var(--space-xl);
+  overflow-y: auto;
+}
+
+.pay-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-xl) var(--space-lg);
+  border-top: 1px solid var(--line-soft);
+  background: var(--surface-sunken);
+}
+
+.pay-modal-actions .button.is-primary {
+  min-width: 9rem;
+}
+
+/* PayPal's own button: PayPal draws it, this only gives it room. */
+.pay-modal-paypal {
+  width: 15rem;
+  min-height: 45px;
+}
+
+.pay-modal-paypal paypal-button {
+  display: block;
+  width: 100%;
+}
+
+/* Each trade partner: who, its scope, % complete, scheduled value, retainage, the amount due. */
+
+.pay-lines {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.pay-lines th,
+.pay-lines td {
+  padding: var(--space-xs) var(--space-2xs);
+  text-align: right;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line-soft);
+  white-space: nowrap;
+}
+
+.pay-lines thead th {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pay-lines thead th:first-child,
+.pay-lines tbody th,
+.pay-lines tfoot th {
+  text-align: left;
+  white-space: normal;
+}
+
+.pay-lines tbody th {
+  display: grid;
+  gap: 2px;
+  font-weight: var(--fw-regular);
+}
+
+.pay-line-firm {
+  color: var(--ink);
+  font-weight: var(--fw-medium);
+}
+
+.pay-line-for {
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.pay-line-amount {
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+}
+
+.pay-lines tfoot th,
+.pay-lines tfoot td {
+  border-bottom: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+}
+
+.pay-lines tfoot small {
+  display: block;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.pay-lines tfoot .pay-lines-total th,
+.pay-lines tfoot .pay-lines-total td {
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-strong);
+}
+
+/* Each payment once sent, as PayPal reports it. */
+.pay-line-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  margin-top: 2px;
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+}
+
+.pay-line-status.is-paid {
+  color: var(--paypal-navy);
+}
+
+/* PayPal's transaction ID under the status, in line with its words (past the 16px ring and its gap). */
+.pay-line-item {
+  display: grid;
+}
+
+.pay-line-item .pay-line-tx {
+  padding-inline-start: calc(16px + var(--space-2xs));
+  font-size: var(--fs-xs);
+}
+
+.pay-line-tx,
+.pay-line-note {
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}
+
+.pay-facts {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-lg);
+  background: var(--surface-sunken);
+  font-size: var(--fs-sm);
+}
+
+.pay-facts > div {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: var(--space-sm);
+}
+
+.pay-facts dt {
+  color: var(--ink-faint);
+  font-weight: var(--fw-medium);
+}
+
+.pay-facts dd {
+  margin: 0;
+  color: var(--ink);
+}
+
+.pay-facts small {
+  display: block;
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+/* The second approval: the rule, the approver, and their answer as it arrives. */
+
+.pay-approval {
+  display: grid;
+  gap: var(--space-2xs);
+  padding: var(--space-md);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.pay-approval.is-requested,
+.pay-approval.is-asking {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.pay-approval.is-approved {
+  border-color: var(--success-line);
+  background: var(--success-soft);
+}
+
+.pay-approval.is-declined,
+.pay-approval.is-stale,
+.pay-approval.is-changed,
+.pay-approval.is-withdrawn {
+  border-color: var(--warning-line);
+  background: var(--warning-soft);
+}
+
+.pay-approval-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0;
+  font-weight: var(--fw-strong);
+}
+
+.pay-approval-title .fa {
+  color: var(--ink-soft);
+}
+
+/* "· payouts over $25,000": the rule beside the title, quieter. */
+.pay-approval-threshold {
+  color: var(--ink-soft);
+  font-weight: var(--fw-regular);
+}
+
+.pay-approval-rule {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+}
+
+.pay-approval-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: var(--space-2xs) 0 0;
+  color: var(--ink);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+}
+
+.pay-approval.is-approved .pay-approval-status {
+  color: var(--success);
+}
+
+.pay-approval > .button {
+  justify-self: start;
+  margin-top: var(--space-2xs);
+}
+
+.pay-approval-terms {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+}
+
+.pay-approval-terms small {
+  display: block;
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+/* Progress: three steps, each moved only by PayPal's answer. */
+
+.pay-progress {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.pay-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pay-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-xs);
+}
+
+/* The line to the next step, filled once this one is done. */
+.pay-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 13px;
+  left: 36px;
+  right: 4px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--line);
+  transition: background var(--dur-slow) var(--ease-out);
+}
+
+.pay-step.is-done:not(:last-child)::after {
+  background: var(--success-fill);
+}
+
+.pay-step-text {
+  display: grid;
+  gap: 2px;
+  padding-top: 32px;
+  margin-left: -36px;
+}
+
+.pay-step-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+}
+
+.pay-step.is-todo .pay-step-label {
+  color: var(--ink-faint);
+}
+
+.pay-step-label .paypal-mark {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.pay-step-detail {
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  overflow-wrap: anywhere;
+}
+
+.pay-modal-batch,
+.pay-modal-released {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+}
+
+.pay-modal-batch strong {
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-weight: var(--fw-medium);
+}
+
+.pay-modal-released {
+  color: var(--paypal-navy);
+  font-weight: var(--fw-medium);
+}
+
+/* The rings: empty, turning while PayPal works, a check once done (PayPal blue for Paid), a warning when refused. */
+
+.pay-ring {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+}
+
+.pay-ring svg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.pay-ring-track {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 2.5;
+}
+
+.pay-ring-arc {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pay-ring-turn 900ms linear infinite;
+}
+
+.pay-ring.is-active .pay-ring-track {
+  stroke: var(--accent-line);
+}
+
+.pay-ring-fill {
+  stroke: none;
+}
+
+.pay-ring.is-done .pay-ring-fill {
+  fill: var(--success-fill);
+}
+
+.pay-step:last-child .pay-ring.is-done .pay-ring-fill {
+  fill: var(--paypal-blue);
+}
+
+.pay-ring.is-failed .pay-ring-fill {
+  fill: var(--danger);
+}
+
+.pay-ring > .fa {
+  position: relative;
+  color: var(--ink-inverse);
+  font-size: 1em;
+}
+
+.pay-ring.is-done,
+.pay-ring.is-failed {
+  animation: pay-ring-pop var(--dur-slow) var(--ease-out);
+}
+
+@keyframes pay-ring-turn {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@keyframes pay-ring-pop {
+  from {
+    scale: 0.6;
+    opacity: 0.4;
+  }
+}
+
+/* Still moving while PayPal works, gently, for those who ask for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  .pay-ring-arc {
+    animation: pay-ring-breathe 1.6s var(--ease-in-out) infinite;
+  }
+
+  @keyframes pay-ring-breathe {
+    50% {
+      opacity: 0.35;
+    }
+  }
+}
+
+.pay-modal.is-request .pay-modal-actions .button.is-primary {
+  min-width: 8rem;
+}

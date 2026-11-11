@@ -1,0 +1,23 @@
+# Fly builds the assistant service's image (apps/agent/Dockerfile) from the repo root. Only what it needs goes up:
+# the workspace's manifests and lockfile, packages/shared, apps/agent, the how-to clips' list and the shared PayPal client
+# the assistant reads PayPal with.
+*
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!.npmrc
+!apps/agent
+!apps/clip-studio/package.json
+!apps/remy-call/package.json
+!apps/web/package.json
+!apps/web/public/clips/clips.json
+!packages/shared
+!supabase/functions/package.json
+!supabase/functions/_shared/paypal.ts
+!supabase/functions/_shared/amounts.ts
+!supabase/functions/_shared/json.ts
+!supabase/functions/_shared/outcomes.ts
+**/node_modules
+apps/agent/recordings
+apps/agent/test
+packages/shared/test

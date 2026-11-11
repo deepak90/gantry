@@ -1,0 +1,747 @@
+/*
+ * Presence: the avatars in the (ink) header, and what is drawn over the Gantt: other people's
+ * pointers, their selected rows and the follow-mode frame. `--peer` / `--peer-ink` are set per person
+ * (presence/peers.ts picks the colors: never red, which means danger).
+ */
+
+/* Header ------------------------------------------------------------------------------------- */
+
+.presence-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.presence-avatars {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0 0 0 var(--space-xs);
+  list-style: none;
+}
+
+.presence-avatars > li {
+  margin-left: calc(-1 * var(--space-xs));
+}
+
+.presence-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 1.95rem;
+  height: 1.95rem;
+  padding: 0;
+  border: 2px solid var(--header);
+  border-radius: 50%;
+  color: var(--peer-ink, var(--ink-inverse));
+  background: var(--peer, var(--cat-none));
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-heavy);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.presence-avatar:hover,
+.presence-avatar:focus-visible {
+  z-index: 1;
+  transform: translateY(-1px);
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--peer, var(--cat-none)) 60%, transparent);
+}
+
+.presence-avatar.is-followed {
+  z-index: 2;
+  box-shadow:
+    0 0 0 2px var(--header),
+    0 0 0 4px var(--peer, var(--cat-none));
+}
+
+.presence-badge {
+  position: absolute;
+  right: -0.3rem;
+  bottom: -0.25rem;
+  display: grid;
+  place-items: center;
+  width: 0.95rem;
+  height: 0.95rem;
+  border-radius: 50%;
+  color: var(--ink);
+  background: var(--gray-200);
+  font-size: 0.5rem;
+  box-shadow: 0 0 0 2px var(--header);
+}
+
+/* A simulated person (the busy-workplace demo): a robot at the top, clear of the "follows you" eye. */
+.presence-badge.is-sim {
+  top: -0.25rem;
+  bottom: auto;
+  color: var(--ink-inverse);
+  background: var(--gray-700);
+}
+
+.presence-more {
+  color: var(--header-ink);
+  background: var(--header-line);
+  cursor: default;
+}
+
+/*
+ * Others following you: the accent, "this is about where you are". Being followed puts your view on someone
+ * else's screen, so it is seen as it starts: the pill slides in filled with the accent and settles to the
+ * header's quiet tint over a few seconds; the follower's avatar gets the same accent eye and a ring that goes
+ * out from it twice.
+ */
+.presence-followers {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: var(--control-sm);
+  padding: 0 var(--space-sm);
+  box-sizing: border-box;
+  border: 1px solid color-mix(in oklch, var(--accent) 60%, transparent);
+  border-radius: var(--radius-pill);
+  color: var(--accent-line);
+  background: color-mix(in oklch, var(--accent) 18%, var(--header));
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+  white-space: nowrap;
+  animation:
+    presence-followers-in var(--dur-slow) var(--ease-out),
+    presence-followers-new 3.2s var(--ease-in-out);
+}
+
+@keyframes presence-followers-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--space-md));
+  }
+}
+
+/* Filled for the first half, then back to the tint above (the implicit last keyframe). */
+@keyframes presence-followers-new {
+  0%,
+  55% {
+    border-color: var(--accent);
+    color: var(--accent-ink);
+    background: var(--accent);
+  }
+}
+
+.presence-avatar.follows-me {
+  animation: presence-follows-me 1.2s var(--ease-out) 2;
+}
+
+.presence-avatar.follows-me .presence-badge:not(.is-sim) {
+  color: var(--accent-ink);
+  background: var(--accent);
+  animation: presence-badge-in var(--dur-slow) var(--ease-out);
+}
+
+/* A crisp ring, not a glow: it widens from the avatar's edge and fades. */
+@keyframes presence-follows-me {
+  from {
+    box-shadow:
+      0 0 0 2px var(--header),
+      0 0 0 3px var(--accent);
+  }
+  to {
+    box-shadow:
+      0 0 0 2px var(--header),
+      0 0 0 14px transparent;
+  }
+}
+
+@keyframes presence-badge-in {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+}
+
+/*
+ * After following: one click back to what this person was looking at before. Two text buttons in one
+ * chip, styled for the ink header (ui.css buttons are for light surfaces).
+ */
+.presence-restore {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-sm);
+  box-sizing: border-box;
+  border: 1px solid var(--header-line);
+  border-radius: var(--radius-pill);
+  background: var(--header-raised);
+  animation: presence-restore-in var(--dur) var(--ease-out);
+}
+
+.presence-restore button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  align-self: stretch;
+  border: 0;
+  border-radius: var(--radius-pill);
+  color: var(--header-ink);
+  background: none;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.presence-restore-button {
+  padding: 0 var(--space-xs) 0 var(--space-sm);
+}
+
+.presence-restore button.presence-restore-dismiss {
+  padding: 0 var(--space-sm) 0 var(--space-xs);
+  color: var(--header-ink-soft);
+}
+
+.presence-restore button:hover {
+  color: var(--header-ink);
+  background: var(--header-line);
+}
+
+@keyframes presence-restore-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+}
+
+/* A short notice under the avatars (someone left, a follow was refused). */
+.presence-note {
+  position: absolute;
+  top: calc(100% + var(--space-sm));
+  right: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: max-content;
+  max-width: 22rem;
+  margin: 0;
+  padding: var(--space-sm) var(--space-xs) var(--space-sm) var(--space-md);
+  border-radius: var(--radius-lg);
+  color: var(--ink-inverse);
+  background: var(--gray-800);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--fs-sm);
+}
+
+.presence-note button {
+  display: grid;
+  place-items: center;
+  width: var(--control-sm);
+  height: var(--control-sm);
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--header-ink-soft);
+  background: none;
+  cursor: pointer;
+}
+
+.presence-note button:hover {
+  color: var(--header-ink);
+  background: var(--gray-700);
+}
+
+/* Over the Gantt ----------------------------------------------------------------------------- */
+
+.presence-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Pointers glide between the frames they arrive in (a tracking motion, so linear). */
+/* No transition: the layer already draws pointers between their updates (pointer-playback.ts). */
+.presence-cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
+}
+
+.presence-layer [hidden] {
+  display: none;
+}
+
+.presence-arrow {
+  display: block;
+  filter: drop-shadow(var(--shadow-xs)) drop-shadow(var(--shadow-xs));
+}
+
+.presence-arrow path {
+  fill: var(--peer, var(--accent));
+  stroke: var(--surface);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+
+.presence-label {
+  position: absolute;
+  top: 15px;
+  left: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-3xs) var(--space-xs);
+  border-radius: var(--radius-sm) var(--radius-sm) var(--radius-sm) var(--radius-xs);
+  color: var(--peer-ink, var(--ink-inverse));
+  background: var(--peer, var(--accent));
+  box-shadow: var(--shadow-sm);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  white-space: nowrap;
+}
+
+.presence-edge-icon {
+  display: none;
+  font-size: 0.6rem;
+}
+
+/* A simulated person's pointer: a small robot after the name. */
+.presence-sim {
+  font-size: 0.6rem;
+  opacity: 0.85;
+}
+
+/* Scrolled out of view: no arrow, a pill pinned to the edge. */
+.presence-cursor:not([data-edge='']) .presence-arrow {
+  display: none;
+}
+
+.presence-cursor:not([data-edge='']) .presence-edge-icon {
+  display: inline-block;
+}
+
+/* On a task folded away on this screen: drawn faintly on the row that holds it. */
+.presence-cursor[data-folded='true'] {
+  opacity: 0.6;
+}
+
+.presence-cursor[data-edge='above'] .presence-label {
+  top: 4px;
+  left: 0;
+  transform: translateX(-50%);
+}
+
+.presence-cursor[data-edge='below'] .presence-label {
+  top: auto;
+  bottom: 4px;
+  left: 0;
+  transform: translateX(-50%);
+}
+
+.presence-cursor[data-edge='left'] .presence-label {
+  top: 0;
+  left: 4px;
+  transform: translateY(-50%);
+}
+
+.presence-cursor[data-edge='right'] .presence-label {
+  top: 0;
+  right: 4px;
+  left: auto;
+  transform: translate(-100%, -50%);
+}
+
+/* The row someone has selected: a tint between two lines, their initials at the start. */
+.presence-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  border-block: 1.5px solid color-mix(in oklch, var(--peer, var(--accent)) 70%, transparent);
+  background: color-mix(in oklch, var(--peer, var(--accent)) 7%, transparent);
+}
+
+.presence-row-tag {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  display: grid;
+  place-items: center;
+  min-width: 1.35rem;
+  height: 1.15rem;
+  padding: 0 var(--space-3xs);
+  box-sizing: border-box;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--peer-ink, var(--ink-inverse));
+  background: var(--peer, var(--accent));
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-heavy);
+  letter-spacing: -0.02em;
+  transform: translateY(-50%);
+}
+
+/* Follow mode: a frame in the leader's color and a banner with the way out. */
+.presence-follow {
+  position: absolute;
+  inset: 0;
+  border: 3px solid var(--peer, var(--accent));
+  border-radius: var(--radius-xs);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--surface) 60%, transparent);
+}
+
+.presence-follow-banner {
+  position: absolute;
+  top: var(--space-sm);
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-2xs) var(--space-2xs) var(--space-2xs) var(--space-md);
+  border-radius: var(--radius-pill);
+  color: var(--peer-ink, var(--ink-inverse));
+  background: var(--peer, var(--accent));
+  box-shadow: var(--shadow-md);
+  font-size: var(--fs-sm);
+  transform: translateX(-50%);
+  pointer-events: auto;
+  white-space: nowrap;
+}
+
+.presence-follow-banner .button.is-sm {
+  border-radius: var(--radius-pill);
+}
+
+/* Each person's marks share their color; the wrapper itself draws nothing. */
+.presence-peer {
+  display: contents;
+}
+
+.presence-label-activity {
+  padding-left: var(--space-xs);
+  border-left: 1px solid color-mix(in oklch, var(--peer-ink, var(--ink-inverse)) 35%, transparent);
+  font-weight: var(--fw-medium);
+}
+
+.presence-cursor.is-busy .presence-label {
+  box-shadow:
+    0 0 0 2px color-mix(in oklch, var(--peer, var(--accent)) 30%, transparent),
+    var(--shadow-sm);
+}
+
+/* Selected cells: a tint, and one outline around each block (edge-* where the neighbor is not selected). */
+.presence-cell,
+.presence-active,
+.presence-bar-outline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+}
+
+.presence-cell {
+  border: 0 solid var(--peer, var(--accent));
+  background: color-mix(in oklch, var(--peer, var(--accent)) 11%, transparent);
+}
+
+.presence-cell.edge-t {
+  border-top-width: 2px;
+}
+
+.presence-cell.edge-b {
+  border-bottom-width: 2px;
+}
+
+.presence-cell.edge-l {
+  border-left-width: 2px;
+}
+
+.presence-cell.edge-r {
+  border-right-width: 2px;
+}
+
+/* The cells a fill is about to write. */
+.presence-cell.is-fill {
+  border-style: dashed;
+  background: repeating-linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--peer, var(--accent)) 10%, transparent) 0 6px,
+    transparent 6px 12px
+  );
+  animation: presence-fill 0.8s linear infinite;
+  background-size: 17px 17px;
+}
+
+/* The cell their keyboard is on, with a flag carrying their name. */
+.presence-active {
+  border: 2px solid var(--peer, var(--accent));
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--surface) 75%, transparent);
+}
+
+.presence-active.is-editing {
+  background: color-mix(in oklch, var(--peer, var(--accent)) 8%, transparent);
+  animation: presence-editing 1.4s var(--ease-in-out) infinite;
+}
+
+.presence-flag {
+  position: absolute;
+  right: -2px;
+  bottom: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0.6rem;
+  height: 0.45rem;
+  padding: 0;
+  border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+  overflow: hidden;
+  color: var(--peer-ink, var(--ink-inverse));
+  background: var(--peer, var(--accent));
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    height var(--dur-fast) var(--ease-out),
+    padding var(--dur-fast) var(--ease-out);
+}
+
+.presence-flag > * {
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.presence-flag.is-open,
+.presence-active.is-pointed .presence-flag {
+  height: 1.15rem;
+  padding: 0 var(--space-xs);
+  box-shadow: var(--shadow-sm);
+}
+
+.presence-flag.is-open > *,
+.presence-active.is-pointed .presence-flag > * {
+  opacity: 1;
+}
+
+.presence-flag .fa {
+  font-size: 0.6rem;
+}
+
+.presence-typing {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.presence-typing i {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: presence-typing 1s var(--ease-in-out) infinite;
+}
+
+.presence-typing i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.presence-typing i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* The bar somebody is moving, resizing or linking from. */
+.presence-bar-outline {
+  border-radius: var(--radius-sm);
+  box-shadow:
+    0 0 0 2px var(--peer, var(--accent)),
+    0 0 0 6px color-mix(in oklch, var(--peer, var(--accent)) 22%, transparent);
+  animation: presence-editing 1.4s var(--ease-in-out) infinite;
+}
+
+.presence-bar-outline .presence-flag {
+  right: auto;
+  bottom: calc(100% + 3px);
+  left: -2px;
+  border-radius: var(--radius-xs);
+}
+
+.presence-row.is-editing {
+  background: color-mix(in oklch, var(--peer, var(--accent)) 12%, transparent);
+}
+
+.presence-row-note {
+  position: absolute;
+  top: 50%;
+  left: 1.75rem;
+  padding: var(--space-3xs) var(--space-xs);
+  border-radius: var(--radius-pill);
+  color: var(--peer-ink, var(--ink-inverse));
+  background: var(--peer, var(--accent));
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  white-space: nowrap;
+  transform: translateY(-50%);
+}
+
+@keyframes presence-editing {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklch, var(--surface) 75%, transparent),
+      0 0 0 0 color-mix(in oklch, var(--peer, var(--accent)) 40%, transparent);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklch, var(--surface) 75%, transparent),
+      0 0 0 4px color-mix(in oklch, var(--peer, var(--accent)) 18%, transparent);
+  }
+}
+
+@keyframes presence-typing {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(-2px);
+    opacity: 1;
+  }
+}
+
+@keyframes presence-fill {
+  to {
+    background-position: 17px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .presence-cursor {
+    transition: none;
+  }
+
+  .presence-active.is-editing,
+  .presence-bar-outline,
+  .presence-cell.is-fill,
+  .presence-typing i {
+    animation: none;
+  }
+}
+
+/* The card about a person: opens on hover or click; following is a choice made in it */
+.presence-person {
+  position: relative;
+}
+
+/* A .popover (panel stylesheets load before ui.css, hence the doubled class where they meet). */
+.popover.presence-card {
+  position: absolute;
+  top: calc(100% + var(--space-sm));
+  right: calc(-1 * var(--space-sm));
+  display: grid;
+  gap: var(--space-xs);
+  width: 17rem;
+  padding: var(--space-md);
+  font-size: var(--fs-xs);
+  text-align: left;
+  animation: presence-card-in var(--dur) var(--ease-out);
+}
+
+@keyframes presence-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.presence-card p {
+  margin: 0;
+}
+
+.presence-card-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--fs-sm);
+}
+
+.presence-card-name strong {
+  font-stretch: var(--stretch-display);
+  font-weight: var(--fw-heavy);
+}
+
+.presence-card-swatch {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: var(--radius-pill);
+  background: var(--peer, var(--cat-none));
+}
+
+.presence-card-meta {
+  color: var(--ink-faint);
+}
+
+.presence-card-line {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  color: var(--ink-soft);
+}
+
+.presence-card-line > .fa {
+  width: 0.9rem;
+  color: var(--ink-faint);
+}
+
+/* The task they look at is a link: it shows that task in your own plan. */
+.presence-card-task.button.is-link {
+  font-size: inherit;
+  font-weight: var(--fw-strong);
+  text-align: left;
+  white-space: normal;
+}
+
+.presence-card-actions {
+  display: grid;
+  gap: var(--space-xs);
+  margin-top: var(--space-2xs);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--line-soft);
+}
+
+.presence-card-hint {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  line-height: 1.4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .presence-card,
+  .presence-restore,
+  .presence-followers,
+  .presence-avatar.follows-me,
+  .presence-avatar.follows-me .presence-badge {
+    animation: none;
+  }
+}
+
+/* Others' cursors put away (View menu, or Remy on a call): their pointers and the names that go with them. */
+html.cursors-hidden .presence-cursor,
+html.cursors-hidden .presence-flag,
+html.cursors-hidden .presence-row-tag {
+  display: none !important;
+}
+
+/* In the 3D view the scene is the subject: others' pointers and name flags stay out of it. */
+html.fx3d-table .presence-cursor,
+html.fx3d-inset .presence-cursor,
+html[data-fx3d='building'] .presence-cursor,
+html[data-fx3d='site'] .presence-cursor,
+html.fx3d-table .presence-flag,
+html.fx3d-inset .presence-flag,
+html[data-fx3d='building'] .presence-flag,
+html[data-fx3d='site'] .presence-flag {
+  display: none !important;
+}

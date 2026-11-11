@@ -1,0 +1,127 @@
+/*
+ * The invoice window (payments/InvoiceModal.tsx): the payment window's shell, table and facts (pay-modal.css), with
+ * what an invoice adds: the parties it is between, and what happened to it once sent. Colors and type from tokens.css.
+ */
+
+.invoice-modal-head-end {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+/* Who it is from and who it bills, the way an invoice opens. */
+
+.invoice-parties {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-md);
+  margin: 0;
+}
+
+.invoice-parties dt {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.invoice-parties dd {
+  margin: var(--space-3xs) 0 0;
+  color: var(--ink);
+  font-weight: var(--fw-medium);
+  overflow-wrap: anywhere;
+}
+
+.invoice-parties small {
+  display: block;
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-regular);
+}
+
+@media (max-width: 480px) {
+  .invoice-parties {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Two columns only: the row's rule runs unbroken under both, so the description stays a table cell. */
+.invoice-lines.pay-lines tbody th {
+  display: table-cell;
+}
+
+.invoice-lines .pay-line-firm,
+.invoice-lines .pay-line-for {
+  display: block;
+}
+
+.invoice-lines .pay-line-for {
+  margin-top: 2px;
+}
+
+/* What the two windows turn to: the invoice, who sent it and when, PayPal's page. */
+
+.invoice-outcome {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-sunken);
+}
+
+.invoice-outcome.is-sent,
+.invoice-outcome.is-paid {
+  border-color: var(--success-line);
+  background: var(--success-soft);
+}
+
+.invoice-outcome-mark {
+  flex: none;
+  color: var(--ink-soft);
+  font-size: var(--fs-2xl);
+  animation: pay-ring-pop var(--dur-slow) var(--ease-out);
+}
+
+.invoice-outcome.is-sent .invoice-outcome-mark,
+.invoice-outcome.is-paid .invoice-outcome-mark {
+  color: var(--success);
+}
+
+.invoice-outcome-text {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.invoice-outcome-title {
+  margin: 0;
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+  overflow-wrap: anywhere;
+}
+
+.invoice-outcome-by {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+}
+
+.invoice-outcome .button {
+  flex: none;
+}
+
+.invoice-modal-consequence {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+}
+
+/* Cancel invoice stands apart from Done, at the other end of the footer. */
+.pay-modal-actions .invoice-modal-revoke {
+  margin-inline-end: auto;
+}

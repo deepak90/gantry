@@ -1,0 +1,29 @@
+{
+  "name": "@collab/agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Remy, the project assistant: reads the shared plan, works out dates and money with tools, drafts plan changes and invoices through a person's browser, and streams its replies and cards on project:{id}:agent",
+  "scripts": {
+    "dev": "node --import tsx src/main.ts",
+    "start": "node --import tsx src/main.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "smoke": "tsx src/dev/smoke.ts",
+    "check-store": "tsx src/dev/check-store.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.132.1",
+    "@collab/shared": "workspace:*",
+    "@paypal/agent-toolkit": "1.11.0",
+    "@supabase/supabase-js": "2.118.0",
+    "mathjs": "15.2.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "5.0.5"
+  }
+}

@@ -1,0 +1,89 @@
+/*
+ * The assistant's face over the 3D view (gantt/fx3d/companion.ts): the face from the call, a little larger, with a
+ * thread of light to what it points at. Its moods are the call face's own (rails.css).
+ */
+
+.fx3d-companion {
+  position: fixed;
+  inset: 0;
+  z-index: 9400;
+  pointer-events: none;
+}
+
+.fx3d-companion[hidden] {
+  display: none;
+}
+
+.fx3d-companion .fx3d-companion-face.rail-face-frame.is-md {
+  --face: 52px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  filter: drop-shadow(0 6px 14px rgb(15 23 42 / 0.28));
+  will-change: transform, opacity;
+}
+
+/* Over the scene's light paper its light needs a little more reach than on the dark call bar. */
+.fx3d-companion .rail-face-aura {
+  inset: -40%;
+}
+
+.fx3d-companion-thread {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  opacity: 0;
+}
+
+.fx3d-companion-thread line {
+  stroke: oklch(0.66 0.17 258);
+  stroke-width: 2;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px oklch(0.72 0.15 250 / 0.85));
+}
+
+.fx3d-companion-dot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, white, oklch(0.84 0.09 232) 55%, oklch(0.66 0.17 258));
+  box-shadow:
+    0 0 0 3px oklch(0.72 0.15 250 / 0.28),
+    0 0 12px oklch(0.72 0.15 250 / 0.9);
+  opacity: 0;
+}
+
+.fx3d-companion-dot::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1.5px solid oklch(0.72 0.15 250 / 0.7);
+  animation: fx3d-companion-ping 1.8s var(--ease-out) infinite;
+}
+
+@keyframes fx3d-companion-ping {
+  from {
+    opacity: 0.9;
+    scale: 0.5;
+  }
+
+  to {
+    opacity: 0;
+    scale: 1.6;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx3d-companion-dot::after {
+    animation: none;
+    opacity: 0;
+  }
+}

@@ -1,0 +1,9 @@
+# The image needs package.json, pnpm-lock.yaml and src/ (and this file and the Dockerfile, for the build).
+node_modules
+test
+scripts
+README.md
+livekit*.toml
+.env
+.env.*
+*.log

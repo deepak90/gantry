@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <!-- Gantry's mark (src/app/GantryMark.tsx) on a night-blue chip. -->
+  <defs>
+    <radialGradient id="chip" cx="0.34" cy="0.28" r="0.85">
+      <stop offset="0" stop-color="#1b2e4c"/>
+      <stop offset="0.7" stop-color="#131a24"/>
+    </radialGradient>
+    <linearGradient id="cobalt" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#78c7fd"/>
+      <stop offset="0.5" stop-color="#427ff7"/>
+      <stop offset="1" stop-color="#1d44a3"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#edf7fe"/>
+      <stop offset="0.55" stop-color="#9ec3e2"/>
+      <stop offset="1" stop-color="#5682bb"/>
+    </linearGradient>
+    <linearGradient id="spark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f3f9ff"/>
+      <stop offset="0.5" stop-color="#a9e0fe"/>
+      <stop offset="1" stop-color="#4a91f8"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="28" fill="url(#chip)"/>
+  <g transform="translate(9 8) scale(0.85)">
+    <path d="M43 6 L37 22 H49 Z" fill="url(#steel)"/>
+    <path d="M43 7 L108 22 M43 7 L14 22" stroke="#a9e0fe" stroke-width="2.4" fill="none"/>
+    <rect x="12" y="22" width="98" height="7" rx="1.5" fill="url(#cobalt)"/>
+    <rect x="12" y="29" width="12" height="11" rx="1.5" fill="#3a63c4"/>
+    <rect x="36" y="29" width="15" height="77" fill="url(#cobalt)"/>
+    <path d="M36 104 L51 92 L36 80 L51 68 L36 56 L51 44 L36 32" stroke="#a9e0fe" stroke-width="2.2" fill="none" stroke-linejoin="round"/>
+    <rect x="51" y="29" width="10" height="9" rx="1.5" fill="#a9e0fe"/>
+    <rect x="27" y="104" width="32" height="9" rx="2" fill="#3a63c4"/>
+    <rect x="83" y="29" width="12" height="5" rx="1" fill="#a9e0fe"/>
+    <path d="M89 34 V64" stroke="#a9e0fe" stroke-width="2.2"/>
+    <path d="M12 1.5C12.7 7.2 16.8 11.3 22.5 12 16.8 12.7 12.7 16.8 12 22.5 11.3 16.8 7.2 12.7 1.5 12 7.2 11.3 11.3 7.2 12 1.5Z" fill="url(#spark)" transform="translate(72 64) scale(1.42)"/>
+  </g>
+</svg>

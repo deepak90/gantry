@@ -1,0 +1,183 @@
+/*
+ * The payout review sheet (payments/PayoutSheet.tsx): our own look, from the design tokens. No PayPal logo and no
+ * PayPal gold; "PayPal" is plain text. Narrow enough for a side panel or a card in the assistant.
+ */
+
+.payout-sheet {
+  display: grid;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+  padding: var(--space-md);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  text-align: left;
+  animation: payout-sheet-in var(--dur-slow) var(--ease-out);
+}
+
+@keyframes payout-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.payout-sheet-head {
+  display: grid;
+  gap: var(--space-3xs);
+}
+
+.payout-sheet-kicker {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.payout-sheet-title {
+  margin: 0;
+  font-size: var(--fs-md);
+  line-height: 1.25;
+}
+
+.payout-sheet-batch {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.payout-sheet-lines {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line-soft);
+}
+
+.payout-sheet-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3xs) var(--space-sm);
+  padding: var(--space-xs) 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.payout-sheet-firm {
+  min-width: 0;
+  font-weight: var(--fw-strong);
+}
+
+.payout-sheet-amount {
+  font-weight: var(--fw-strong);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.payout-sheet-state {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: baseline;
+  gap: var(--space-2xs);
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.payout-sheet-state > .fa {
+  flex: none;
+  font-size: 0.9em;
+}
+
+.payout-sheet-tx {
+  color: var(--ink-faint);
+  font-weight: var(--fw-regular);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.payout-sheet-note {
+  grid-column: 1 / -1;
+  color: var(--ink-soft);
+  font-size: var(--fs-2xs);
+  line-height: 1.4;
+}
+
+.payout-sheet-line.is-sending .payout-sheet-state,
+.payout-sheet-line.is-pending .payout-sheet-state {
+  color: var(--accent-strong);
+}
+
+.payout-sheet-line.is-paid .payout-sheet-state {
+  color: var(--success);
+  font-weight: var(--fw-strong);
+}
+
+.payout-sheet-line.is-held .payout-sheet-state {
+  color: var(--warning);
+  font-weight: var(--fw-strong);
+}
+
+.payout-sheet-line.is-failed .payout-sheet-state {
+  color: var(--danger-strong);
+  font-weight: var(--fw-strong);
+}
+
+/* No column gap: the total's rule runs unbroken across both columns. */
+.payout-sheet-facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  row-gap: var(--space-2xs);
+  margin: 0;
+}
+
+.payout-sheet-facts > div {
+  display: contents;
+}
+
+.payout-sheet-facts dt {
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+}
+
+.payout-sheet-facts dd {
+  display: grid;
+  justify-items: end;
+  margin: 0;
+  padding-inline-start: var(--space-md);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.payout-sheet-facts dd small {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.payout-sheet-total dt,
+.payout-sheet-total dd {
+  padding-top: var(--space-xs);
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-heavy);
+}
+
+.payout-sheet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.payout-sheet-fine {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  line-height: 1.4;
+}

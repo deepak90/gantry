@@ -1,0 +1,708 @@
+/*
+ * Bryntum widgets that float above the page (context menus, the task editor, tooltips and the
+ * collapsed-cell editors) render in Bryntum's float root, outside the workspace, so they are
+ * themed here through the same tokens (tokens.css).
+ */
+
+.b-float-root {
+  --b-primary: var(--accent);
+  --b-widget-font-family: inherit;
+}
+
+/* Context menus -------------------------------------------------------------------------------- */
+
+.b-menu {
+  --b-menu-background: var(--surface-raised);
+  --b-menu-border-radius: var(--radius-lg);
+  --b-menu-padding: 0.35rem;
+  --b-menu-item-border-radius: var(--radius-md);
+  --b-menu-item-padding: 0.45rem 0.7rem;
+  --b-menu-item-gap: 0.6rem;
+  --b-menu-item-font-weight: var(--fw-medium);
+  --b-menu-item-color: var(--ink);
+  --b-menu-item-icon-color: var(--ink-faint);
+  --b-menu-item-hover-background: var(--gray-100);
+  --b-menu-item-hover-color: var(--ink);
+  --b-menu-item-hover-icon-color: var(--ink-soft);
+  --b-menu-item-focus-background: var(--gray-100);
+  --b-menu-item-focus-color: var(--ink);
+  --b-menu-item-focus-icon-color: var(--ink-soft);
+  --b-menu-item-separator-border-color: var(--line);
+  font-size: var(--fs-md);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-lg);
+}
+
+.b-menu .b-menuitem.look-menu-danger {
+  --b-menu-item-hover-background: var(--danger-soft);
+  --b-menu-item-hover-color: var(--danger-strong);
+  --b-menu-item-hover-icon-color: var(--danger);
+  --b-menu-item-focus-background: var(--danger-soft);
+  --b-menu-item-focus-color: var(--danger-strong);
+  --b-menu-item-focus-icon-color: var(--danger);
+}
+
+/* Tooltips: white cards ------------------------------------------------------------------------ */
+
+.b-tooltip.look-tooltip {
+  --b-popup-background: var(--surface);
+  --b-popup-border-radius: var(--radius-lg);
+  --b-popup-padding: 0;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-lg);
+  color: var(--ink);
+}
+
+.b-tooltip.look-tooltip .b-tooltip-content,
+.b-tooltip.look-tooltip .b-popup-content {
+  padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+html.fx3d-live .b-tooltip.look-tooltip {
+  display: none;
+}
+
+.look-tip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 17rem;
+  max-width: 23rem;
+  padding: 0.85rem 0.95rem 0.9rem;
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+  color: var(--ink);
+  border-top: 3px solid var(--look-phase);
+  border-radius: var(--radius-lg);
+}
+
+.look-tip-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.look-tip-icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-md);
+  background: color-mix(in oklch, var(--look-phase) 14%, var(--surface));
+  color: var(--look-phase);
+  font-size: var(--fs-md);
+}
+
+.look-tip-heading {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.look-tip-path {
+  font-size: var(--fs-2xs);
+  color: var(--ink-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.look-tip-path i {
+  font-size: var(--fs-2xs);
+  margin-inline: 0.2rem;
+}
+
+.look-tip-title {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-heavy);
+  line-height: 1.25;
+}
+
+.look-tip-head > .look-pill {
+  flex: 0 0 auto;
+  margin-top: 0.1rem;
+}
+
+.look-tip-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.look-tip-progress .look-progress-track {
+  height: 0.38rem;
+}
+
+.look-tip-progress .look-progress-fill {
+  background: var(--look-phase);
+}
+
+.look-tip-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.look-tip-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  color: var(--ink-soft);
+}
+
+.look-tip-row > i {
+  flex: 0 0 1rem;
+  margin-top: 0.2rem;
+  font-size: var(--fs-xs);
+  text-align: center;
+  color: var(--ink-faint);
+}
+
+.look-tip-row strong {
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+}
+
+.look-tip-row strong i {
+  font-size: var(--fs-2xs);
+  margin-inline: 0.15rem;
+  color: var(--ink-faint);
+}
+
+.look-tip-row em {
+  font-style: normal;
+  color: var(--ink-faint);
+}
+
+.look-tip-row.is-warn,
+.look-tip-row.is-warn > i {
+  color: var(--warning);
+}
+
+.look-tip-row.is-alert,
+.look-tip-row.is-alert > i {
+  color: var(--danger);
+  font-weight: var(--fw-strong);
+}
+
+.look-tip-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.look-tip-crew {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.1rem 0.5rem 0.1rem 0.4rem;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklch, var(--crew) 11%, var(--surface));
+  color: color-mix(in oklch, var(--crew) 60%, var(--ink));
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+}
+
+.look-tip-crew i {
+  color: var(--crew);
+  font-size: var(--fs-2xs);
+}
+
+.look-tip-crew em {
+  font-style: normal;
+  font-weight: var(--fw-medium);
+  color: var(--ink-faint);
+}
+
+.look-tip-crew em::before {
+  content: '·';
+  margin-inline-end: 0.3rem;
+}
+
+.look-tip-note {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+}
+
+.look-tip-note i {
+  margin-top: 0.2rem;
+  font-size: var(--fs-2xs);
+  color: var(--ink-faint);
+}
+
+/* The card stays open under the pointer: its text can be read and selected. */
+.b-tooltip.look-tooltip.b-allow-over .look-tip {
+  user-select: text;
+}
+
+.look-tip-row.is-critical,
+.look-tip-row.is-critical > i {
+  color: color-mix(in oklch, var(--look-phase) 70%, var(--ink));
+}
+
+/* Planned against current dates: two lanes on one scale, the slipped days hatched red. */
+.look-tip-plan {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.5rem 0.6rem 0.45rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
+.look-tip-plan-lane {
+  display: grid;
+  grid-template-columns: 2.1rem 1fr;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.look-tip-plan-tag {
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  color: var(--ink-faint);
+}
+
+.look-tip-plan-track {
+  position: relative;
+  height: 0.5rem;
+}
+
+.look-tip-plan-bar {
+  position: absolute;
+  inset-block: 0;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.look-tip-plan-bar.is-plan {
+  background: var(--line-strong);
+}
+
+.look-tip-plan-bar.is-now {
+  background: var(--look-phase);
+}
+
+.look-tip-plan-slip {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  background: repeating-linear-gradient(-45deg, var(--danger) 0 2px, var(--danger-line) 2px 4px);
+}
+
+.look-tip-plan-words {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.1rem;
+  font-size: var(--fs-xs);
+  color: var(--ink-soft);
+}
+
+.look-tip-plan.is-late .look-tip-plan-words {
+  color: var(--danger-strong);
+  font-weight: var(--fw-strong);
+}
+
+/* Money: expected against budget as a meter (spent and paid inside it, the budget as a check mark). */
+.look-tip-money > span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.look-tip-meter {
+  position: relative;
+  height: 0.42rem;
+  border-radius: var(--radius-pill);
+  background: var(--line-soft);
+}
+
+.look-tip-meter > span {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-radius: var(--radius-pill);
+}
+
+.look-tip-meter-expected {
+  background: var(--accent-line);
+}
+
+.look-tip-meter.is-over .look-tip-meter-expected {
+  background: var(--danger-line);
+}
+
+.look-tip-meter-spent {
+  background: var(--accent);
+}
+
+.look-tip-meter-paid {
+  background: var(--success);
+}
+
+.look-tip-meter-budget {
+  inset-block: -0.18rem !important;
+  width: 2px;
+  border-radius: 1px !important;
+  background: var(--ink);
+}
+
+/* The fix and payment tracker, with its sentence. */
+.look-tip-tracker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.6rem 0.65rem 0.65rem;
+  border-radius: var(--radius-md);
+  background: var(--tone-soft, var(--surface-sunken));
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--tone, var(--line)) 20%, transparent);
+}
+
+.look-tip-tracker-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.look-tip-tracker-head span {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-soft);
+}
+
+.look-tip-tracker-head strong {
+  font-size: var(--fs-sm);
+  color: var(--ink);
+}
+
+.look-tip-hint {
+  font-size: var(--fs-2xs);
+  color: var(--ink-faint);
+}
+
+/* Dependency card */
+
+.look-dep-tip {
+  min-width: 15rem;
+  border-top-color: var(--accent);
+}
+
+.look-dep-kind {
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  color: var(--accent);
+}
+
+.look-dep-ends {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.look-dep-task {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-md);
+  background: color-mix(in oklch, var(--look-phase) 12%, var(--surface));
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+  font-size: var(--fs-sm);
+}
+
+.look-dep-task i {
+  color: var(--look-phase);
+  font-size: var(--fs-2xs);
+}
+
+.look-dep-arrow {
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.look-dep-sentence {
+  color: var(--ink-soft);
+}
+
+/* The drag / resize / create tooltips Bryntum shows while editing on the timeline */
+
+.b-tooltip.b-gantt-task-drag-tooltip,
+.b-tooltip.b-sch-tip-valid,
+.b-tooltip.b-sch-tip-invalid {
+  --b-popup-border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  font-size: var(--fs-sm);
+}
+
+/* Collapsed-cell editors (schedule, costs) ---------------------------------------------------- */
+
+.b-popup.look-editor {
+  --b-popup-background: var(--surface);
+  --b-popup-border-radius: var(--radius-lg);
+  --b-panel-header-background: var(--surface);
+  --b-panel-header-color: var(--ink);
+  --b-panel-header-padding: 0.85rem 1rem 0.2rem;
+  --b-panel-bottom-toolbar-background: var(--surface-sunken);
+  --b-label-color: var(--ink-soft);
+  --b-label-font-size: var(--fs-xs);
+  --b-label-font-weight: var(--fw-strong);
+  --b-slider-color: var(--accent);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-lg);
+}
+
+.b-popup.look-editor .b-panel-header .b-header-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.look-editor-title {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-heavy);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.look-editor-subtitle {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--ink-faint);
+}
+
+.b-popup.look-editor .b-panel-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 0.8rem;
+  padding: 0.75rem 1rem 1rem;
+}
+
+.b-popup.look-editor .look-editor-progress,
+.b-popup.look-editor .look-editor-actuals {
+  grid-column: 1 / -1;
+}
+
+.look-editor-actuals {
+  display: flex;
+  gap: 1rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+}
+
+.look-editor-actuals span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.look-editor-actuals .fa-paypal {
+  color: var(--paypal-navy);
+}
+
+.b-popup.look-editor .b-bottom-toolbar {
+  border-top: 1px solid var(--line);
+}
+
+.look-editor-hint {
+  flex: 1 1 auto;
+  font-size: var(--fs-xs);
+  color: var(--ink-faint);
+}
+
+.b-popup.look-editor {
+  --b-panel-header-text-align: start;
+  --b-slider-value-background: var(--accent);
+  --b-slider-thumb-color: var(--accent);
+  font-size: var(--fs-md);
+}
+
+.b-popup.look-editor .b-label,
+.b-popup.look-editor .b-field > label {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+  color: var(--ink-soft);
+}
+
+.b-popup.look-editor input {
+  font-size: var(--fs-md);
+}
+
+.b-popup.look-editor .b-button {
+  font-size: var(--fs-sm);
+}
+
+/* Bryntum lays the dependency tooltip out as a label/value grid; the card brings its own layout. */
+.b-tooltip.look-dep-tooltip .b-popup-content,
+.b-tooltip.look-dep-tooltip .b-tooltip-content {
+  display: block;
+}
+
+.look-dep-ends {
+  flex-wrap: nowrap;
+}
+
+.look-dep-task {
+  min-width: 0;
+  max-width: 12rem;
+}
+
+.look-dep-task span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Bryntum's fields draw their own focus border. The app's focus ring on the input inside one is clipped
+   by the field except beside the trigger, where it shows as a stray line. */
+.b-field-inner input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Date pickers (every date field: task panel, schedule popup, grid cells) ---------------------- */
+/* Compact, the app's type scale, weekends visibly quieter, today and the chosen day distinct. */
+
+.b-date-picker {
+  --b-date-picker-min-width: 17.5rem;
+  --b-date-picker-color: var(--ink);
+  --b-date-picker-toolbar-color: var(--ink);
+  --b-date-picker-toolbar-font-size: var(--fs-md);
+  --b-date-picker-title-font-weight: var(--fw-strong);
+  --b-date-picker-header-padding: 0.35rem 0.4rem;
+  --b-date-picker-day-color: var(--ink-soft);
+  --b-date-picker-day-font-size: var(--fs-2xs);
+  --b-date-picker-date-font-size: var(--fs-sm);
+  --b-date-picker-date-padding: 0;
+  --b-date-picker-cell-margin-block: 0;
+  --b-date-picker-date-hover-background: var(--accent-soft);
+  --b-date-picker-date-hover-color: var(--accent);
+  --b-date-picker-selected-background: var(--accent);
+  --b-date-picker-selected-color: var(--surface);
+  --b-date-picker-selected-font-weight: var(--fw-heavy);
+  --b-date-picker-selected-hover-background: var(--accent-strong);
+  --b-date-picker-today-background: transparent;
+  --b-date-picker-today-border: 1.5px solid var(--accent);
+  --b-date-picker-today-color: var(--accent);
+  --b-date-picker-today-font-weight: var(--fw-heavy);
+  --b-calendar-panel-other-month-color: var(--gray-400);
+  --b-calendar-panel-gap: 0;
+  --b-calendar-panel-weeks-gap: 0;
+  --b-popup-border-radius: var(--radius-lg);
+  font-size: var(--fs-sm);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-lg);
+}
+
+/* One even grid: the hover and the chosen day fill their cell, with no gaps between columns or rows. */
+.b-date-picker .b-date-picker-cell-inner {
+  width: 100%;
+  min-width: 0;
+  height: 2rem;
+  aspect-ratio: auto;
+  border-radius: var(--radius-sm);
+}
+
+/* Saturdays and Sundays: shaded, still pickable (the site calendar works Saturdays). */
+.b-date-picker .b-calendar-panel-cell.b-non-working-day {
+  color: var(--ink-soft);
+  background: color-mix(in oklch, var(--line) 30%, transparent);
+}
+
+.b-date-picker .b-calendar-day-header.b-non-working-day {
+  color: var(--ink-faint);
+}
+
+.b-date-picker .b-calendar-panel-cell.b-non-working-day.b-other-month:not(:hover) {
+  color: var(--gray-400);
+}
+
+/* Bryntum gives every hovered cell the hover color, the chosen day included, which then matches its own background. */
+.b-date-picker .b-calendar-panel-cell:hover {
+  color: var(--accent-strong);
+}
+
+.b-date-picker .b-calendar-panel-cell.b-selected-date,
+.b-date-picker .b-calendar-panel-cell.b-selected-date:hover {
+  color: var(--accent-ink);
+}
+
+.b-date-picker .b-calendar-panel-cell.b-selected-date:hover {
+  --b-date-picker-date-background: var(--accent-strong);
+}
+
+.b-date-picker .b-calendar-day-header,
+.b-date-picker .b-calendar-day-header > div {
+  font-weight: var(--fw-strong);
+  text-transform: none;
+}
+
+.b-date-picker .b-week-number-cell {
+  display: none;
+}
+
+/* What a fill or a clear did: one line over the bottom of the plan for a few seconds. */
+.gantt-cell-notice {
+  position: absolute;
+  bottom: 0.9rem;
+  left: 50%;
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: min(42rem, calc(100% - 2rem));
+  margin: 0;
+  padding: 0.45rem 0.5rem 0.45rem 0.8rem;
+  border-radius: var(--radius-md);
+  color: var(--ink-inverse);
+  background: var(--gray-800);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--fs-sm);
+  transform: translateX(-50%);
+  animation: gantt-notice-in var(--dur) var(--ease-out);
+}
+
+.gantt-cell-notice.is-ok > .fa {
+  color: var(--success-line);
+}
+
+.gantt-cell-notice.is-error > .fa {
+  color: var(--danger-line);
+}
+
+.gantt-cell-notice button {
+  border: 0;
+  color: var(--gray-400);
+  background: none;
+  cursor: pointer;
+}
+
+@keyframes gantt-notice-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+}

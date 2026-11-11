@@ -1,0 +1,178 @@
+/*
+ * Design tokens: the only place colors, type, space, radii, shadows and motion are defined.
+ * Every other stylesheet uses these roles; docs/DESIGN.md explains when to use which.
+ *
+ * Color has meaning. Structure is quiet (neutrals tinted toward the cobalt accent, muted phase
+ * colors); state is loud. Red means danger or "needs attention" and nothing else: it is never a
+ * phase, crew, task or decoration color.
+ */
+@import '@fontsource-variable/archivo/wdth.css';
+
+:root {
+  /* Type -------------------------------------------------------------------------------------- */
+  --font-ui: 'Archivo Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  /* Names and headings use the wide cut of the same family (signage); UI text the normal width. */
+  --stretch-display: 112%;
+  --stretch-ui: 100%;
+  /* Narrow cut for dense grid cells where names would otherwise be cut short. */
+  --stretch-dense: 94%;
+
+  /* Every font size in the app is one of these (11px is the smallest text). */
+  --fs-2xs: 0.6875rem;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.8125rem;
+  --fs-md: 0.875rem;
+  --fs-lg: 1rem;
+  --fs-xl: 1.125rem;
+  --fs-2xl: 1.375rem;
+  --fs-3xl: 1.75rem;
+
+  --fw-regular: 420;
+  --fw-medium: 540;
+  --fw-strong: 640;
+  --fw-heavy: 760;
+
+  /* Space: a 4px scale. Use gap between siblings. */
+  --space-3xs: 0.125rem;
+  --space-2xs: 0.25rem;
+  --space-xs: 0.375rem;
+  --space-sm: 0.5rem;
+  --space-md: 0.75rem;
+  --space-lg: 1rem;
+  --space-xl: 1.5rem;
+  --space-2xl: 2rem;
+  --space-3xl: 3rem;
+
+  /* Radii: crisp, not bubbly. */
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius-md: 7px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-pill: 999px;
+
+  /* Control heights. */
+  --control-sm: 1.625rem;
+  --control-md: 2rem;
+  --control-lg: 2.5rem;
+
+  /* Neutrals (tinted toward hue 255). ------------------------------------------------------------ */
+  --gray-0: oklch(0.995 0.002 255);
+  --gray-25: oklch(0.982 0.003 255);
+  --gray-50: oklch(0.968 0.005 255);
+  --gray-100: oklch(0.948 0.006 255);
+  --gray-200: oklch(0.91 0.008 255);
+  --gray-300: oklch(0.86 0.011 255);
+  --gray-400: oklch(0.74 0.016 255);
+  --gray-500: oklch(0.53 0.022 255);
+  --gray-600: oklch(0.42 0.025 255);
+  --gray-700: oklch(0.34 0.024 255);
+  --gray-800: oklch(0.27 0.022 255);
+  --gray-900: oklch(0.21 0.02 255);
+
+  /* Roles: text and surfaces. */
+  --ink: var(--gray-900);
+  /* Secondary text: 8:1 on white. */
+  --ink-soft: var(--gray-600);
+  /* Tertiary text and icons: 5.3:1 on white (AA). Use --line for decoration, never for text. */
+  --ink-faint: var(--gray-500);
+  --ink-disabled: var(--gray-400);
+  --ink-inverse: var(--gray-0);
+  --surface: var(--gray-0);
+  --surface-raised: var(--gray-0);
+  --surface-sunken: var(--gray-25);
+  --surface-hover: var(--gray-50);
+  --canvas: var(--gray-50);
+  --line: var(--gray-200);
+  --line-soft: var(--gray-100);
+  --line-strong: var(--gray-300);
+
+  /* Accent: selection, focus, links, "in progress". Not for primary buttons (those are ink). */
+  --accent: oklch(0.52 0.17 260);
+  --accent-strong: oklch(0.44 0.16 262);
+  --accent-soft: oklch(0.955 0.02 260);
+  --accent-line: oklch(0.84 0.06 260);
+  --accent-ink: var(--gray-0);
+
+  /* State. Each has: strong (text, icons, fills carrying white text), soft (backgrounds), line. */
+  --danger: oklch(0.55 0.2 27);
+  --danger-strong: oklch(0.47 0.18 27);
+  --danger-soft: oklch(0.965 0.018 27);
+  --danger-line: oklch(0.85 0.07 27);
+  --warning: oklch(0.55 0.12 65);
+  --warning-fill: oklch(0.8 0.14 80);
+  --warning-soft: oklch(0.972 0.032 88);
+  --warning-line: oklch(0.86 0.08 80);
+  --success: oklch(0.52 0.12 152);
+  --success-fill: oklch(0.62 0.14 152);
+  --success-soft: oklch(0.965 0.03 155);
+  --success-line: oklch(0.85 0.07 155);
+  --info: var(--accent);
+  --info-soft: var(--accent-soft);
+  --info-line: var(--accent-line);
+
+  /* Categories (phases, task colors): muted, carry white text at 5:1+, never red/orange/pink. */
+  --cat-0: oklch(0.52 0.09 255);
+  --cat-1: oklch(0.52 0.08 200);
+  --cat-2: oklch(0.52 0.075 140);
+  --cat-3: oklch(0.5 0.09 315);
+  --cat-4: oklch(0.48 0.03 250);
+  --cat-5: oklch(0.48 0.11 285);
+  --cat-none: var(--gray-500);
+
+  /* The brand mark: hi-vis yellow on ink, used for the logo only. */
+  --brand-mark: oklch(0.86 0.17 95);
+  --brand-mark-ink: var(--gray-900);
+  --header: var(--gray-900);
+  --header-ink: var(--gray-0);
+  --header-ink-soft: oklch(0.78 0.015 255);
+  --header-line: oklch(0.32 0.022 255);
+  --header-raised: oklch(0.27 0.022 255);
+
+  /* PayPal's own colors (brand guidelines); used only on PayPal surfaces. */
+  --paypal-navy: #003087;
+  --paypal-blue: #0070e0;
+  --paypal-sky: #009cde;
+  --paypal-ink: #2c2e2f;
+
+  /* The odds (odds panel and its marks on the chart): runs that hand over by the contract date, and runs after it.
+   * Checked as a pair for color-blind separation and 3:1 contrast on the surface. */
+  --odds-on-time: oklch(0.58 0.105 185);
+  --odds-late: oklch(0.66 0.15 66);
+
+  /* Elevation. */
+  --shadow-xs: 0 1px 2px oklch(0.21 0.02 255 / 0.06);
+  --shadow-sm: 0 1px 2px oklch(0.21 0.02 255 / 0.06), 0 2px 6px -2px oklch(0.21 0.02 255 / 0.1);
+  --shadow-md: 0 0 0 1px oklch(0.21 0.02 255 / 0.07), 0 10px 24px -10px oklch(0.21 0.02 255 / 0.28);
+  --shadow-lg: 0 0 0 1px oklch(0.21 0.02 255 / 0.07), 0 24px 48px -16px oklch(0.21 0.02 255 / 0.4);
+  --focus-ring: 0 0 0 2px var(--surface), 0 0 0 4px oklch(0.52 0.17 260 / 0.55);
+
+  /* Motion. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --dur-slow: 320ms;
+
+  /* Aliases still in use. ------------------------------------------------------------------------ */
+  --paper: var(--surface);
+  --look-phase: var(--cat-none);
+}
+
+/* Phase colors, by the phase's position in the plan. */
+.look-phase-0 { --look-phase: var(--cat-0); }
+.look-phase-1 { --look-phase: var(--cat-1); }
+.look-phase-2 { --look-phase: var(--cat-2); }
+.look-phase-3 { --look-phase: var(--cat-3); }
+.look-phase-4 { --look-phase: var(--cat-4); }
+.look-phase-5 { --look-phase: var(--cat-5); }
+.look-phase-none { --look-phase: var(--cat-none); }
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur: 0ms;
+    --dur-slow: 0ms;
+  }
+}

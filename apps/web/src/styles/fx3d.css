@@ -1,0 +1,1103 @@
+/*
+ * The 3D view (gantt/fx3d); ?fx=off leaves it out. Tokens only, and the same rule as
+ * everywhere: red means danger, so amber marks a machine that is waiting.
+ */
+
+/* One canvas over the whole window. It takes the pointer only while the board or a room is open. */
+.fx3d-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  touch-action: none;
+}
+
+.fx3d-canvas.is-live {
+  pointer-events: auto;
+  cursor: grab;
+}
+
+.fx3d-canvas.is-live:active {
+  cursor: grabbing;
+}
+
+/* While a model or the board is open the chart fades away behind the table. */
+html.fx3d-table,
+html.fx3d-table body {
+  overflow: hidden;
+  background: var(--gray-900);
+}
+
+html.fx3d-table #root {
+  pointer-events: none;
+  user-select: none;
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.fx3d-slot .b-gantt-task {
+  opacity: 0;
+}
+
+/* The side panel's place is held in the page while it is over the scene. */
+.inspector-spot.is-holding {
+  display: block;
+  flex: 0 0 auto;
+}
+
+/* The side panel over the scene: it takes the diary's corner, reaching down to the controls, under a bar of its own. */
+.inspector-host.is-lifted > .inspector {
+  position: fixed;
+  top: calc(var(--space-md) + var(--fx3d-panelbar-height));
+  right: var(--space-md);
+  bottom: calc(var(--fx3d-bar-height, 13.5rem) + var(--space-md));
+  z-index: 9100;
+  overflow: hidden;
+  border: 1px solid var(--ink);
+  border-radius: 0 0 var(--radius-xs) var(--radius-xs);
+}
+
+.inspector-host.is-lifted {
+  --fx3d-panelbar-height: 2.5rem;
+}
+
+.fx3d-panelbar {
+  position: fixed;
+  top: var(--space-md);
+  right: var(--space-md);
+  z-index: 9100;
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-3xs);
+  /* As wide as the panel under it, with the panel's own border. */
+  box-sizing: border-box;
+  width: calc(clamp(340px, 28vw, 430px) + 2px);
+  height: var(--fx3d-panelbar-height);
+  padding: 0 var(--space-xs);
+  border: 1px solid var(--ink);
+  border-bottom: 0;
+  border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+  background: var(--surface);
+}
+
+/* Remy's crane, beside Remy's name in the 3D view. */
+.remy-mark.fx3d-mark {
+  display: inline-block;
+  flex: none;
+  width: 1.2em;
+  height: 1.2em;
+  vertical-align: -0.25em;
+}
+
+.fx3d-panelbar-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: 0 var(--space-xs);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--fs-sm);
+}
+
+.fx3d-panelbar-tab[hidden] {
+  display: none;
+}
+
+.fx3d-panelbar-tab:hover {
+  color: var(--ink);
+}
+
+.fx3d-panelbar-tab[aria-pressed='true'] {
+  border-bottom-color: var(--ink);
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+}
+
+.fx3d-panelbar-close {
+  align-self: center;
+  margin-left: auto;
+}
+
+/* It slides in from the right, as a drawer does, and back out the same way. */
+.inspector-host.is-lifted > .inspector,
+.inspector-host.is-lifted > .fx3d-panelbar {
+  animation: fx3d-panel-in var(--dur-slow) var(--ease-out) both;
+}
+
+.inspector-host.is-leaving > .inspector,
+.inspector-host.is-leaving > .fx3d-panelbar {
+  animation: fx3d-panel-out var(--dur-slow) var(--ease-out) both;
+}
+
+@keyframes fx3d-panel-in {
+  from {
+    transform: translateX(calc(100% + var(--space-md)));
+  }
+
+  to {
+    transform: none;
+  }
+}
+
+@keyframes fx3d-panel-out {
+  from {
+    transform: none;
+  }
+
+  to {
+    transform: translateX(calc(100% + var(--space-md)));
+  }
+}
+
+/* The date pickers and lists of what is in the panel open over the scene too. */
+html.fx3d-table .b-float-root {
+  z-index: 9300;
+}
+
+.inspector-host.is-lifted .inspector-panel {
+  border-right: 0;
+}
+
+.inspector-host.is-lifted .inspector-rail {
+  display: none;
+}
+
+html.fx3d-panel-open .fx3d-diary,
+html.fx3d-panel-open .fx3d-viewpad {
+  display: none;
+}
+
+/* What someone pointing at tasks from outside the scene was brought to. */
+.fx3d-caption {
+  position: fixed;
+  top: 4.5rem;
+  left: var(--space-md);
+  z-index: 9100;
+  display: grid;
+  gap: var(--space-2xs);
+  justify-items: start;
+  width: min(24rem, 40vw);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  font-size: var(--fs-sm);
+  pointer-events: none;
+  animation: fx3d-caption-in var(--dur-slow) var(--ease-out) both;
+}
+
+.fx3d-caption[hidden] {
+  display: none;
+}
+
+.fx3d-caption > p {
+  margin: 0;
+}
+
+@keyframes fx3d-caption-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.4rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* In the empty stretch of the chart's own toolbar, between the search box and View. */
+.fx3d-dock {
+  position: fixed;
+  top: 3.6rem;
+  left: 22rem;
+  z-index: 9100;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+/* In the toolbar it takes its place among the rest. */
+[data-fx3d-slot] .fx3d-dock {
+  position: static;
+}
+
+html[data-fx3d='site'] .fx3d-dock {
+  display: none;
+}
+
+/* The site board's controls, under the table: the date rail is the heart of them. */
+.fx3d-sitebar {
+  position: fixed;
+  left: var(--space-md);
+  right: var(--space-md);
+  bottom: var(--space-sm);
+  z-index: 9100;
+  display: grid;
+  gap: var(--space-2xs);
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  opacity: 0;
+  transform: translateY(0.75rem);
+  transition:
+    opacity var(--dur-slow) var(--ease-out),
+    transform var(--dur-slow) var(--ease-out);
+  pointer-events: none;
+}
+
+.fx3d-sitebar.is-shown {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.fx3d-siterow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.fx3d-siterow [hidden] {
+  display: none;
+}
+
+.fx3d-siterow .segmented > button[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--ink-inverse);
+}
+
+.fx3d-siterow .segmented > button:disabled {
+  color: var(--ink-disabled);
+  cursor: not-allowed;
+}
+
+.fx3d-legend {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2xs) var(--space-md);
+  min-width: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+}
+
+.fx3d-legend > span,
+.fx3d-railkey > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+
+.fx3d-legend i,
+.fx3d-railkey i {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 2px;
+}
+
+.fx3d-railkey {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2xs) var(--space-md);
+  color: var(--ink-soft);
+  font-size: var(--fs-2xs);
+}
+
+.fx3d-railkey i.is-dot {
+  border-radius: 50%;
+}
+
+.fx3d-railkey i.is-line {
+  width: 2px;
+}
+
+.fx3d-railkey i.is-diamond {
+  transform: rotate(45deg) scale(0.8);
+}
+
+.fx3d-railkey i.is-triangle {
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  border-radius: 0;
+}
+
+.fx3d-directions {
+  margin-left: auto;
+  color: var(--ink-faint);
+}
+
+/* The rail itself: it is the slider, so anywhere on it sets the date. */
+.fx3d-rail {
+  position: relative;
+  width: 100%;
+  cursor: ew-resize;
+  touch-action: none;
+  user-select: none;
+  font-family: var(--font-ui);
+  outline-offset: 2px;
+}
+
+.fx3d-rail svg {
+  display: block;
+  font-variant-numeric: tabular-nums;
+}
+
+.fx3d-rail-tip {
+  position: absolute;
+  bottom: calc(100% + var(--space-2xs));
+  max-width: 26rem;
+  padding: var(--space-3xs) var(--space-xs);
+  border-radius: var(--radius-xs);
+  background: var(--ink);
+  color: var(--ink-inverse);
+  font-size: var(--fs-2xs);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.fx3d-rail-tip[hidden] {
+  display: none;
+}
+
+/* Where you are, and each way on from here. */
+.fx3d-nav {
+  position: fixed;
+  top: var(--space-md);
+  left: var(--space-md);
+  z-index: 9100;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  max-width: calc(100vw - 22rem);
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease-out);
+  pointer-events: none;
+}
+
+.fx3d-nav.is-shown {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.fx3d-trail {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  margin: 0;
+  padding: var(--space-2xs) var(--space-sm);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  list-style: none;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+}
+
+.fx3d-trail li + li::before {
+  content: '›';
+  margin-right: var(--space-2xs);
+  color: var(--ink-faint);
+}
+
+.fx3d-trail button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-strong);
+  font: inherit;
+  cursor: pointer;
+}
+
+.fx3d-trail button:hover {
+  text-decoration: underline;
+}
+
+.fx3d-onward {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+}
+
+.fx3d-onward .button {
+  gap: var(--space-xs);
+}
+
+/* The site diary: what this date means, in the board's top corner. */
+.fx3d-diary {
+  position: fixed;
+  top: var(--space-md);
+  right: var(--space-md);
+  z-index: 9100;
+  display: grid;
+  gap: var(--space-xs);
+  width: 18.5rem;
+  max-height: calc(100vh - var(--fx3d-bar-height, 13.5rem) - 9rem);
+  overflow: auto;
+  padding: var(--space-md);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease-out);
+  pointer-events: none;
+}
+
+.fx3d-diary.is-shown {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.fx3d-diary h2 {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-stretch: var(--stretch-display);
+  font-weight: var(--fw-heavy);
+  line-height: 1.2;
+}
+
+.fx3d-diary-sub {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.fx3d-diary-part {
+  display: grid;
+  gap: var(--space-3xs);
+  padding-top: var(--space-xs);
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-xs);
+}
+
+.fx3d-diary-part small {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.fx3d-diary-part p {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.fx3d-diary .is-caution {
+  color: var(--warning);
+  font-weight: var(--fw-medium);
+}
+
+.fx3d-diary .is-danger {
+  color: var(--danger);
+  font-weight: var(--fw-medium);
+}
+
+.fx3d-facts {
+  display: grid;
+  gap: var(--space-2xs);
+  padding-top: var(--space-xs);
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-xs);
+}
+
+.fx3d-facts > div {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr;
+  gap: var(--space-xs);
+}
+
+.fx3d-facts small {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.fx3d-diary > .pill {
+  justify-self: start;
+  margin: 0;
+  white-space: normal;
+}
+
+.fx3d-diary .fx3d-card-actions {
+  margin-top: 0;
+}
+
+.fx3d-paypal-logo {
+  display: block;
+  height: 0.875rem;
+}
+
+/* Words pinned to the models: the board's own labels, kept short and upright. */
+.fx3d-tags {
+  position: fixed;
+  inset: 0;
+  z-index: 9050;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.fx3d-tag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0.0625rem var(--space-xs);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px oklch(0.21 0.02 255 / 0.35);
+}
+
+.fx3d-tag[data-tone='danger'] {
+  background: var(--danger);
+  color: var(--gray-0);
+}
+
+.fx3d-tag[data-tone='caution'] {
+  background: var(--warning-fill);
+  color: var(--ink);
+}
+
+.fx3d-tag[data-tone='paypal'] {
+  background: var(--paypal-blue);
+  color: var(--gray-0);
+}
+
+/* Ready to pay: something to do, in ink like the button that reviews it. */
+.fx3d-tag[data-tone='ready'] {
+  background: var(--ink);
+  color: var(--ink-inverse);
+}
+
+.fx3d-tag[data-tone='good'] {
+  background: var(--success-fill);
+  color: var(--surface);
+}
+
+/* A fix has landed: how it came out, and whether to go and pay for it. */
+.fx3d-offer {
+  position: fixed;
+  top: 4.5rem;
+  left: var(--space-md);
+  z-index: 9100;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-xs) var(--space-sm);
+  width: min(24rem, 40vw);
+  padding: var(--space-md);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  font-size: var(--fs-sm);
+}
+
+.fx3d-offer[hidden] {
+  display: none;
+}
+
+.fx3d-offer > i {
+  padding-top: 0.2em;
+  color: var(--ink-soft);
+}
+
+.fx3d-offer > p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.fx3d-offer-actions {
+  display: flex;
+  grid-column: 2;
+  gap: var(--space-xs);
+}
+
+/* An issue that is not happening on this date stays on the board, but steps back. */
+.fx3d-tag[data-live='false'] {
+  background: var(--surface);
+  color: var(--ink-soft);
+  outline: 1px solid var(--line-strong);
+}
+
+.fx3d-tag[style*='pointer-events: auto'] {
+  cursor: pointer;
+}
+
+.fx3d-card {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9200;
+  display: grid;
+  gap: var(--space-2xs);
+  width: 17.5rem;
+  padding: var(--space-sm);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  font-size: var(--fs-xs);
+  transform: translate(var(--x, 0), var(--y, 0));
+  pointer-events: none;
+}
+
+.fx3d-card[hidden],
+.fx3d-tag[hidden] {
+  display: none;
+}
+
+.fx3d-card > b {
+  font-size: var(--fs-sm);
+  font-stretch: var(--stretch-display);
+}
+
+.fx3d-card > div {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr;
+  gap: var(--space-xs);
+}
+
+.fx3d-card small {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.fx3d-card .pill {
+  justify-self: start;
+  margin: 0;
+}
+
+.fx3d-card.is-pinned {
+  pointer-events: auto;
+}
+
+.fx3d-card-hint {
+  margin-top: var(--space-2xs);
+}
+
+.fx3d-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+  margin-top: var(--space-2xs);
+}
+
+.fx3d-card .fx3d-pay {
+  min-height: var(--control-sm);
+}
+
+/* The way back to a piece of work only exists after leaving one: `.button` must not bring it back as a blank. */
+.fx3d-dock [hidden] {
+  display: none;
+}
+
+/* Zoom, turn and tilt, for anyone without the gesture to hand. */
+.fx3d-viewpad {
+  position: fixed;
+  right: var(--space-md);
+  bottom: calc(var(--fx3d-bar-height, 13.5rem) + var(--space-md));
+  z-index: 9100;
+  display: none;
+  grid-template-columns: repeat(2, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+}
+
+html.fx3d-panels .fx3d-viewpad {
+  display: grid;
+}
+
+.fx3d-viewpad button {
+  display: grid;
+  place-items: center;
+  width: var(--control-sm);
+  height: var(--control-sm);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  touch-action: none;
+}
+
+.fx3d-viewpad button:nth-child(odd) {
+  border-right: 1px solid var(--line);
+}
+
+.fx3d-viewpad button:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.fx3d-viewpad button:hover {
+  background: var(--surface-hover);
+}
+
+.fx3d-viewpad button:active {
+  background: var(--ink);
+  color: var(--ink-inverse);
+}
+
+/* The board's labels: the same size at every zoom, as a map's are. */
+.fx3d-plates {
+  position: fixed;
+  inset: 0;
+  z-index: 9040;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.fx3d-plates.is-leaving {
+  display: none;
+}
+
+.fx3d-plate {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  gap: 1px;
+  width: max-content;
+  max-width: 9.5rem;
+  color: var(--ink-soft);
+  font-size: var(--fs-2xs);
+  /* A halo instead of a box, as a map's labels have: it reads over anything and covers nothing. */
+  text-shadow:
+    0 0 2px oklch(0.985 0.004 95),
+    0 0 2px oklch(0.985 0.004 95),
+    0 0 4px oklch(0.985 0.004 95),
+    0 0 6px oklch(0.985 0.004 95 / 0.8);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+}
+
+.fx3d-plate[hidden] {
+  display: none;
+}
+
+/* Work someone was just brought to: its name stands out from the rest of the map. */
+.fx3d-plate.is-pointed-at {
+  z-index: 2;
+  max-width: 13rem;
+  padding: var(--space-3xs) var(--space-2xs);
+  border-radius: var(--radius-xs);
+  background: var(--ink);
+  color: var(--surface);
+  text-shadow: none;
+}
+
+.fx3d-plate.is-pointed-at > b {
+  color: inherit;
+}
+
+.fx3d-plate > b {
+  color: var(--ink);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+}
+
+.fx3d-plate > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fx3d-plate i {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-right: var(--space-3xs);
+  border-radius: 2px;
+}
+
+.fx3d-plate i.is-dot {
+  border-radius: 50%;
+}
+
+.fx3d-plate[data-level='1'] {
+  max-width: 12rem;
+}
+
+.fx3d-plate[data-level='2'] {
+  max-width: 15rem;
+}
+
+.fx3d-plate.is-phase {
+  max-width: 6.5rem;
+}
+
+.fx3d-plate.is-phase > b {
+  font-stretch: var(--stretch-display);
+  white-space: normal;
+}
+
+.fx3d-plate [data-tone='strong'] {
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+}
+
+.fx3d-plate [data-tone='danger'] {
+  color: var(--danger);
+  font-weight: var(--fw-strong);
+}
+
+.fx3d-plate [data-tone='caution'] {
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+  background: linear-gradient(transparent 65%, var(--warning-fill) 65%);
+}
+
+.fx3d-plate [data-tone='paypal'] {
+  color: var(--paypal-blue);
+  font-weight: var(--fw-strong);
+}
+
+.fx3d-plate[data-quiet='true'] {
+  opacity: 0.5;
+}
+
+.fx3d-plate[style*='pointer-events: auto'] {
+  cursor: pointer;
+}
+
+/* The bar's own color, filling the screen for a moment on the way through it. */
+.fx3d-light {
+  position: fixed;
+  inset: 0;
+  z-index: 9030;
+  pointer-events: none;
+}
+
+.fx3d-light[hidden] {
+  display: none;
+}
+
+.fx3d-front-tag {
+  background: var(--ink);
+  color: var(--ink-inverse);
+}
+
+.fx3d-front-tag[hidden] {
+  display: none;
+}
+
+/* What else the board can show: it opens upward, since the bar sits along the bottom of the window. */
+.fx3d-show {
+  position: relative;
+  font-size: var(--fs-xs);
+}
+
+.fx3d-show > summary {
+  display: inline-flex;
+  align-items: center;
+  height: var(--control-sm);
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: var(--fw-medium);
+  list-style: none;
+  cursor: pointer;
+}
+
+.fx3d-show > summary::-webkit-details-marker {
+  display: none;
+}
+
+.fx3d-show > div {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + var(--space-2xs));
+  display: grid;
+  gap: var(--space-2xs);
+  width: 11rem;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.fx3d-show label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  cursor: pointer;
+}
+
+/* Where and when: the plan as a flowline, in the space the board has. */
+.fx3d-flowline {
+  position: fixed;
+  top: 3.25rem;
+  left: var(--space-md);
+  right: calc(18.5rem + var(--space-md) * 2);
+  bottom: calc(var(--fx3d-bar-height, 13.5rem) + var(--space-md));
+  z-index: 9060;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: var(--space-2xs);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  font-variant-numeric: tabular-nums;
+}
+
+.fx3d-flowline > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-sm);
+  font-size: var(--fs-xs);
+  color: var(--ink-soft);
+}
+
+.fx3d-flowline > header > b {
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  font-stretch: var(--stretch-display);
+}
+
+.fx3d-flowline > footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs) var(--space-md);
+  color: var(--ink-soft);
+  font-size: var(--fs-2xs);
+}
+
+.fx3d-flowline > footer span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+
+.fx3d-flowline > footer i {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+}
+
+/* The money chart: a stacked bar for each phase or firm, solid as far as the money has gone out. */
+.fx3d-diary.is-wide {
+  width: 24rem;
+}
+
+.fx3d-money-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+}
+
+.fx3d-money-head .segmented {
+  font-size: var(--fs-2xs);
+}
+
+.fx3d-money-head .segmented > button {
+  padding: 0 var(--space-xs);
+  height: 1.5rem;
+}
+
+.fx3d-money-head .segmented > button[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--ink-inverse);
+}
+
+.fx3d-money {
+  display: grid;
+  gap: var(--space-xs);
+  font-size: var(--fs-2xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.fx3d-money-row {
+  display: grid;
+  gap: 2px;
+}
+
+.fx3d-money-row > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  color: var(--ink-soft);
+}
+
+.fx3d-money-row b {
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+  white-space: nowrap;
+}
+
+.fx3d-money-bar {
+  display: flex;
+  gap: 2px;
+  height: 0.875rem;
+}
+
+.fx3d-money-seg {
+  position: relative;
+  display: block;
+  flex-basis: 0;
+  min-width: 2px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: color-mix(in oklch, var(--seg) 28%, var(--surface));
+}
+
+.fx3d-money-seg:first-child {
+  border-radius: 3px 0 0 3px;
+}
+
+.fx3d-money-seg:last-child {
+  border-radius: 0 3px 3px 0;
+}
+
+button.fx3d-money-seg {
+  cursor: pointer;
+}
+
+.fx3d-money-seg:hover {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+  z-index: 1;
+}
+
+.fx3d-money-seg > i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--seg);
+}
+
+.fx3d-money-readout {
+  min-height: 2.2em;
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+/* The moment an idle day's money goes out: it leaves its tile and is gone. */
+.fx3d-pop {
+  font-size: var(--fs-sm);
+  animation: fx3d-pop 1.15s var(--ease-out) forwards;
+}
+@keyframes fx3d-pop {
+  from {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  to {
+    transform: translate(-50%, calc(-50% - 4.5rem));
+    opacity: 0;
+  }
+}

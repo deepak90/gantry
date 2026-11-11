@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en-US" data-route="{{ROUTE}}">
+  <head>
+    <!-- @include head -->
+    <title>Privacy · Gantry</title>
+    <meta name="description" content="What happens to your information on Gantry: no accounts, no emails, visits counted without cookies, and every session wiped after the visit." />
+    <!-- @include social -->
+  </head>
+  <body>
+    <!-- @include header -->
+    <main id="main" class="doc" tabindex="-1">
+      <h1>Privacy</h1>
+      <p class="doc-meta">Updated November 10, 2026</p>
+      <p class="doc-lead">
+        Gantry is a demo built for the PayPal AI Hackathon. This page says, in plain words, what happens to your
+        information when you visit.
+      </p>
+
+      <h2>The short version</h2>
+      <ul>
+        <li><strong>No accounts and no emails.</strong> We never ask who you are.</li>
+        <li><strong>Visits are counted without cookies.</strong></li>
+        <li><strong>Your session is wiped after your visit</strong>, with everything you did in it.</li>
+        <li><strong>What you say to Remy goes to the AI companies that run her</strong>, listed below.</li>
+      </ul>
+
+      <h2>Counting visits</h2>
+      <p>
+        Vercel Web Analytics counts page views, and Vercel Speed Insights measures how fast the pages load. Neither
+        uses cookies. They record the page, where the visit came from, the country, and the kind of browser and
+        device, never who you are. We send them the page’s address only, without anything after it, so no link or
+        code to your session is ever recorded. Vercel explains what it collects in its
+        <a href="https://vercel.com/docs/analytics/privacy-policy">Web Analytics privacy notes</a>.
+      </p>
+
+      <h2>Your session</h2>
+      <p>
+        When you start a session, you get your own copy of the Harbor Street Offices plan. It’s kept in our database,
+        run by <a href="https://supabase.com/privacy">Supabase</a>, while you use it. Only the people you invite, with
+        the link or the session code, see it. After your visit it’s wiped, with the chat and everything you changed.
+      </p>
+      <p>You pick a name from our list; you never type one.</p>
+      <p>
+        Your browser keeps what the app needs to bring you back to your session (a teammate tab keeps its own until
+        you close it), and a few display settings, until you clear it. None of it is used to follow you anywhere else.
+      </p>
+      <p>
+        When a session code someone types matches no session, we note the time against their visit for 10 minutes,
+        to stop guessing.
+      </p>
+
+      <h2>Talking to Remy</h2>
+      <ul>
+        <li>
+          <strong>In the chat:</strong> the messages you send Remy go to Anthropic’s Claude, which writes her answers.
+        </li>
+        <li>
+          <strong>On a call:</strong> your voice goes to OpenAI, which makes out what you said. ElevenLabs turns
+          Remy’s written answers into her voice; it gets only her text, never yours. LiveKit carries the audio between
+          everyone on the call. We don’t record or keep the audio.
+        </li>
+      </ul>
+      <p>
+        Each of these companies handles what it receives under its own policy:
+        <a href="https://www.anthropic.com/legal/privacy">Anthropic</a>,
+        <a href="https://openai.com/policies/privacy-policy/">OpenAI</a>,
+        <a href="https://elevenlabs.io/privacy-policy">ElevenLabs</a> and
+        <a href="https://livekit.com/legal/privacy-policy">LiveKit</a>.
+        Please don’t tell Remy anything private.
+      </p>
+
+      <h2>Payments</h2>
+      <p>
+        Every payment runs on PayPal’s sandbox, which moves no real money. If a PayPal window opens, it’s PayPal’s
+        sandbox: sign in only with a sandbox test account, never your own PayPal login, and never enter real card
+        or bank details.
+      </p>
+
+      <h2>The film</h2>
+      <p>
+        The film plays in YouTube’s privacy-enhanced mode (youtube-nocookie.com), and nothing loads from YouTube
+        until you press play. After that, YouTube’s player works under
+        <a href="https://policies.google.com/privacy">Google’s privacy policy</a>.
+      </p>
+
+      <h2>Keeping the demo up</h2>
+      <p>
+        Vercel hosts the site and, like any web host, sees your IP address to send you the pages
+        (<a href="https://vercel.com/legal/privacy-notice">Vercel’s privacy notice</a>). Before a session starts,
+        Cloudflare Turnstile may check that a person, not a script, is asking
+        (<a href="https://www.cloudflare.com/privacypolicy/">Cloudflare’s privacy policy</a>).
+      </p>
+
+      <h2>Questions</h2>
+      <p>Ask on <a href="{{DEVPOST_URL}}">Gantry’s page on Devpost</a>.</p>
+    </main>
+    <!-- @include footer -->
+  </body>
+</html>

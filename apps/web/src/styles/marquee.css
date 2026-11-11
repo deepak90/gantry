@@ -1,0 +1,199 @@
+/* The assistant's start page: capability rows drifting in opposite directions, then a topic's questions. */
+
+.marquee {
+  display: grid;
+  gap: var(--space-sm);
+  width: 100%;
+  min-width: 0;
+}
+
+.marquee-rows {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.marquee-row {
+  overflow: hidden;
+  /* Cards fade in at one edge and out at the other instead of being cut off. */
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+}
+
+.marquee-track {
+  display: flex;
+  gap: var(--space-xs);
+  width: max-content;
+  padding-block: var(--space-3xs);
+  will-change: transform;
+}
+
+.marquee-track.is-left {
+  animation: marquee-left 46s linear infinite;
+}
+
+.marquee-track.is-right {
+  animation: marquee-right 52s linear infinite;
+}
+
+.marquee-row:hover .marquee-track,
+.marquee-row:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes marquee-left {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes marquee-right {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+
+.marquee-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+  min-height: 56px;
+  padding: var(--space-xs) var(--space-sm) var(--space-xs) var(--space-xs);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform var(--dur) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out);
+}
+
+.marquee-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-line);
+  box-shadow: var(--shadow-sm);
+}
+
+.marquee-card:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.marquee-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: var(--fs-sm);
+}
+
+.marquee-text {
+  display: grid;
+  gap: 1px;
+  white-space: nowrap;
+}
+
+.marquee-text strong {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+  font-stretch: var(--stretch-display);
+}
+
+.marquee-text span {
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+}
+
+.marquee-topic {
+  display: grid;
+  gap: var(--space-xs);
+  justify-items: start;
+}
+
+.marquee-back {
+  margin-left: calc(var(--space-xs) * -1);
+}
+
+.marquee-topic-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  margin: 0;
+  font-weight: var(--fw-strong);
+  font-stretch: var(--stretch-display);
+}
+
+.marquee-topic-title i {
+  color: var(--accent-strong);
+}
+
+.marquee-questions {
+  display: grid;
+  gap: var(--space-2xs);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.marquee-question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+
+.marquee-question i {
+  color: var(--ink-faint);
+  transition: color var(--dur-fast) var(--ease-out), transform var(--dur) var(--ease-out);
+}
+
+.marquee-question:hover {
+  border-color: var(--accent-line);
+  background: var(--surface-hover);
+}
+
+.marquee-question:hover i {
+  color: var(--accent-strong);
+  transform: translateY(-2px);
+}
+
+.marquee-question:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-row {
+    overflow-x: auto;
+    mask-image: none;
+  }
+  .marquee-track.is-left,
+  .marquee-track.is-right {
+    animation: none;
+  }
+  .marquee-card[aria-hidden='true'] {
+    display: none;
+  }
+  .marquee-card,
+  .marquee-card:hover {
+    transform: none;
+    transition: none;
+  }
+}

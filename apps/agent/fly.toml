@@ -1,0 +1,41 @@
+# The assistant service on Fly.io: one machine, always on, 1 GB. Deploy from the repo root (the image needs the
+# workspace), as the README says:
+#   fly deploy . --config apps/agent/fly.toml --dockerfile apps/agent/Dockerfile --ha=false
+# Its secrets (ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY; for check_with_paypal, PAYPAL_CLIENT_ID,
+# PAYPAL_CLIENT_SECRET and PAYPAL_MODE=live) are set with `fly secrets`, never here.
+
+app = "gantry-agent"
+primary_region = "iad"
+kill_signal = "SIGINT"
+kill_timeout = 10
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  GANTRY_HOSTED = "1"
+  # The plan's today: the film's day, as on the site (VITE_PLAN_DATE in the README). Times stay real.
+  GANTRY_PLAN_DATE = "2026-11-10"
+  AGENT_MODEL_ANALYSIS = "claude-sonnet-5-5"
+  AGENT_PROJECT_IDS = "00000000-0000-4000-8000-000000010001,00000000-0000-4000-8000-000000010002,00000000-0000-4000-8000-000000010003,00000000-0000-4000-8000-000000010004,00000000-0000-4000-8000-000000010005,00000000-0000-4000-8000-000000010006,00000000-0000-4000-8000-000000010007,00000000-0000-4000-8000-000000010008,00000000-0000-4000-8000-000000010009,00000000-0000-4000-8000-000000010010,00000000-0000-4000-8000-000000010011,00000000-0000-4000-8000-000000010012"
+  PORT = "8080"
+
+# Only the health check is served. Machines are never stopped or started by traffic: one runs all the time.
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "off"
+  auto_start_machines = false
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "30s"
+    interval = "30s"
+    method = "GET"
+    path = "/healthz"
+    timeout = "5s"
+
+[[vm]]
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 1

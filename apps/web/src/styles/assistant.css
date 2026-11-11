@@ -1,0 +1,2002 @@
+/*
+ * The Assistant tab (assistant/AssistantPanel.tsx, assistant/cards.tsx): a thread of people's
+ * messages and the assistant's replies, the reply being written (progress line, text with a caret,
+ * cards filling in), the cards themselves and the composer at the bottom.
+ *
+ * Buttons, pills, cards, notes, inputs, the popover and the segmented switch come from ui.css; this
+ * file lays them out and draws only what is the assistant's own (messages, card bodies, charts).
+ */
+
+.assistant-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--surface);
+}
+
+.assistant-thread {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-lg);
+  min-height: 0;
+  padding: var(--space-md) var(--space-md) var(--space-xl);
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  /* The thread follows new replies itself (AssistantPanel): the browser's own anchoring would move it as cards grow. */
+  overflow-anchor: none;
+}
+
+/* The assistant's mark: a solid ink tile (people get round avatars); cobalt while it works. */
+.assistant-orb {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-md);
+  color: var(--ink-inverse);
+  background: var(--ink);
+  font-size: var(--fs-2xs);
+  transition: background-color var(--dur) var(--ease-out);
+}
+
+.assistant-orb.is-large {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-lg);
+  font-size: var(--fs-lg);
+}
+
+/* Remy's crane sits on the tile; while Remy works, the trolley shuttles and a cobalt rim shows. */
+.assistant-orb .remy-mark {
+  width: 84%;
+  height: 84%;
+}
+
+.assistant-orb.is-busy {
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--accent) 45%, transparent);
+}
+
+.assistant-avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  color: var(--who-ink, var(--ink-inverse));
+  background: var(--who, var(--gray-500));
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-heavy);
+}
+
+/* Messages: the assistant's replies sit on the panel; people's messages are lightly tinted. */
+.assistant-msg {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: flex-start;
+  animation: assistant-in var(--dur) var(--ease-out);
+}
+
+@keyframes assistant-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.assistant-msg.is-mine {
+  flex-direction: row-reverse;
+}
+
+.assistant-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0 0 var(--space-3xs);
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.assistant-meta strong {
+  color: var(--ink);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+}
+
+.assistant-meta time {
+  margin-left: auto;
+  padding-left: var(--space-xs);
+}
+
+.assistant-bubble {
+  max-width: 82%;
+  padding: var(--space-xs) var(--space-md) var(--space-sm);
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) var(--radius-xs);
+  background: var(--surface-hover);
+}
+
+.assistant-msg.is-mine .assistant-bubble {
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-xs) var(--radius-lg);
+  background: var(--gray-100);
+}
+
+.assistant-bubble p,
+.assistant-text p {
+  margin: 0 0 var(--space-sm);
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.assistant-bubble p:last-child,
+.assistant-text p:last-child {
+  margin-bottom: 0;
+}
+
+.assistant-body {
+  display: grid;
+  flex: 1;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.assistant-text p {
+  font-size: var(--fs-md);
+  line-height: 1.55;
+}
+
+/* The reply being written */
+.assistant-text.is-streaming p:last-child::after {
+  content: '';
+  display: inline-block;
+  width: 0.45rem;
+  height: 1em;
+  margin-left: var(--space-3xs);
+  vertical-align: text-bottom;
+  border-radius: 1px;
+  background: var(--accent);
+  animation: assistant-caret 900ms steps(2) infinite;
+}
+
+@keyframes assistant-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+.assistant-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+}
+
+.assistant-dots {
+  display: inline-flex;
+  gap: var(--space-3xs);
+}
+
+.assistant-dots i {
+  width: 0.32rem;
+  height: 0.32rem;
+  border-radius: 50%;
+  background: currentColor;
+  animation: assistant-dot 1.1s ease-in-out infinite;
+}
+
+.assistant-dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.assistant-dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes assistant-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+/* Empty thread (an .empty-state): the mark, what to ask, a few questions to start with */
+.empty-state.assistant-empty {
+  gap: var(--space-md);
+  margin: auto 0;
+}
+
+/* The capability rows run the full width of the thread (their edges fade out). */
+.assistant-empty .marquee {
+  align-self: stretch;
+  margin-inline: calc(var(--space-md) * -1);
+}
+
+.assistant-empty .marquee-topic {
+  padding-inline: var(--space-md);
+}
+
+/* Errors */
+.note.assistant-error {
+  align-items: center;
+  margin: 0 var(--space-md) var(--space-sm);
+  font-size: var(--fs-xs);
+}
+
+.assistant-error > span {
+  flex: 1;
+}
+
+.note.assistant-error > .fa {
+  margin-top: 0;
+}
+
+.assistant-error-inline {
+  margin: 0;
+  color: var(--danger-strong);
+  font-size: var(--fs-xs);
+}
+
+/* Composer */
+.assistant-composer {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md) var(--space-md);
+}
+
+.assistant-composer textarea.input {
+  flex: 1;
+  min-height: var(--control-lg);
+  max-height: 140px;
+  padding: var(--space-sm) var(--space-md);
+  line-height: 1.4;
+  resize: none;
+}
+
+.assistant-composer .button.assistant-send {
+  width: var(--control-lg);
+  min-height: var(--control-lg);
+}
+
+/* Cards (a .card each) ------------------------------------------------------------------------ */
+
+.ac-card {
+  animation: assistant-in var(--dur) var(--ease-out);
+}
+
+/* An older card of a kind stays as a record: sunk back, still legible. */
+.ac-card.is-old {
+  border-color: var(--line-soft);
+  background: var(--surface-sunken);
+}
+
+/* A card still being written: a cobalt edge and pulsing placeholders. */
+.ac-card.is-partial {
+  border-color: var(--accent-line);
+}
+
+.ac-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ac-kicker.is-danger {
+  color: var(--danger-strong);
+}
+
+.ac-kicker.is-warning {
+  color: var(--warning);
+}
+
+.ac-title-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.ac-title-link:hover {
+  text-decoration: underline;
+}
+
+.ac-title {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--fs-md);
+  line-height: 1.35;
+}
+
+.ac-text,
+.ac-question {
+  margin: 0;
+  color: var(--gray-700);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.ac-muted {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.ac-skeleton {
+  display: block;
+  width: 70%;
+  height: 0.9rem;
+  border-radius: var(--radius-xs);
+  background: var(--line);
+  animation: ac-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes ac-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* Money the problem costs: flagged, so red */
+.ac-money {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--danger-line);
+  border-radius: var(--radius-md);
+  background: var(--danger-soft);
+}
+
+.ac-money span {
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+}
+
+.ac-money strong {
+  color: var(--danger-strong);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-heavy);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The rental, day by day */
+.ac-strip {
+  margin: 0;
+}
+
+.ac-strip figcaption {
+  margin-bottom: var(--space-2xs);
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+}
+
+.ac-strip ol {
+  display: flex;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ac-strip li {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  min-width: 0;
+  height: 1.55rem;
+  overflow: hidden;
+  border-radius: var(--radius-xs);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* Paid for and idle: hatched, as idle days are on the chart */
+.ac-strip li.is-idle {
+  color: var(--danger-strong);
+  background: repeating-linear-gradient(135deg, var(--danger-line) 0 4px, var(--danger-soft) 4px 8px);
+}
+
+.ac-strip li.is-work {
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.ac-strip li.is-weekend {
+  opacity: 0.55;
+}
+
+.ac-strip li.is-start {
+  box-shadow: inset 2px 0 0 var(--success);
+}
+
+.ac-strip-legend {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: var(--space-2xs) 0 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.ac-strip-legend span {
+  width: 0.6rem;
+  height: 0.6rem;
+  margin-left: var(--space-2xs);
+  border-radius: 2px;
+}
+
+.ac-strip-legend .is-idle {
+  background: repeating-linear-gradient(135deg, var(--danger-line) 0 3px, var(--danger-soft) 3px 6px);
+}
+
+.ac-strip-legend .is-work {
+  background: var(--success-soft);
+  box-shadow: inset 0 0 0 1px var(--success-line);
+}
+
+.ac-facts,
+.ac-schedule {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-xs) var(--space-md);
+  margin: 0;
+}
+
+.ac-schedule {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
+.ac-facts dt,
+.ac-schedule dt {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+}
+
+.ac-facts dd,
+.ac-schedule dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.ac-schedule .is-ok dd {
+  color: var(--success);
+}
+
+.ac-schedule .is-alert dd {
+  color: var(--danger-strong);
+}
+
+/* The remedy is a .note; it only sits flush in the card */
+.ac-remedy {
+  margin: 0;
+}
+
+.ac-actions,
+.ac-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+/* Inline links inside cards take the size of the text around them. */
+.ac-card .button.is-link {
+  font-size: inherit;
+}
+
+/* Today against with the fix */
+.ac-compare {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.ac-compare > div {
+  display: grid;
+  gap: var(--space-3xs);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
+.ac-compare .is-after {
+  border-color: var(--success-line);
+  background: var(--success-soft);
+}
+
+.ac-compare span {
+  color: var(--ink-soft);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+}
+
+.ac-compare strong {
+  color: var(--ink);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-heavy);
+  font-variant-numeric: tabular-nums;
+}
+
+.ac-compare .is-after strong {
+  color: var(--success);
+}
+
+.ac-compare small {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  line-height: 1.3;
+}
+
+.ac-compare > i {
+  color: var(--gray-400);
+}
+
+.ac-lines {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.ac-lines td {
+  padding: var(--space-2xs) 0;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--gray-700);
+}
+
+.ac-lines td:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-strong);
+}
+
+.ac-lines tr.is-saving td:last-child,
+.ac-lines tr.is-total td {
+  color: var(--success);
+  font-weight: var(--fw-heavy);
+}
+
+.ac-lines tr.is-total td {
+  border-bottom: 0;
+  font-size: var(--fs-md);
+}
+
+.ac-changed,
+.ac-assumptions {
+  display: grid;
+  gap: var(--space-2xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--gray-700);
+  font-size: var(--fs-xs);
+}
+
+.ac-changed i {
+  color: var(--ink-faint);
+}
+
+.ac-assumptions .pill {
+  margin-right: var(--space-xs);
+}
+
+/* The live approval chain inside a card: no second frame */
+.ac-approvals .chain {
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+}
+
+.ac-approvals .chain-head {
+  display: none;
+}
+
+/* How-to card (how-to-card.tsx): a clip of the real app, its steps under it */
+.ac-how-clip {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
+.ac-how-clip.is-waiting {
+  animation: ac-pulse 1.4s ease-in-out infinite;
+}
+
+.ac-how-clip video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The poster with one round button: reduced motion, or paused by the viewer */
+.ac-how-play {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  margin: auto;
+  padding: 0 0 0 0.15rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  font-size: var(--fs-lg);
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.ac-how-play:hover {
+  transform: scale(1.06);
+}
+
+.ac-how-controls {
+  position: absolute;
+  right: var(--space-xs);
+  bottom: var(--space-xs);
+  display: flex;
+  gap: var(--space-2xs);
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease-out);
+}
+
+/* Shown while the pointer is on the clip, while a control has focus, and whenever it is paused */
+.ac-how-clip:hover .ac-how-controls,
+.ac-how-controls:focus-within,
+.ac-how-clip:not(.is-playing) .ac-how-controls {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .ac-how-controls {
+    opacity: 1;
+  }
+}
+
+.ac-how-failed {
+  position: absolute;
+  inset: auto 0 0;
+  margin: 0;
+  padding: var(--space-xs) var(--space-sm);
+  color: var(--ink-soft);
+  background: var(--surface);
+  font-size: var(--fs-xs);
+}
+
+.ac-how-steps {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: how-step;
+}
+
+.ac-how-steps li {
+  display: grid;
+  grid-template-columns: 1.25rem 1fr;
+  gap: var(--space-sm);
+  align-items: start;
+  color: var(--gray-700);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  counter-increment: how-step;
+}
+
+.ac-how-steps li::before {
+  content: counter(how-step);
+  display: grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.05rem;
+  border-radius: var(--radius-pill);
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ac-how-clip.is-waiting,
+  .ac-how-play {
+    animation: none;
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assistant-dots i,
+  .ac-skeleton,
+  .assistant-text.is-streaming p:last-child::after {
+    animation: none;
+  }
+}
+
+/* Plan cards (plan-cards.tsx) -------------------------------------------------------------------- */
+
+.pc-task-list {
+  display: grid;
+  gap: var(--space-3xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pc-task-list li {
+  display: grid;
+  gap: var(--space-3xs);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
+}
+
+.pc-task-list li:hover {
+  background: var(--surface-hover);
+}
+
+.pc-task-name {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  color: var(--ink);
+  background: transparent;
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pc-task-name strong {
+  overflow: hidden;
+  font-weight: var(--fw-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pc-task-name:hover strong {
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-decoration-color: var(--accent-line);
+  text-underline-offset: 0.18em;
+}
+
+.pc-path {
+  flex: 0 1 auto;
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pc-task-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3xs) var(--space-sm);
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.pc-slack {
+  color: var(--warning);
+  font-weight: var(--fw-strong);
+}
+
+/* "Sets the handover date": a small amber bolt, on cards and on task names in the text */
+.pc-critical-mark {
+  color: var(--warning);
+  font-size: var(--fs-2xs);
+}
+
+.pc-crews {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs) var(--space-sm);
+}
+
+.pc-crew {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  color: var(--ink-soft);
+  font-size: var(--fs-2xs);
+}
+
+.pc-crew .pill-dot,
+.pc-heat .pill-dot {
+  flex: none;
+}
+
+.pc-more {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.pc-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm) var(--space-md);
+  margin: 0;
+}
+
+.pc-facts dt,
+.pc-links-label {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pc-facts dd {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.pc-progress {
+  width: 3rem;
+  height: 0.35rem;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, var(--accent) var(--pc), var(--line) var(--pc));
+}
+
+.pc-links {
+  display: grid;
+  gap: var(--space-2xs);
+}
+
+.pc-links p,
+.pc-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2xs);
+  margin: 0;
+}
+
+.pc-links-label {
+  margin-right: var(--space-3xs);
+}
+
+.pc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+
+.pc-link small {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+/* A task named on a card: a label pill that shows the task in the plan. */
+.pc-chip {
+  max-width: 14rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+
+.pill.pc-chip:hover {
+  border-color: var(--accent-line);
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+
+.note.pc-note {
+  margin: 0;
+  font-size: var(--fs-xs);
+}
+
+.pc-fix {
+  margin-top: var(--space-2xs);
+}
+
+/* Charts */
+
+.pc-heat-wrap {
+  overflow-x: auto;
+}
+
+.pc-heat {
+  border-collapse: separate;
+  border-spacing: 2px;
+  font-size: var(--fs-2xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.pc-heat th {
+  color: var(--ink-faint);
+  font-weight: var(--fw-strong);
+  white-space: nowrap;
+}
+
+.pc-heat thead th {
+  padding: 0 var(--space-3xs) var(--space-3xs);
+  text-align: center;
+}
+
+.pc-heat tbody th {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  max-width: 8.5rem;
+  overflow: hidden;
+  padding-right: var(--space-xs);
+  color: var(--gray-700);
+  font-weight: var(--fw-medium);
+  text-align: left;
+  text-overflow: ellipsis;
+}
+
+.pc-heat td {
+  width: 1.55rem;
+  min-width: 1.55rem;
+  height: 1.3rem;
+  border-radius: var(--radius-xs);
+  color: var(--ink);
+  text-align: center;
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+  cursor: default;
+}
+
+.pc-heat.is-compact td {
+  width: 0.8rem;
+  min-width: 0.8rem;
+  height: 1.15rem;
+}
+
+.pc-heat.is-compact td i {
+  font-size: 0.55rem;
+}
+
+/* Month names hang over the empty week cells next to them instead of widening their column. */
+.pc-heat-months th {
+  max-width: 0;
+  height: 0.9rem;
+  overflow: visible;
+  text-align: left !important;
+}
+
+.pc-heat td.is-hover {
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+
+/* More than one crew can do in a week: amber, like the overbooked days on the crew schedule */
+.pc-heat td.is-over {
+  box-shadow: inset 0 0 0 1px var(--warning);
+}
+
+.pc-heat td.is-over i {
+  color: var(--ink);
+}
+
+.pc-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2xs);
+  margin: var(--space-xs) 0 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.pc-ramp {
+  display: inline-flex;
+  gap: 1px;
+}
+
+.pc-ramp i {
+  width: 0.7rem;
+  height: 0.55rem;
+  border-radius: 2px;
+}
+
+.pc-key {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.45rem;
+  margin-left: var(--space-2xs);
+  border-radius: 2px;
+}
+
+.pc-bars {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pc-bars li {
+  display: grid;
+  grid-template-columns: minmax(0, 8.5rem) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--fs-2xs);
+}
+
+.pc-bar-label {
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  color: var(--gray-700);
+  background: transparent;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pc-bar-label:hover {
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-decoration-color: var(--accent-line);
+}
+
+.pc-bar-track {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* One series color (the plan's muted blue); budget is the gray reference beside it. */
+.pc-bar,
+.pc-key.is-forecast {
+  height: 0.6rem;
+  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+  background: var(--cat-0);
+}
+
+.pc-bar.is-budget,
+.pc-key.is-budget {
+  background: var(--line-strong);
+}
+
+.pc-bars.is-paired .pc-bar {
+  height: 0.45rem;
+}
+
+.pc-bar.is-slack {
+  background: var(--cat-1);
+}
+
+.pc-bar-value {
+  display: grid;
+  justify-items: end;
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pc-over {
+  color: var(--warning);
+  font-weight: var(--fw-strong);
+}
+
+/* Findings */
+
+.pc-findings {
+  display: grid;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pc-findings li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-sm);
+  color: var(--gray-700);
+  font-size: var(--fs-sm);
+}
+
+.pc-findings li > i {
+  margin-top: var(--space-3xs);
+}
+
+.pc-findings li.is-high > i {
+  color: var(--danger);
+}
+
+.pc-findings li.is-medium > i {
+  color: var(--warning);
+}
+
+.pc-findings li.is-low > i {
+  color: var(--ink-faint);
+}
+
+.pc-findings p {
+  margin: 0;
+}
+
+.pc-findings .pc-chips {
+  margin-top: var(--space-2xs);
+}
+
+/* Plan edits */
+
+.pc-ops {
+  display: grid;
+  gap: var(--space-2xs);
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  color: var(--gray-800);
+  background: var(--surface-sunken);
+  list-style: none;
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+}
+
+.pc-ops label,
+.pc-ops span {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+}
+
+.pc-ops i {
+  color: var(--ink-faint);
+}
+
+.pc-ops input {
+  accent-color: var(--accent);
+}
+
+.pc-warning {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+  margin: 0;
+  color: var(--warning);
+  font-size: var(--fs-xs);
+}
+
+.pc-warning.is-error {
+  color: var(--danger-strong);
+}
+
+/* What the change does to the plan (a .note in the tone of the outcome) */
+.note.pc-impact {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2xs) var(--space-md);
+  font-size: var(--fs-xs);
+}
+
+.pc-impact span:first-child {
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+}
+
+.pc-outcome {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+}
+
+.pc-outcome.is-applied,
+.pc-outcome.is-saved {
+  color: var(--success);
+}
+
+.pc-outcome.is-applying {
+  color: var(--accent-strong);
+}
+
+/* Snippet drafts */
+
+.pc-snippet {
+  display: grid;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
+.pc-snippet header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.pc-snippet header div {
+  display: grid;
+  min-width: 0;
+}
+
+.pc-snippet header strong {
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  font-stretch: var(--stretch-display);
+  font-weight: var(--fw-strong);
+}
+
+.pc-snippet header small {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.pc-snippet-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  color: var(--ink-soft);
+  background: var(--surface);
+}
+
+.pc-snippet .snippet-mini {
+  display: block;
+  width: 100%;
+  height: 1.8rem;
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+}
+
+.pc-folder {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.pc-folder select {
+  width: auto;
+  min-height: var(--control-sm);
+  font-size: var(--fs-xs);
+}
+
+/* Next steps */
+
+.pc-followups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+/* A person did something with a card */
+
+.assistant-activity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0 0 0 calc(1.75rem + var(--space-sm));
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.assistant-activity strong {
+  color: var(--ink-soft);
+  font-weight: var(--fw-strong);
+}
+
+.assistant-activity time {
+  margin-left: auto;
+  font-size: var(--fs-2xs);
+}
+
+/* Threads ----------------------------------------------------------------------------------------- */
+
+.thread-head {
+  position: relative;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.thread-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: var(--space-xs) var(--space-md) 0;
+}
+
+.thread-current > .fa-lock,
+.thread-lock {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+/* Who reads the open thread: private to you, the people invited, or the whole project. */
+.thread-audience {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2xs) var(--space-sm);
+  min-height: var(--control-sm);
+  padding: var(--space-3xs) var(--space-md) var(--space-xs) calc(var(--space-md) + var(--space-sm));
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.thread-audience-who {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.thread-audience-who > .fa {
+  font-size: var(--fs-2xs);
+}
+
+.thread-audience-actions {
+  display: inline-flex;
+  gap: var(--space-3xs);
+  margin-left: auto;
+}
+
+.thread-invite {
+  position: absolute;
+  top: calc(100% + var(--space-3xs));
+  right: var(--space-md);
+  display: grid;
+  gap: var(--space-2xs);
+  min-width: 15rem;
+  padding: var(--space-sm);
+}
+
+.thread-invite .section-label {
+  padding: 0 var(--space-sm) var(--space-2xs);
+}
+
+.thread-invite-row {
+  display: grid;
+  gap: var(--space-2xs);
+}
+
+.thread-invite .menu-item .pill {
+  margin-left: auto;
+}
+
+/* The caution before someone who cannot see costs comes in: a warning card over the conversation. */
+.popover.thread-caution {
+  position: absolute;
+  top: calc(100% + var(--space-3xs));
+  right: var(--space-md);
+  left: var(--space-md);
+  z-index: 40;
+  display: grid;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-color: var(--warning-line);
+  box-shadow: 0 0 0 1px var(--warning-line), var(--shadow-lg);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  animation: thread-caution-in var(--dur) var(--ease-out);
+}
+
+@keyframes thread-caution-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.thread-caution p {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.thread-caution .thread-caution-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--ink);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-strong);
+}
+
+.thread-caution-title .fa {
+  color: var(--warning);
+}
+
+.thread-caution .thread-caution-small {
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.thread-caution-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+/* The open thread's name: a quiet button that opens the list */
+.thread-bar .thread-current {
+  flex: 1;
+  justify-content: flex-start;
+  min-width: 0;
+  padding: 0 var(--space-sm);
+  text-align: left;
+}
+
+.thread-current span {
+  overflow: hidden;
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thread-current > .fa-chevron-down,
+.thread-current > .fa-chevron-up {
+  margin-left: auto;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.thread-dot {
+  display: inline-block;
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+}
+
+/* The thread list (a .popover) */
+.thread-menu {
+  position: absolute;
+  top: calc(100% + var(--space-2xs));
+  right: var(--space-md);
+  left: var(--space-md);
+  display: grid;
+  gap: var(--space-sm);
+  max-height: min(26rem, 60vh);
+  padding: var(--space-sm);
+  overflow: auto;
+}
+
+.thread-row.is-editing .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.thread-list {
+  display: grid;
+  gap: var(--space-3xs);
+}
+
+.thread-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  border-radius: var(--radius-sm);
+}
+
+.thread-row.is-active {
+  background: var(--accent-soft);
+}
+
+.thread-row:not(.is-active, .is-confirming):hover {
+  background: var(--surface-hover);
+}
+
+.thread-pick {
+  display: grid;
+  flex: 1;
+  gap: var(--space-3xs);
+  min-width: 0;
+  padding: var(--space-xs) var(--space-sm);
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: inherit;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.thread-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  overflow: hidden;
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thread-row.is-active .thread-title {
+  color: var(--accent-strong);
+}
+
+.thread-meta {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.thread-actions {
+  display: flex;
+  padding-right: var(--space-2xs);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.thread-row:hover .thread-actions,
+.thread-row:focus-within .thread-actions {
+  opacity: 1;
+}
+
+.thread-row.is-editing {
+  padding: var(--space-2xs);
+}
+
+/* Deleting asks first (a .note in the danger tone) */
+.thread-row.is-confirming {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs) var(--space-sm);
+}
+
+.thread-row.is-confirming span {
+  flex: 1 1 100%;
+}
+
+.thread-hint {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+}
+
+/* The composer: what goes along, and how changes apply -------------------------------------------- */
+
+.assistant-compose {
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.assistant-compose .assistant-composer {
+  padding-top: var(--space-xs);
+  padding-bottom: var(--space-xs);
+}
+
+.assistant-context,
+.assistant-context-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2xs);
+  margin: 0;
+  padding: var(--space-sm) var(--space-md) 0;
+  font-size: var(--fs-xs);
+}
+
+.assistant-context-hint {
+  gap: var(--space-xs);
+  color: var(--ink-faint);
+}
+
+.assistant-context-label {
+  margin-right: var(--space-3xs);
+  color: var(--ink-soft);
+  font-weight: var(--fw-strong);
+}
+
+/* A selected task going along with the message (a .pill): its name shows it, the x leaves it out. */
+.pill.assistant-context-chip {
+  max-width: 100%;
+  padding: 0 var(--space-3xs) 0 0;
+}
+
+.assistant-context-name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  max-width: 13rem;
+  overflow: hidden;
+  padding: var(--space-3xs) var(--space-3xs) var(--space-3xs) var(--space-sm);
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font-size: inherit;
+  font-weight: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.assistant-context-chip.is-off .assistant-context-name {
+  color: var(--ink-faint);
+  text-decoration: line-through;
+}
+
+.assistant-context-wbs {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.assistant-context-chip.is-off .assistant-context-wbs {
+  color: inherit;
+}
+
+.assistant-context-toggle {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  color: inherit;
+  background: transparent;
+  font-size: 0.625rem;
+  cursor: pointer;
+}
+
+.assistant-context-toggle:hover {
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.assistant-context-more {
+  color: var(--ink-faint);
+}
+
+.assistant-mode {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0 var(--space-md);
+}
+
+.assistant-mode .segmented > button {
+  min-height: var(--control-sm);
+  padding: 0 var(--space-sm);
+  font-size: var(--fs-xs);
+}
+
+/* ui.css marks the chosen segment by aria-pressed; this switch is a radiogroup (aria-checked). */
+.assistant-mode .segmented > button[aria-checked='true'] {
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  font-weight: var(--fw-strong);
+}
+
+.assistant-mode-hint {
+  display: block;
+  margin: 0;
+  padding: var(--space-xs) var(--space-md) var(--space-md);
+  line-height: 1.4;
+}
+
+/* Task names in the assistant's text, and what a person asked about */
+
+.assistant-task-link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-3xs);
+  padding: 0 var(--space-2xs);
+  border: 0;
+  border-bottom: 1px dashed var(--accent-line);
+  border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.assistant-task-link:hover {
+  border-bottom-color: var(--accent);
+  background: color-mix(in oklch, var(--accent-soft), var(--accent-line));
+}
+
+.assistant-task-link .fa-bolt {
+  color: var(--warning);
+  font-size: 0.7em;
+}
+
+/* A crew or piece of equipment named in a reply: quieter than a task, it filters the plan. */
+.assistant-task-link.is-crew {
+  border-bottom-color: var(--line-strong);
+  color: var(--ink);
+  background: var(--gray-100);
+}
+
+.assistant-task-link.is-crew .fa {
+  color: var(--ink-faint);
+  font-size: 0.7em;
+}
+
+/* An amount left out because someone reading may not see costs. */
+.assistant-withheld {
+  vertical-align: 0.05em;
+}
+
+.assistant-withheld .fa {
+  font-size: 0.65rem;
+}
+
+.assistant-about {
+  margin: var(--space-2xs) 0 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+/* Inside a person's message the meta line and "about" line keep their own size, not the text's. */
+.assistant-bubble .assistant-meta,
+.assistant-bubble .assistant-about {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  line-height: 1.4;
+}
+
+.assistant-bubble .assistant-meta {
+  margin-bottom: var(--space-3xs);
+}
+
+.assistant-bubble .assistant-about {
+  margin-top: var(--space-2xs);
+}
+
+.assistant-about .assistant-task-link {
+  font-size: inherit;
+}
+
+/* A change waiting for the person (a .note in the warning tone) */
+
+.note.pc-hold {
+  margin: 0;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+}
+
+/* What new rental dates come to, on a drafted change. */
+.pc-rental-money {
+  margin: 6px 0 0;
+  font-weight: 600;
+}
+
+/* Chat and Calls ------------------------------------------------------------------------------------- */
+
+/* Shown once a call has been kept: the written conversation, or the calls. The marker slides between them. */
+.assistant-views {
+  display: flex;
+  flex: none;
+  gap: var(--space-3xs);
+  margin: 0 var(--space-md) var(--space-sm);
+  padding: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+}
+
+.assistant-view {
+  position: relative;
+  display: grid;
+  flex: 1;
+  place-items: center;
+  height: 30px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  color: var(--ink-soft);
+  background: transparent;
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+  cursor: pointer;
+}
+
+.assistant-view.is-on {
+  color: var(--ink);
+}
+
+.assistant-view:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.assistant-view-pill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.assistant-view-label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.assistant-view-count {
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  color: var(--accent-ink);
+  background: var(--accent);
+  font-size: var(--fs-2xs);
+  line-height: 18px;
+  text-align: center;
+}
+
+/* Each call kept: what was said, and what was done, marked out. */
+.calls {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  gap: var(--space-sm);
+  min-height: 0;
+  padding: 0 var(--space-md) var(--space-md);
+  overflow-y: auto;
+}
+
+.calls-empty {
+  padding: var(--space-lg);
+}
+
+.calls-call {
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  transition: border-color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
+}
+
+.calls-call.is-fresh {
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.calls-call summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  cursor: pointer;
+  list-style: none;
+}
+
+.calls-call summary::-webkit-details-marker {
+  display: none;
+}
+
+.calls-when {
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+}
+
+.calls-when .fa {
+  margin-right: var(--space-xs);
+  color: var(--accent);
+}
+
+.calls-meta {
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+
+.calls-lines {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0 var(--space-md) var(--space-sm);
+  list-style: none;
+}
+
+.calls-line {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  gap: var(--space-sm);
+  font-size: var(--fs-sm);
+}
+
+.calls-who {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+}
+
+.calls-line.is-remy .calls-who {
+  color: var(--accent);
+}
+
+.calls-mark {
+  align-self: center;
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.calls-line.is-did {
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
+  background: var(--success-soft);
+}
+
+.calls-line.is-did .calls-who {
+  color: var(--success);
+}
+
+.calls-text p {
+  margin: 0;
+}
+
+.calls-thread {
+  margin: 0 var(--space-md) var(--space-sm);
+}
+
+/* While the call's bar floats over the bottom of the page (RailCall.tsx adds `has-rail-call`), the thread leaves room
+   under its last card, so following the thread down keeps the newest card, and its buttons, clear of the bar. */
+html.has-rail-call .assistant-thread {
+  padding-bottom: calc(var(--space-xl) + 112px);
+  scroll-padding-bottom: 112px;
+}

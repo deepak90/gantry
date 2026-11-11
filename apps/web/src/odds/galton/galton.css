@@ -1,0 +1,273 @@
+/*
+ * The Galton board's words over its canvas (odds/galton/odds-galton.ts): the counter while the runs pour, the big
+ * number and its words on the result, the dates under the bins, the deadline's name, and the titles of two boards
+ * side by side. Colors, type and space are tokens; sizes follow the board's own size (container units), so the same
+ * board reads in the odds panel and full screen.
+ */
+
+.galton {
+  position: relative;
+  overflow: hidden;
+  container-type: size;
+  background: var(--surface, #fbfbfa);
+  font-family: var(--font-ui);
+}
+
+.galton-canvas {
+  display: block;
+}
+
+.galton-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: var(--ink);
+}
+
+.galton-labels > * {
+  position: absolute;
+  top: 0;
+  left: 0;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+/* Dates under the bins. */
+.galton-day {
+  color: var(--ink-soft);
+  font-size: max(var(--fs-2xs), 1.05cqh);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-medium);
+  line-height: 1;
+}
+
+.galton-day.is-contract {
+  color: var(--ink);
+  font-weight: var(--fw-heavy);
+}
+
+.galton-month {
+  color: var(--ink-faint);
+  font-size: max(var(--fs-2xs), 1cqh);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+/* The deadline's name, over its glass. */
+.galton-deadline {
+  padding: 0.25em 0.6em;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklch, var(--surface) 92%, transparent);
+  color: var(--ink);
+  font-size: max(var(--fs-2xs), 1.35cqh);
+  font-weight: var(--fw-strong);
+  line-height: 1.1;
+}
+
+/* The runs as a building: the deadline's name at the end of its floor line, and on the right of two boards the band's
+   count beside its bracket ("324 more / on time"). Their opacity follows the line and the bracket in. */
+.galton-deadline.is-floor {
+  font-size: max(var(--fs-2xs), 1.4cqh);
+}
+
+.galton-labels > .galton-band {
+  display: grid;
+  justify-items: end;
+  color: var(--ink);
+  font-size: max(var(--fs-2xs), 1.5cqh);
+  font-weight: var(--fw-strong);
+  line-height: 1.2;
+  text-align: right;
+}
+
+.galton-band > span + span {
+  color: var(--ink-soft);
+  font-weight: var(--fw-medium);
+}
+
+/* The counter while the runs pour. */
+.galton-counter {
+  position: absolute;
+  top: max(var(--space-md), 3.2cqh);
+  left: max(var(--space-md), 2.4cqw);
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: max(var(--fs-xs), 2.1cqh);
+  font-weight: var(--fw-medium);
+  opacity: 0;
+  transition: opacity var(--dur-fast) linear;
+}
+
+.galton-counter .num {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-strong);
+}
+
+.galton-counter.is-shown {
+  opacity: 1;
+}
+
+/* The result: the big number and its words. */
+.galton-headline {
+  position: absolute;
+  top: 30%;
+  left: 3.2%;
+  width: 26%;
+  opacity: 0;
+  transform: translateY(0.4cqh);
+  transition:
+    opacity var(--dur-slow) var(--ease-out),
+    transform var(--dur-slow) var(--ease-out);
+}
+
+.galton-headline.is-shown {
+  opacity: 1;
+  transform: none;
+}
+
+/* A frame too narrow for the number beside the piles (the chart's side beside the odds panel): the number and its
+   words over them, across the top. */
+.galton[data-layout='stacked'] .galton-headline {
+  top: 3.5%;
+  left: 4%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 1.1em;
+  width: 92%;
+}
+
+.galton[data-layout='stacked'] .galton-figure {
+  font-size: min(13cqh, 24cqw);
+}
+
+.galton[data-layout='stacked'] .galton-words {
+  max-width: 22em;
+  margin: 0;
+}
+
+.galton-figure {
+  display: flex;
+  align-items: baseline;
+  margin: 0;
+  color: var(--ink);
+  /* As tall as the board allows, never wider than its column beside the piles. */
+  font-size: min(15cqh, 11cqw);
+  font-stretch: var(--stretch-display);
+  font-weight: var(--fw-heavy);
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+
+.galton-digits {
+  display: inline-flex;
+}
+
+.galton-drum {
+  display: inline-block;
+  height: 1.1em;
+  overflow: hidden;
+}
+
+.galton-strip {
+  display: flex;
+  flex-direction: column;
+  font-variant-numeric: tabular-nums;
+}
+
+.galton-strip > span {
+  display: block;
+  height: 1.1em;
+  line-height: 1.1;
+}
+
+.galton-said {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.galton-unit {
+  margin-left: 0.04em;
+  color: var(--ink-soft);
+  font-size: 0.42em;
+  font-weight: var(--fw-strong);
+  letter-spacing: 0;
+}
+
+.galton-words {
+  margin: 1.4cqh 0 0;
+  color: var(--ink-soft);
+  font-size: max(var(--fs-sm), 2.3cqh);
+  line-height: 1.3;
+  white-space: normal;
+}
+
+/* Two boards side by side: a title over each, as wide as its board on screen (--title-w, set as the boards move),
+   with type sized to fit it, so the two never meet at any size. The note line is there even when empty, so the big
+   numbers stand level. */
+.galton-labels > .galton-title {
+  display: grid;
+  justify-items: center;
+  gap: 0.35cqh;
+  text-align: center;
+  white-space: normal;
+}
+
+.galton-title-name {
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: clamp(11px, min(3.1cqh, calc(var(--title-w, 400px) / 10)), 48px);
+  font-weight: var(--fw-heavy);
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.galton-title-note {
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: clamp(11px, min(2.2cqh, calc(var(--title-w, 400px) / 16)), 30px);
+  font-weight: var(--fw-strong);
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.galton-title-figure {
+  margin: 0.3cqh 0 0;
+  color: var(--ink);
+  font-size: clamp(18px, min(9.5cqh, calc(var(--title-w, 400px) / 3.6)), 140px);
+  font-stretch: var(--stretch-display);
+  font-weight: var(--fw-heavy);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.galton-title-words {
+  max-width: 100%;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: clamp(11px, min(2cqh, calc(var(--title-w, 400px) / 22)), 26px);
+  line-height: 1.3;
+  white-space: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .galton-counter,
+  .galton-headline {
+    transition: none;
+  }
+}

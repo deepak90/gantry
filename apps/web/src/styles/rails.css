@@ -1,0 +1,786 @@
+/* The walkthrough: the assistant's cursor and its press, the counter in the header, and the caption. */
+
+/* The assistant's cursor ------------------------------------------------------------------------ */
+
+.rail-hand {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.rail-hand[hidden] {
+  display: none;
+}
+
+/* Resting beside the assistant's face in the header: faded, its name put away, until it works again. */
+.rail-hand {
+  transition: opacity var(--dur) var(--ease-out);
+}
+
+.rail-hand.is-resting {
+  opacity: 0.55;
+}
+
+.rail-hand.is-resting .rail-hand-label {
+  opacity: 0;
+}
+
+.rail-hand-arrow {
+  display: block;
+  fill: var(--accent);
+  stroke: var(--paper);
+  stroke-width: 1.2;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.35));
+  transform-origin: 2px 2px;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.rail-hand.is-pressing .rail-hand-arrow {
+  transform: scale(0.86);
+}
+
+.rail-hand-label {
+  position: absolute;
+  top: 17px;
+  left: 13px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2xs);
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-pill);
+  color: var(--ink-inverse);
+  background: var(--accent);
+  box-shadow: var(--shadow-sm);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+  white-space: nowrap;
+}
+
+.rail-hand-tag {
+  align-self: center;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 0.22);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-heavy);
+  letter-spacing: 0.04em;
+  line-height: 1.35;
+}
+
+.rail-hand-note {
+  font-weight: var(--fw-regular);
+  opacity: 0.85;
+}
+
+.rail-hand:not(.has-note) .rail-hand-note {
+  display: none;
+}
+
+/* Carrying something, the name moves up and left of the arrow, so what it carries stays readable. */
+.rail-hand-label {
+  transition:
+    top var(--dur) var(--ease-out),
+    translate var(--dur) var(--ease-out);
+}
+
+.rail-hand.is-dragging .rail-hand-label {
+  top: -24px;
+  translate: calc(-100% - 6px) 0;
+}
+
+/* Joining and leaving, as on a call. The position is the transform, so only the inner parts animate. */
+.rail-hand.is-joining .rail-hand-arrow,
+.rail-hand.is-joining .rail-hand-label {
+  animation: rail-join 420ms var(--ease-out) both;
+}
+
+.rail-hand.is-leaving .rail-hand-arrow,
+.rail-hand.is-leaving .rail-hand-label {
+  animation: rail-leave 800ms var(--ease-in-out) forwards;
+}
+
+@keyframes rail-join {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+@keyframes rail-leave {
+  60% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    scale: 0.8;
+  }
+}
+
+.rail-ripple {
+  position: fixed;
+  z-index: 2147482999;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  border: 2.5px solid var(--accent);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: rail-ripple 520ms var(--ease-out) forwards;
+}
+
+@keyframes rail-ripple {
+  from {
+    opacity: 1;
+    transform: scale(0.3);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+/* The counter in the header ---------------------------------------------------------------------- */
+
+.rail-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.rail-bar-back {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--header-line);
+  border-radius: var(--radius-md);
+  color: var(--header-ink-soft);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease-out);
+}
+
+.rail-bar-back:hover:not(:disabled) {
+  color: var(--header-ink);
+  background: var(--header-raised);
+}
+
+.rail-bar-back:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.rail-bar-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+  height: 30px;
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--header-line);
+  border-radius: var(--radius-md);
+  color: var(--header-ink);
+  font-size: var(--fs-xs);
+}
+
+.rail-bar-count {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  color: var(--header-ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.rail-bar-digit {
+  color: var(--header-ink);
+  text-align: right;
+}
+
+.rail-bar-label {
+  flex: 0 1 auto;
+  min-width: 0;
+  transition: width var(--dur-slow) var(--ease-in-out);
+}
+
+.rail-bar-sizer {
+  position: absolute;
+  visibility: hidden;
+  white-space: nowrap;
+}
+
+.rail-bar-warn {
+  color: var(--warning);
+}
+
+/* Next is the one thing a visitor presses, so it reads as a button even on the dark header. */
+.rail-bar-next.button {
+  flex: none;
+  gap: var(--space-2xs);
+  height: 30px;
+  padding: 0 var(--space-sm) 0 var(--space-md);
+  border-color: transparent;
+  color: var(--ink-inverse);
+  background: var(--accent);
+}
+
+.rail-bar-next.button:hover:not(:disabled) {
+  background: var(--accent-strong);
+}
+
+.rail-bar-next.button:disabled {
+  opacity: 0.7;
+}
+
+/* Faces on the call ------------------------------------------------------------------------------ */
+
+/*
+ * A face sits in a frame with a soft light behind it: the aura. It breathes with the voice (--level, 0 to 1,
+ * written on every frame) on a base that each state sets. While Remy thinks, three small lights chase each
+ * other round it. No lines around the face.
+ */
+.rail-face-frame {
+  --level: 0;
+  --aura: 0.25;
+  --ring: var(--accent);
+  --glow: oklch(0.72 0.16 256);
+  --glow-deep: oklch(0.62 0.19 262);
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+}
+
+.rail-face-frame.is-sm {
+  --face: 1.95rem;
+}
+
+.rail-face-frame.is-md {
+  --face: 2.5rem;
+}
+
+.rail-face-aura {
+  position: absolute;
+  inset: -32%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    color-mix(in oklch, var(--glow) 95%, transparent) 0 26%,
+    color-mix(in oklch, var(--glow-deep) 40%, transparent) 46%,
+    transparent 68%
+  );
+  filter: blur(2px);
+  opacity: calc(var(--aura) + var(--level) * 0.85);
+  scale: calc(0.9 + var(--level) * 0.4 + var(--aura) * 0.2);
+}
+
+.rail-face-frame.is-listening {
+  --aura: 0.12;
+}
+
+.rail-face-frame.is-thinking {
+  --aura: 0.18;
+}
+
+.rail-face-frame.is-working {
+  --aura: 0.42;
+}
+
+/* On the call and waiting: a slow breath of light. */
+.rail-face-frame.is-idle .rail-face-aura {
+  animation: rail-aura-breathe 3.6s var(--ease-in-out) infinite;
+}
+
+/* Yours glows in your color, and only while you talk. */
+.rail-face-frame.is-you {
+  --aura: 0;
+  --glow: color-mix(in oklch, var(--ring) 62%, white);
+  --glow-deep: var(--ring);
+}
+
+.rail-face {
+  position: relative;
+  display: grid;
+  width: var(--face);
+  height: var(--face);
+  place-items: center;
+  border-radius: 50%;
+  color: var(--face-ink, var(--ink-inverse));
+  background: var(--ring);
+  font-weight: var(--fw-heavy);
+}
+
+.rail-face-frame.is-sm .rail-face {
+  font-size: var(--fs-xs);
+}
+
+.rail-face-frame.is-md .rail-face {
+  font-size: var(--fs-sm);
+}
+
+/* Remy: the crane on a night-blue chip. */
+.rail-face.is-assistant {
+  background: radial-gradient(circle at 34% 28%, oklch(0.3 0.06 260), var(--header) 70%);
+}
+
+.rail-face-mark {
+  width: 76%;
+  height: 76%;
+}
+
+/* Thinking: three lights chase each other round, already turning as they fade in. */
+.rail-face-orbs {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 320ms var(--ease-out);
+  animation: rail-orbit 1.1s linear infinite;
+}
+
+.rail-face-frame.is-thinking .rail-face-orbs {
+  opacity: 1;
+}
+
+.rail-face-orbs i {
+  --dot: calc(var(--face) * 0.15);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--dot);
+  height: var(--dot);
+  margin: calc(var(--dot) / -2) 0 0 calc(var(--dot) / -2);
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, white, oklch(0.84 0.09 232) 55%, oklch(0.66 0.17 258));
+  box-shadow: 0 0 calc(var(--face) * 0.14) oklch(0.72 0.15 250 / 0.9);
+  transform: rotate(var(--at)) translateY(calc(var(--face) * -0.68)) scale(var(--size));
+}
+
+.rail-face-orbs i:nth-child(1) {
+  --at: 0deg;
+  --size: 1;
+}
+
+.rail-face-orbs i:nth-child(2) {
+  --at: -30deg;
+  --size: 0.8;
+  opacity: 0.72;
+}
+
+.rail-face-orbs i:nth-child(3) {
+  --at: -60deg;
+  --size: 0.62;
+  opacity: 0.45;
+}
+
+@keyframes rail-orbit {
+  to {
+    rotate: 1turn;
+  }
+}
+
+@keyframes rail-aura-breathe {
+  0%,
+  100% {
+    opacity: 0.18;
+  }
+
+  50% {
+    opacity: 0.38;
+  }
+}
+
+/* The call, low on the screen ------------------------------------------------------------------- */
+
+.rail-call {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  z-index: 2147482000;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  max-width: calc(100vw - 32px);
+  padding: var(--space-sm) var(--space-sm);
+  border-radius: 18px;
+  color: var(--ink-inverse);
+  background: color-mix(in oklch, var(--gray-900) 90%, transparent);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+  /* --shift moves it aside while the assistant works underneath. */
+  translate: calc(-50% + var(--shift, 0px)) 0;
+  transition: translate 460ms var(--ease-out);
+}
+
+.rail-call.has-words {
+  padding-right: var(--space-lg, 1rem);
+}
+
+.rail-call:not(.has-people) .rail-call-people {
+  display: none;
+}
+
+/* The call's own buttons (Talk, Send, End), beside the words they act on. Only they take presses. */
+.rail-call-controls {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-xs);
+  padding-left: var(--space-sm);
+  pointer-events: auto;
+}
+
+.rail-call:not(.has-people) .rail-call-text {
+  padding-left: var(--space-xs);
+  border-left: 0;
+}
+
+.rail-call-people {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-xs);
+}
+
+.rail-call-tile {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  min-width: 4.75rem;
+  padding: var(--space-2xs) var(--space-2xs) 0;
+  /* Clipped while it slides open, with room around it for the face's light and the thinking orbs. */
+  overflow: clip;
+  overflow-clip-margin: 1rem;
+  text-align: center;
+}
+
+.rail-call-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+  white-space: nowrap;
+}
+
+.rail-call-doing {
+  font-size: var(--fs-2xs);
+  white-space: nowrap;
+  opacity: 0.72;
+}
+
+.rail-tag {
+  padding: 0 4px;
+  border-radius: 4px;
+  color: var(--ink-inverse);
+  background: color-mix(in oklch, var(--accent) 70%, transparent);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-heavy);
+  letter-spacing: 0.04em;
+  line-height: 1.35;
+}
+
+.rail-call-text {
+  display: grid;
+  align-content: center;
+  width: min(31rem, calc(100vw - 16rem));
+  min-height: 3.1rem;
+  padding-left: var(--space-md);
+  border-left: 1px solid rgb(255 255 255 / 0.14);
+  font-size: var(--fs-lg);
+  line-height: 1.42;
+}
+
+.rail-call-text p {
+  margin: 0;
+}
+
+.rail-call-who {
+  display: block;
+  margin-bottom: 1px;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+  opacity: 0.78;
+}
+
+.rail-call-said.is-assistant .rail-call-who {
+  color: color-mix(in oklch, var(--accent) 40%, white);
+  opacity: 1;
+}
+
+.rail-word {
+  transition: opacity var(--dur) var(--ease-out);
+  animation: rail-word 240ms var(--ease-out) both;
+}
+
+/* Still being made out by the transcription: it may change. */
+.rail-word.is-tentative {
+  opacity: 0.55;
+}
+
+@keyframes rail-word {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+  }
+
+  to {
+    opacity: 1;
+    filter: none;
+  }
+}
+
+.rail-call-takeaway strong {
+  font-weight: var(--fw-heavy);
+}
+
+/*
+ * A call's captions (RailCall's `captions`, the call with several people): a place kept for them while they are
+ * on, so the bar holds still as people talk; the speaker's name in their color, with a dot of it, over their
+ * newest two lines (older lines roll up out of sight). Sized to read on a recording at 1080p.
+ */
+/* As wide as its faces, captions and controls (up to the screen's width less a margin), not the half of the screen
+   that `left: 50%` leaves it, which would squeeze them. */
+.rail-call.is-captions {
+  width: max-content;
+  padding-right: var(--space-sm);
+}
+
+.rail-call.is-captions .rail-call-text {
+  align-content: start;
+  width: min(36rem, calc(100vw - 31rem));
+  min-height: calc(3.62em + 2px);
+  border-left-color: color-mix(in oklch, var(--header-ink) 14%, transparent);
+  font-size: clamp(1.0625rem, 0.45rem + 0.85vw, 1.5rem);
+  line-height: 1.34;
+}
+
+/* A caption fading out and the next fading in share the place. */
+.rail-call.is-captions .rail-call-text > * {
+  grid-area: 1 / 1;
+}
+
+.rail-call.is-captions .rail-call-said {
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  min-width: 0;
+}
+
+.rail-call.is-captions .rail-call-said .rail-call-who {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  margin: 0;
+  color: color-mix(in oklch, var(--speaker, var(--header-ink)) 50%, white);
+  font-size: 0.7em;
+  font-weight: var(--fw-heavy);
+  letter-spacing: 0.02em;
+  line-height: 1.34;
+  opacity: 1;
+}
+
+.rail-call.is-captions .rail-call-said .rail-call-who::before {
+  content: '';
+  flex: none;
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: 50%;
+  background: var(--speaker, var(--header-ink));
+}
+
+.rail-call.is-captions .rail-call-said.is-assistant {
+  --speaker: var(--accent);
+}
+
+.rail-call.is-captions .rail-call-words {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  max-height: 2.68em;
+  overflow: hidden;
+}
+
+.rail-call.is-captions .rail-call-line {
+  flex: none;
+}
+
+/* Someone is talking and their words aren't in yet: the dots, at the size of the words to come. */
+.rail-call.is-captions .rail-call-dots {
+  gap: 0.3em;
+  height: 1.34em;
+}
+
+.rail-call.is-captions .rail-call-dots i {
+  width: 0.32em;
+  height: 0.32em;
+}
+
+/* The call's controls sit after the captions, apart from them as the captions are from the faces. */
+.rail-call.is-captions .rail-call-controls {
+  align-self: stretch;
+  padding-left: var(--space-md);
+  border-left: 1px solid color-mix(in oklch, var(--header-ink) 14%, transparent);
+}
+
+.rail-call-status {
+  font-size: var(--fs-sm);
+  opacity: 0.8;
+}
+
+/* A word about the call itself ("Remy is unavailable right now", and why): in the captions' place, centered on the
+   bar's height, with her mark, at the captions' own size so it reads as part of the call, not a footnote. */
+.rail-call-text.is-notice {
+  align-content: center;
+  align-self: stretch;
+}
+
+.rail-call-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.75em;
+  min-width: 0;
+  max-width: 34rem;
+  padding-inline-end: 0.6em;
+  font-size: clamp(0.95rem, 0.55rem + 0.55vw, 1.125rem);
+  line-height: 1.35;
+}
+
+.rail-call-notice-mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.2em;
+  height: 2.2em;
+  border-radius: 50%;
+  background: color-mix(in oklch, var(--accent) 18%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 38%, transparent);
+}
+
+.rail-call-notice-mark svg {
+  width: 1.35em;
+  height: 1.35em;
+}
+
+.rail-call-notice-words {
+  display: grid;
+  gap: 0.15em;
+  min-width: 0;
+}
+
+.rail-call-notice-title {
+  color: var(--header-ink);
+  font-weight: var(--fw-heavy);
+}
+
+.rail-call-notice-detail {
+  color: color-mix(in oklch, var(--header-ink) 74%, transparent);
+  font-size: 0.86em;
+  text-wrap: pretty;
+}
+
+/* Your microphone's meter: five bars with your voice. */
+.rail-meter {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 14px;
+  color: var(--ink-inverse);
+}
+
+.rail-meter i {
+  width: 3px;
+  height: 100%;
+  border-radius: 2px;
+  background: currentColor;
+  transform: scaleY(0.16);
+}
+
+.rail-call-tile.is-you:not(.is-talking) .rail-meter {
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail-hand-arrow,
+  .rail-hand-label,
+  .rail-ripple,
+  .rail-face-aura,
+  .rail-face-orbs,
+  .rail-word {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* You're talking and your words aren't written down yet: three dots that rise in turn. */
+.rail-call-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 1.2em;
+  vertical-align: middle;
+}
+
+.rail-call-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.35;
+  animation: rail-dots 1.1s var(--ease-in-out) infinite;
+}
+
+.rail-call-dots i:nth-child(2) {
+  animation-delay: 0.14s;
+}
+
+.rail-call-dots i:nth-child(3) {
+  animation-delay: 0.28s;
+}
+
+@keyframes rail-dots {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    translate: 0 0;
+  }
+
+  30% {
+    opacity: 1;
+    translate: 0 -3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail-call-dots i {
+    animation: none;
+    opacity: 0.7;
+  }
+}
+
+/* While the assistant's face is out over the 3D view (gantt/fx3d/companion.ts), its tile keeps its place with the
+   face gone faint, and its cursor is put away: the face does the pointing. */
+[data-testid='rail-call-assistant'] .rail-face-frame {
+  transition:
+    opacity var(--dur) var(--ease-out),
+    scale var(--dur) var(--ease-out);
+}
+
+html.remy-embodied [data-testid='rail-call-assistant'] .rail-face-frame {
+  opacity: 0.22;
+  scale: 0.86;
+}
+
+html.remy-embodied .rail-hand {
+  opacity: 0;
+}

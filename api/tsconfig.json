@@ -1,0 +1,16 @@
+// The hosted site's functions (`tsc -p api`). Vercel compiles them, and the files they import, with this file: it reads
+// only the options written here, not the base's, and fills in its own module and strict when they are missing, so the
+// base's are repeated. rewriteRelativeImportExtensions turns the repo's `./x.ts` imports into `./x.js` in its output.
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "types": ["node"],
+    "noEmit": true,
+    "rewriteRelativeImportExtensions": true
+  },
+  "include": ["**/*.ts"]
+}

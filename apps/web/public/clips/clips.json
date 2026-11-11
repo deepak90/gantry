@@ -1,0 +1,134 @@
+{
+  "clips": [
+    {
+      "id": "link-tasks",
+      "title": "Link two tasks",
+      "summary": "Drag from the end of one bar to the start of another, so the second task waits for the first.",
+      "steps": [
+        "Point at the first task’s bar: a small dot appears at each end.",
+        "Drag from the dot at its end to the start of the task that has to wait.",
+        "Let go: the arrow is drawn and the later work moves to make room."
+      ],
+      "topics": [
+        "link",
+        "dependency",
+        "connect tasks",
+        "arrow",
+        "predecessor",
+        "successor",
+        "waits for",
+        "finish to start",
+        "join"
+      ],
+      "duration_ms": 7080,
+      "bytes": 52452,
+      "recorded_at": "2026-11-11T16:19:57.217Z"
+    },
+    {
+      "id": "library-drop",
+      "title": "Add work from the library",
+      "summary": "Drag a library card onto the plan; Remy says where it fits, and its tasks and links go in with it.",
+      "steps": [
+        "Open the Library tab and grab a card.",
+        "Drag it onto the plan: the line shows where it lands.",
+        "Let go: take Remy’s place, or tie it in where you let go.",
+        "The note says what moved and why; Undo takes it out again.",
+        "Close the panel: its tasks sit under one heading, with outline numbers.",
+        "Links tie it in: it waits for the flooring, and the doors wait for it."
+      ],
+      "topics": [
+        "library",
+        "snippet",
+        "template",
+        "add work",
+        "drag",
+        "drop",
+        "reuse",
+        "where",
+        "fits",
+        "outline",
+        "links",
+        "undo"
+      ],
+      "duration_ms": 30167,
+      "bytes": 4699235,
+      "recorded_at": "2026-11-11T16:24:12.700Z"
+    },
+    {
+      "id": "save-to-library",
+      "title": "Save work to the library",
+      "summary": "Select tasks in the plan, right-click, Save to library, name it, and Save.",
+      "steps": [
+        "Click a task, then Shift-click another to select both.",
+        "Right-click them and choose “Save to library…”.",
+        "Name it in the short form and pick the folder it goes in.",
+        "Save: it is in the Library tab, ready to drag into any plan."
+      ],
+      "topics": [
+        "save to library",
+        "library",
+        "snippet",
+        "template",
+        "reuse",
+        "keep",
+        "copy work",
+        "save tasks"
+      ],
+      "duration_ms": 16280,
+      "bytes": 191887,
+      "recorded_at": "2026-11-11T16:20:22.889Z"
+    },
+    {
+      "id": "watch-recipe",
+      "title": "Watch the plan with a rule",
+      "summary": "Open the Watch tab, pick a recipe under Rules, and Add it: the rule reads as a sentence.",
+      "steps": [
+        "Open the Watch tab on the right.",
+        "Go to Rules: under your rules are recipes other teams keep.",
+        "Press Add on the one you want, or Adjust it first.",
+        "It joins your rules and reads as a sentence: when, if, then."
+      ],
+      "topics": [
+        "watch",
+        "rule",
+        "alert",
+        "recipe",
+        "notify",
+        "notified",
+        "warn me",
+        "warned",
+        "keep an eye",
+        "monitor"
+      ],
+      "duration_ms": 13800,
+      "bytes": 177184,
+      "recorded_at": "2026-11-11T16:20:45.611Z"
+    },
+    {
+      "id": "invite-to-conversation",
+      "title": "Invite someone into a conversation",
+      "summary": "Open a private conversation, press Invite and pick a project member: they read it from then on.",
+      "steps": [
+        "In the Remy tab, open the conversation from the list.",
+        "Private conversations show a lock: only you and Remy read them.",
+        "Press Invite and pick a project member.",
+        "They read all of it from then on, earlier messages included; the line under the title says who reads it."
+      ],
+      "topics": [
+        "invite",
+        "share",
+        "conversation",
+        "thread",
+        "private",
+        "add someone",
+        "chat",
+        "assistant",
+        "collaborate",
+        "teammate"
+      ],
+      "duration_ms": 10920,
+      "bytes": 75773,
+      "recorded_at": "2026-11-11T16:15:49.512Z"
+    }
+  ]
+}

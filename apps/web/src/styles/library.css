@@ -1,0 +1,1249 @@
+/*
+ * The task library panel, the card dragged over the plan and the drop marks on Gantt rows.
+ * Tokens come from tokens.css; buttons, pills, cards, notes, fields and menus from ui.css. This file
+ * only lays them out and draws what is the library's own (the folder tree, the drop areas, the ghost).
+ */
+
+.library {
+  font-size: var(--fs-md);
+  color: var(--ink);
+}
+
+/* Search and tools ----------------------------------------------------------------------------- */
+
+.library-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg) var(--space-xs);
+}
+
+/* The search box: an .input frame around an icon and a bare input. */
+.input.library-search {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--space-xs);
+  width: auto;
+  min-width: 0;
+  color: var(--ink-faint);
+}
+
+.input.library-search:focus-within {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.library-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  outline: none;
+}
+
+.library-search input:focus-visible {
+  box-shadow: none;
+}
+
+.library-search input::placeholder {
+  color: var(--ink-faint);
+}
+
+.library-how {
+  margin: 0;
+  padding: var(--space-3xs) var(--space-lg) var(--space-sm);
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+}
+
+.library-how i {
+  margin-right: var(--space-2xs);
+}
+
+.library-status {
+  margin: var(--space-xs) var(--space-lg) 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.empty-state.library-empty {
+  margin: var(--space-sm) 0 0;
+  padding-block: var(--space-lg);
+}
+
+.note.library-error {
+  align-items: center;
+  margin: var(--space-md) var(--space-lg) 0;
+}
+
+.library-error .button {
+  margin-left: auto;
+}
+
+/* Result of the last drop ---------------------------------------------------------------------- */
+
+.note.library-note {
+  margin: var(--space-md) var(--space-lg) 0;
+  /* Clear of the sticky panel head when it is scrolled into view. */
+  scroll-margin-top: 5.5rem;
+  animation: library-note-in var(--dur) var(--ease-out);
+}
+
+.library-note-text {
+  display: grid;
+  flex: 1 1 auto;
+  gap: var(--space-3xs);
+  min-width: 0;
+}
+
+.library-note-text strong {
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+}
+
+.library-note-warn {
+  color: var(--warning);
+}
+
+.library-note-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs) var(--space-lg);
+  padding-top: var(--space-3xs);
+}
+
+.button.library-note-close {
+  flex: 0 0 auto;
+  margin: calc(-1 * var(--space-2xs)) calc(-1 * var(--space-xs)) 0 0;
+}
+
+@keyframes library-note-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* The folder tree -------------------------------------------------------------------------------- */
+
+.library-tree-root,
+.library-folder-body {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.library-tree-root {
+  padding: var(--space-xs) var(--space-md) var(--space-xl) var(--space-sm);
+}
+
+.library-folder {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.library-folder-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  min-height: var(--control-md);
+  padding-right: var(--space-2xs);
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.library-folder-row:hover {
+  background: var(--surface-hover);
+}
+
+/* A card dragged over a folder files it there. */
+.library-folder-row.b-drop-target,
+.library-folder-row:has(+ .b-drag-over) {
+  outline: 2px dashed var(--accent);
+  outline-offset: -2px;
+  background: var(--accent-soft);
+}
+
+/*
+ * The chevrons that open a folder or a card are disclosure toggles, not pressed buttons: ui.css tints
+ * a quiet button with aria-expanded as pressed (meant for menu triggers), so they opt out of it.
+ */
+.button.is-quiet.library-folder-toggle[aria-expanded='true'],
+.button.is-quiet.library-toggle[aria-expanded='true'] {
+  color: var(--ink-soft);
+  background: transparent;
+}
+
+.button.is-quiet.library-folder-toggle[aria-expanded='true']:hover,
+.button.is-quiet.library-toggle[aria-expanded='true']:hover {
+  color: var(--ink);
+  background: var(--gray-100);
+}
+
+.library-folder-icon {
+  color: var(--ink-faint);
+  font-size: var(--fs-sm);
+}
+
+.library-folder-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  padding: var(--space-3xs) var(--space-2xs);
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: inherit;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* Outline numbers (1.2, 1.2.1) in folders, cards and the contents list. */
+.library-number {
+  flex: 0 0 auto;
+  margin-right: var(--space-3xs);
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-stretch: var(--stretch-ui);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-medium);
+}
+
+.library-folder-empty {
+  padding-block: var(--space-3xs);
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+  font-style: italic;
+  list-style: none;
+}
+
+.input.library-rename {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  min-height: var(--control-sm);
+  border-color: var(--accent);
+}
+
+/* Menus ----------------------------------------------------------------------------------------- */
+
+.library-menu-anchor {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.popover.library-menu {
+  position: absolute;
+  top: calc(100% + var(--space-2xs));
+  left: 0;
+  display: grid;
+  min-width: 13rem;
+  max-height: 20rem;
+  overflow-y: auto;
+}
+
+.popover.library-menu-right {
+  right: 0;
+  left: auto;
+}
+
+.section-label.library-menu-title {
+  margin: var(--space-2xs) var(--space-sm) var(--space-2xs);
+}
+
+/* ui.css has no disabled menu item yet. */
+.library-menu .menu-item:disabled {
+  color: var(--ink-disabled);
+  background: none;
+  cursor: default;
+}
+
+.library-menu .menu-item:disabled > .fa {
+  color: var(--ink-disabled);
+}
+
+.library-confirm {
+  display: grid;
+  gap: var(--space-sm);
+  max-width: 16rem;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.library-confirm p {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+}
+
+.library-confirm div {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-xs);
+}
+
+/* Cards ---------------------------------------------------------------------------------------- */
+
+.card.library-card {
+  position: relative;
+  gap: 0;
+  padding: 0;
+  list-style: none;
+  cursor: default;
+}
+
+/* An open card keeps its accent frame while hovered. */
+.card.library-card.is-selected:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), var(--shadow-sm);
+}
+
+.library-grab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-xs);
+  cursor: grab;
+  user-select: none;
+}
+
+.library-grab:active {
+  cursor: grabbing;
+}
+
+.library-grip {
+  color: var(--ink-faint);
+  font-size: var(--fs-sm);
+  opacity: 0.6;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.library-card:hover .library-grip {
+  opacity: 1;
+}
+
+.library-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: var(--control-md);
+  height: var(--control-md);
+  border-radius: var(--radius-md);
+  background: var(--gray-100);
+  color: var(--ink-soft);
+}
+
+.library-card.is-selected .library-icon {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.library-card-text {
+  display: grid;
+  flex: 1 1 auto;
+  gap: var(--space-3xs);
+  min-width: 0;
+}
+
+.library-card-text strong {
+  overflow: hidden;
+  font-size: var(--fs-md);
+  font-stretch: var(--stretch-display);
+  font-weight: var(--fw-strong);
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.library-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-3xs);
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.library-card-meta .library-crews {
+  margin-right: var(--space-xs);
+  padding-left: var(--space-3xs);
+}
+
+.library-crews {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+/* Crew colors are the plan's own data (set inline). */
+.library-crew-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-left: -0.15rem;
+  border: 2px solid var(--surface);
+  border-radius: var(--radius-pill);
+  background: var(--ink-faint);
+}
+
+.library-crew-dot.is-unknown {
+  border: 1.5px dashed var(--ink-faint);
+  background: var(--surface);
+}
+
+.library-crew-more {
+  margin-left: var(--space-3xs);
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.library-meta-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3xs);
+  margin-left: var(--space-xs);
+  color: var(--ink-soft);
+}
+
+/* A small Gantt of the piece under the card's title. */
+.library-mini {
+  padding: 0 var(--space-md) var(--space-sm) 2.95rem;
+}
+
+.snippet-mini {
+  display: block;
+  width: 100%;
+  height: 2.1rem;
+  border-radius: var(--radius-xs);
+  background: var(--surface-sunken);
+}
+
+/* The open card: facts, tweaks, contents and the keyboard way to add it ------------------------- */
+
+.library-detail {
+  display: grid;
+  gap: var(--space-md);
+  padding: 0 var(--space-md) var(--space-md);
+  border-top: 1px solid var(--line-soft);
+}
+
+.library-summary {
+  margin: var(--space-md) 0 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+
+.library-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+  margin-top: var(--space-sm);
+}
+
+.library-tweaks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm) var(--space-md);
+}
+
+.library-tweaks > .field {
+  min-width: 0;
+}
+
+.library-field-wide {
+  grid-column: 1 / -1;
+}
+
+/* A number stepper (ui.css has none): − 2 rooms + */
+.library-stepper {
+  display: flex;
+  align-items: center;
+  height: var(--control-md);
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.library-stepper button {
+  align-self: stretch;
+  width: var(--control-md);
+  border: 0;
+  background: var(--surface-sunken);
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.library-stepper button:hover:not(:disabled) {
+  background: var(--gray-100);
+  color: var(--ink);
+}
+
+.library-stepper button:disabled {
+  color: var(--ink-disabled);
+  cursor: default;
+}
+
+.library-stepper output {
+  flex: 1 1 auto;
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-medium);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.library-repeat-note {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+}
+
+/* What the snippet contains -------------------------------------------------------------------- */
+
+.library-tree {
+  display: grid;
+  gap: var(--space-3xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.library-detail > .library-tree {
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
+/* Nested groups hang off a thin guide line. */
+.library-tree .library-tree {
+  margin: var(--space-3xs) 0 var(--space-2xs) var(--space-xs);
+  padding-left: var(--space-sm);
+  border-left: 1px solid var(--line-strong);
+}
+
+.library-tree-group > .library-tree-name {
+  color: var(--ink);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+}
+
+.library-tree-group > .library-tree-name i {
+  margin-right: var(--space-3xs);
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.library-tree-task {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: var(--space-3xs) var(--space-sm);
+  padding: var(--space-3xs) 0;
+  font-size: var(--fs-xs);
+}
+
+.library-tree-task .library-tree-name {
+  color: var(--ink-soft);
+}
+
+.library-tree-days {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.library-tree-crews {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 1 / -1;
+  gap: var(--space-2xs);
+}
+
+.library-tree-crews:empty {
+  display: none;
+}
+
+/* A crew named in the piece that this project does not have. */
+.library-tree-crews .pill.is-unknown {
+  border-style: dashed;
+  color: var(--ink-faint);
+}
+
+.library-tree-crews .pill.is-unknown .pill-dot {
+  border: 1px dashed var(--ink-faint);
+  background: transparent;
+}
+
+.library-milestone {
+  margin-right: var(--space-2xs);
+  color: var(--ink);
+  font-size: var(--fs-2xs);
+}
+
+.library-has-note {
+  margin-left: var(--space-2xs);
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.pill.library-link-tag {
+  min-height: 1rem;
+  margin-left: var(--space-xs);
+  padding: 0 var(--space-2xs);
+  border-radius: var(--radius-xs);
+  vertical-align: 0.05em;
+}
+
+.library-ranges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-md);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+}
+
+.library-ranges li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.library-range-swatch {
+  width: 0.8rem;
+  height: 0.55rem;
+  border-radius: var(--radius-xs);
+  background: var(--band);
+}
+
+.library-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm) var(--space-md);
+}
+
+/* The task name can be long: the button wraps instead of overflowing the card. */
+.button.library-add {
+  max-width: 100%;
+  padding-block: var(--space-2xs);
+  white-space: normal;
+  text-align: left;
+}
+
+/* Saving work picked in the plan --------------------------------------------------------------- */
+
+.button.library-save-picked {
+  justify-content: flex-start;
+  width: auto;
+  margin: var(--space-3xs) var(--space-lg) var(--space-sm);
+}
+
+.card.library-save {
+  display: grid;
+  gap: var(--space-sm);
+  margin: var(--space-3xs) var(--space-lg) var(--space-sm);
+  padding: var(--space-md);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), var(--shadow-md);
+  animation: library-choice-in var(--dur) var(--ease-out);
+}
+
+.library-save-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.library-save-head strong {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--fs-sm);
+  font-stretch: var(--stretch-display);
+  font-weight: var(--fw-strong);
+}
+
+.library-save-head i {
+  color: var(--accent-strong);
+}
+
+.library-save-what {
+  display: grid;
+  gap: var(--space-xs);
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+}
+
+.library-save-what .library-mini {
+  padding: 0;
+}
+
+.library-save-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* The card while it is dragged over the plan --------------------------------------------------- */
+
+body.library-dragging {
+  user-select: none;
+}
+
+.library-drag-proxy,
+.library-drag-proxy.b-drag-proxy {
+  opacity: 1;
+}
+
+.card.library-drag-proxy {
+  z-index: 10000;
+  gap: var(--space-xs);
+  width: 18rem;
+  padding: var(--space-sm) var(--space-md);
+  box-shadow: 0 0 0 1px var(--accent), var(--shadow-lg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--fs-sm);
+  pointer-events: none;
+}
+
+.library-drag-head {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0 var(--space-sm);
+}
+
+.library-drag-head strong {
+  font-stretch: var(--stretch-display);
+  font-weight: var(--fw-strong);
+}
+
+.library-drag-head i {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: var(--control-md);
+  height: var(--control-md);
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.library-drag-head span {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.library-drag-hint {
+  padding-top: var(--space-xs);
+  border-top: 1px solid var(--line-soft);
+  color: var(--ink-soft);
+  font-weight: var(--fw-medium);
+}
+
+.library-drag-proxy.is-placed .library-drag-hint {
+  color: var(--accent-strong);
+}
+
+.card.library-drag-proxy.b-drag-invalid {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-md);
+}
+
+/* Drop marks and new rows on the Gantt --------------------------------------------------------- */
+
+/* Rows clip their overflow, so the marks are drawn inside the row. */
+.b-grid-row.library-drop-before::before,
+.b-grid-row.library-drop-after::before {
+  content: '';
+  position: absolute;
+  inset: auto 0;
+  z-index: 6;
+  height: 3px;
+  background: var(--accent);
+  pointer-events: none;
+}
+
+.b-grid-row.library-drop-before::before {
+  top: 0;
+}
+
+.b-grid-row.library-drop-after::before {
+  bottom: 0;
+}
+
+.b-grid-sub-grid-locked .b-grid-row.library-drop-before::after,
+.b-grid-sub-grid-locked .b-grid-row.library-drop-after::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  z-index: 7;
+  width: 10px;
+  height: 7px;
+  background: var(--accent);
+  pointer-events: none;
+}
+
+.b-grid-sub-grid-locked .b-grid-row.library-drop-before::after {
+  top: 0;
+  border-radius: 0 0 var(--radius-sm) 0;
+}
+
+.b-grid-sub-grid-locked .b-grid-row.library-drop-after::after {
+  bottom: 0;
+  border-radius: 0 var(--radius-sm) 0 0;
+}
+
+.b-grid-row.library-drop-inside::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  border-block: 2px solid var(--accent);
+  background: color-mix(in oklch, var(--accent) 10%, transparent);
+  pointer-events: none;
+}
+
+/* The assistant's place, while its option is pointed at: the only line, so it is plain where the work lands. */
+.b-grid-row.library-suggested::before {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 6;
+  height: 3px;
+  border: 0;
+  background: var(--accent);
+  pointer-events: none;
+}
+
+.b-grid-sub-grid-locked .b-grid-row.library-suggested::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  z-index: 7;
+  width: 10px;
+  height: 7px;
+  border-radius: 0 var(--radius-sm) 0 0;
+  background: var(--accent);
+  pointer-events: none;
+}
+
+.b-gantt:has(.library-suggested) .b-grid-row:is(.library-drop-before, .library-drop-after, .library-drop-inside):not(.library-suggested)::before,
+.b-gantt:has(.library-suggested) .b-grid-row:is(.library-drop-before, .library-drop-after):not(.library-suggested)::after {
+  content: none;
+}
+
+/* New rows glow once and fade (flashRows in library/drag.ts removes the class after 2.6 s). */
+.b-grid-row.library-new-row::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: color-mix(in oklch, var(--accent) 18%, transparent);
+  pointer-events: none;
+  animation: library-new-row 2.6s var(--ease-out) forwards;
+}
+
+@keyframes library-new-row {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* The card at the drop spot: how to tie the piece in, with what each way would move ------------ */
+
+.popover.library-choice {
+  position: fixed;
+  z-index: 10001;
+  display: grid;
+  gap: var(--space-xs);
+  width: 22rem;
+  max-width: calc(100vw - 24px);
+  /* A small window scrolls the card: its last way stays within reach. */
+  box-sizing: border-box;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  padding: var(--space-sm);
+  font-family: var(--font-ui);
+  animation: library-choice-in var(--dur) var(--ease-out);
+}
+
+@keyframes library-choice-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+}
+
+.library-choice-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0 0 var(--space-xs) var(--space-3xs);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.library-choice-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: var(--control-md);
+  height: var(--control-md);
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.library-choice-title {
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.library-choice-title strong {
+  overflow: hidden;
+  font-size: var(--fs-sm);
+  font-stretch: var(--stretch-display);
+  font-weight: var(--fw-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.library-choice-title span {
+  color: var(--ink-soft);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+}
+
+.library-choice-options {
+  display: grid;
+  gap: var(--space-3xs);
+}
+
+.library-choice-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-sm);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.library-choice-option:disabled {
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: not-allowed;
+}
+
+.library-choice-option > i {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: var(--control-md);
+  height: var(--control-md);
+  border-radius: var(--radius-md);
+  background: var(--gray-100);
+  color: var(--ink-soft);
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.library-choice-option:hover,
+.library-choice-option:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  outline: none;
+}
+
+.library-choice-option:hover > i,
+.library-choice-option:focus-visible > i {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.library-choice-text {
+  display: grid;
+  gap: var(--space-3xs);
+  min-width: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  line-height: 1.35;
+}
+
+.library-choice-text strong {
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+}
+
+.library-choice-option:hover .library-choice-text strong,
+.library-choice-option:focus-visible .library-choice-text strong {
+  color: var(--accent-strong);
+}
+
+.library-choice-wait {
+  color: var(--ink-faint);
+}
+
+/* A later handover is the number that matters: in ink, the rest stays soft. */
+.library-choice-crews {
+  display: grid;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-3xs) 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.library-choice-crew {
+  display: grid;
+  grid-template-columns: minmax(5rem, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+}
+
+.library-choice-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-3xs) 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.library-choice-hint {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+/* "Was here": where a bar a drop (or its undo) moved used to be, for a few seconds (library/was-here.ts). */
+.collab-gantt-workspace .b-indicator.library-was-here {
+  z-index: 0;
+  box-sizing: border-box;
+  border: 1.5px dashed var(--ink-faint);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklch, var(--gray-200) 40%, transparent);
+  /*
+   * Endless on paper; was-here.ts takes the outline away at 6 s, before it would start over. The grid
+   * holds its rows out of reach of the mouse until every finite animation inside it has ended, and a
+   * six-second one left everything below a drop dead for that long.
+   */
+  animation: library-was-here 7s var(--ease-out) infinite;
+}
+
+@keyframes library-was-here {
+  0%,
+  60% {
+    opacity: 1;
+  }
+  86%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Later work that would move back: tinted amber (caution) across both halves of the row. */
+.b-grid-row.library-will-move::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: color-mix(in oklch, var(--warning-fill) 24%, transparent);
+  pointer-events: none;
+}
+
+/* Bands from library pieces ---------------------------------------------------------------------- */
+
+/*
+ * A band's tone is the author's pick in the builder (library/bands.ts adds library-band-<tone>);
+ * each maps to a muted category color, never red. Amber stays amber (the caution color): it is
+ * the tone for "keep off" windows. The tone class also colors the swatch in the open card.
+ */
+.library-band-amber {
+  --band: var(--warning-fill);
+  --band-ink: var(--ink);
+}
+
+.library-band-sky {
+  --band: var(--cat-1);
+}
+
+.library-band-rose {
+  --band: var(--cat-3);
+}
+
+.library-band-violet {
+  --band: var(--cat-5);
+}
+
+.library-band-green {
+  --band: var(--cat-2);
+}
+
+.library-band-slate {
+  --band: var(--cat-4);
+}
+
+/* Bryntum draws a time range as .b-sch-time-range: a label in the header, a tint in the body. */
+.b-sch-time-range.library-band {
+  --b-time-range-header-background: var(--band, var(--cat-none));
+  --b-time-range-color: var(--band-ink, var(--ink-inverse));
+  --b-time-range-header-font-weight: var(--fw-strong);
+  --b-time-range-background: color-mix(in oklch, var(--band, var(--cat-none)) 11%, transparent);
+}
+
+.b-timeline-sub-grid .b-sch-time-range.library-band {
+  border-inline: 1px dashed color-mix(in oklch, var(--band, var(--cat-none)) 60%, transparent);
+}
+
+/* A band narrower than its name ("City inspector away" over five days): the name is a tag in the band's color over the
+   dates beside it, not loose text across them. */
+.b-time-ranges-header-canvas .b-sch-time-range.library-band.b-narrow-range > label {
+  padding-inline: 0.45em;
+  border-radius: var(--radius-sm);
+  background: var(--b-time-range-header-background);
+}
+
+.library-band-tip {
+  display: grid;
+  gap: var(--space-3xs);
+  font-size: var(--fs-xs);
+}
+
+.library-band-owner {
+  color: var(--ink-faint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .b-grid-row.library-new-row::after {
+    animation-duration: 0.01s;
+  }
+}
+
+/* Where the assistant thinks a dropped piece fits: first in the card, then the ways at the drop point. */
+.library-choice-suggest {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-2xs);
+  padding: var(--space-sm);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
+.library-choice-suggest.is-ready {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.library-choice-suggest > .assistant-orb {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.library-choice-before {
+  color: var(--ink-soft);
+  font-weight: var(--fw-regular);
+}
+
+/* The work belongs in another group for the same place: which one, above where in it. */
+.library-choice-elsewhere {
+  color: var(--accent-strong);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.01em;
+}
+
+/* The assistant found it belongs in none of the groups here: said plainly, in the warning's colors. */
+.library-choice-suggest.is-misfit {
+  border-color: var(--warning-line);
+  background: var(--warning-soft);
+}
+
+.library-choice-misfit {
+  color: var(--warning);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+}
+
+.library-choice-source {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.library-choice-where {
+  margin: var(--space-xs) 0 var(--space-3xs);
+}
+
+/* A line that fills while the assistant thinks. */
+.library-choice-shimmer {
+  display: block;
+  width: 100%;
+  height: 8px;
+  margin-top: var(--space-2xs);
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, var(--gray-100) 0%, var(--accent-soft) 40%, var(--gray-100) 80%) 0 0 / 200% 100%;
+  animation: library-shimmer 1.4s linear infinite;
+}
+
+@keyframes library-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+.library-choice.is-auto {
+  width: min(320px, calc(100vw - 24px));
+}
+
+.library-note-placed {
+  color: var(--ink-soft);
+}
+
+.library-note-placed i {
+  color: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .library-choice-shimmer {
+    animation: none;
+  }
+}

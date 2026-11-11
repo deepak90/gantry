@@ -1,0 +1,24 @@
+{
+  "name": "@collab/clip-studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Cuts the clip tapes recorded by tests/clips into the how-to clips Remy shows",
+  "scripts": {
+    "studio": "remotion studio src/index.ts --public-dir ../../test-results/tapes",
+    "render": "node render.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.534",
+    "@remotion/google-fonts": "4.0.534",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "remotion": "4.0.534"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "typescript": "5.9.3"
+  }
+}

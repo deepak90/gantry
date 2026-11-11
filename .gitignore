@@ -1,0 +1,36 @@
+# dependencies / build
+node_modules/
+dist/
+build/
+.pnpm-store/
+
+# env & secrets
+.env
+.env.*
+!.env.example
+
+# supabase local state
+supabase/.temp/
+supabase/.branches/
+.supabase/
+
+# what the dev server keeps on this machine (calls with Remy)
+.dev-data/
+
+# tests
+coverage/
+test-results/
+playwright-report/
+
+# os / editor / logs
+.DS_Store
+*.log
+.vscode/*
+!.vscode/extensions.json
+
+# machine-specific seed overlay generated from .env.local
+supabase/seed_local*.sql
+.vercel
+
+# LiveKit Cloud's project and agent ids for `lk agent deploy` (written by `lk agent create`)
+apps/remy-call/livekit.toml

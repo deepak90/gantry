@@ -1,0 +1,1382 @@
+/*
+ * Bryntum needs three kinds of stylesheet: the FontAwesome files (icons, expanders, arrows),
+ * the structural CSS and exactly one theme. Everything after the imports re-themes it through
+ * Bryntum's CSS variables plus the `look-*` classes the renderers in gantt/look.ts add.
+ */
+@import '@bryntum/gantt/fontawesome/css/fontawesome.css';
+@import '@bryntum/gantt/fontawesome/css/solid.css';
+@import '@bryntum/gantt/fontawesome/css/brands.css';
+@import '@bryntum/gantt/gantt.css';
+@import '@bryntum/gantt/svalbard-light.css';
+
+/* Tokens (type scale, roles, phase colors) live in tokens.css. */
+
+/* Bryntum theme variables ---------------------------------------------------------------------- */
+
+.collab-gantt-workspace .b-gantt,
+.collab-gantt-workspace .b-resource-histogram {
+  --b-primary: var(--accent);
+  --b-widget-font-family: inherit;
+  --b-grid-header-background: var(--surface);
+  --b-grid-header-color: var(--ink-soft);
+  --b-grid-header-font-size: var(--fs-sm);
+  --b-grid-header-font-weight: var(--fw-strong);
+  --b-grid-header-text-transform: none;
+  --b-grid-header-border-color: var(--line);
+  --b-grid-cell-border-color: transparent;
+  --b-grid-row-border-color: var(--line-soft);
+  --b-grid-cell-font-size: var(--fs-md);
+  --b-grid-cell-color: var(--ink);
+  --b-grid-cell-hover-background: var(--surface-hover);
+  --b-grid-cell-selected-background: var(--accent-soft);
+  --b-grid-cell-hover-selected-background: color-mix(in oklch, var(--accent-soft), var(--accent) 8%);
+  --b-grid-cell-padding-inline: 0.75rem;
+  --b-tree-parent-font-weight: var(--fw-strong);
+  --b-tree-expander-color: var(--ink-faint);
+  --b-non-working-time-background: color-mix(in oklch, var(--line) 45%, transparent);
+  --b-dependency-color: var(--gray-400);
+  --b-dependency-stroke-width: 1.25px;
+  /* The critical path is drawn only on request; red because a day lost there moves the handover. */
+  --b-critical-path-primary: var(--danger);
+  --b-critical-path-parent-primary: var(--danger);
+  --b-gantt-task-border-radius: var(--radius-md);
+  --b-gantt-task-font-size: var(--fs-xs);
+  --b-gantt-task-font-weight: var(--fw-strong);
+  --b-gantt-task-padding-inline: 0.45rem;
+  --b-label-color: var(--ink-soft);
+  --b-label-font-size: var(--fs-xs);
+  --b-baseline-background: var(--gray-400);
+  --b-baseline-wrap-size: 0.2;
+  --b-baseline-flex: 0.16;
+  --b-baseline-border-color: transparent;
+  --b-baseline-border-radius: var(--radius-xs);
+  --b-time-range-line-color: var(--warning-fill);
+  font-family: inherit;
+}
+
+.collab-gantt-workspace .b-grid-header-text {
+  letter-spacing: 0;
+}
+
+/* Time axis: sentence case, the week on top, single-letter days below. */
+.collab-gantt-workspace .b-sch-header-text {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.collab-gantt-workspace .b-sch-header-row-0 .b-sch-header-text {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+  color: var(--ink-soft);
+}
+
+.collab-gantt-workspace .b-sch-header-row-1 .b-sch-header-text {
+  font-size: var(--fs-2xs);
+  color: var(--ink-faint);
+}
+
+/* Grid ----------------------------------------------------------------------------------------- */
+
+.collab-gantt-workspace .b-grid-row.look-row-phase {
+  background: var(--surface-sunken);
+}
+
+.collab-gantt-workspace .b-grid-row.look-row-done .look-name > span:last-child {
+  color: var(--ink-faint);
+}
+
+.look-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.look-name > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.look-name-icon {
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-xs);
+  color: var(--look-phase);
+  background: color-mix(in oklch, var(--look-phase) 11%, var(--surface));
+}
+
+.look-name-phase {
+  font-weight: var(--fw-strong);
+  font-size: var(--fs-md);
+}
+
+.look-phase-dot {
+  flex: 0 0 auto;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: var(--radius-xs);
+  background: var(--look-phase);
+}
+
+/* Progress cell */
+
+.look-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+}
+
+.look-progress-track {
+  position: relative;
+  flex: 1 1 auto;
+  height: 0.4rem;
+  border-radius: var(--radius-pill);
+  background: var(--line);
+  overflow: hidden;
+}
+
+.look-progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.look-progress-value {
+  flex: 0 0 2.4rem;
+  text-align: end;
+}
+
+.look-progress.is-zero .look-progress-value {
+  color: var(--ink-faint);
+}
+
+.look-progress.is-done {
+  color: var(--success);
+  font-weight: var(--fw-strong);
+}
+
+.collab-gantt-workspace .b-grid-row.look-row-group {
+  background: var(--surface-sunken);
+}
+
+/* Crew avatars */
+
+.collab-gantt-workspace .b-resource-avatar {
+  width: 1.6rem;
+  height: 1.6rem;
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-heavy);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+/* Timeline: the bar language (docs/design/bar-language.md) ------------------------------------
+ * Fill says where the work is in time: a ghost outline before it starts, a raised solid bar while
+ * it runs (the part already done darker), a flat receded bar once finished. Shape says what kind
+ * of work it is: hexagon ends for a check, a capsule for rented equipment, a bracket for a phase.
+ * Edges say what the plan hangs on: a heavy keel on the critical path, a hatched red tail for
+ * the days it slipped. Motion is kept for money moving at PayPal. Every one of these has a word
+ * in the hover card or beside the bar too, so nothing depends on color alone.
+ */
+
+.collab-gantt-workspace .b-gantt-task-wrap {
+  --b-primary: var(--look-phase);
+  --look-paypal: var(--paypal-blue);
+  --look-paypal-deep: var(--paypal-navy);
+}
+
+/* Every leaf bar: the status rules below only set the fill, the ink and the edges. */
+.collab-gantt-workspace .b-gantt-task-wrap:not(.b-gantt-task-parent, .b-milestone-wrap) .b-gantt-task {
+  --look-tail: linear-gradient(transparent, transparent);
+  border-radius: var(--radius-sm);
+  color: var(--ink-inverse);
+  background-color: var(--look-phase);
+  background-image: var(--look-tail), var(--look-fill, linear-gradient(transparent, transparent));
+  background-size: var(--look-slip, 0%) 100%, 100% 100%;
+  background-position: right center, 0 0;
+  background-repeat: no-repeat;
+  box-shadow:
+    var(--look-ring, 0 0 transparent),
+    var(--look-cap, 0 0 transparent),
+    var(--look-keel, 0 0 transparent),
+    var(--look-edge, 0 0 transparent),
+    var(--look-lift, 0 0 transparent);
+  container-type: inline-size;
+  transition:
+    background-color var(--dur-slow) var(--ease-out),
+    color var(--dur-slow) var(--ease-out),
+    box-shadow var(--dur-slow) var(--ease-out);
+}
+
+/* A split task's outline is the dashed thread between its parts; the parts carry the fill. */
+.collab-gantt-workspace .b-gantt-task-wrap:not(.b-gantt-task-parent, .b-milestone-wrap) .b-gantt-task.b-segmented {
+  --look-slip: 0%;
+  background: transparent;
+  box-shadow: none;
+}
+
+.collab-gantt-workspace .b-gantt-task.b-segmented::before {
+  content: '';
+  position: absolute;
+  inset: 50% 0 auto;
+  border-top: 2px dashed color-mix(in oklch, var(--look-phase) 55%, transparent);
+}
+
+/* Not started: a ghost. Tinted fill, phase outline, dark ink: planned, not yet real. */
+.collab-gantt-workspace .b-gantt-task-wrap.look-status-todo .b-gantt-task:not(.b-segmented) {
+  background-color: color-mix(in oklch, var(--look-phase) 8%, var(--surface));
+  color: color-mix(in oklch, var(--look-phase) 50%, var(--ink));
+  --look-edge: inset 0 0 0 1.5px color-mix(in oklch, var(--look-phase) 55%, var(--surface));
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.look-status-todo .look-bar-icon {
+  color: var(--look-phase);
+  opacity: 1;
+}
+
+/* In progress: raised and solid, the done part darker with a bright leading edge. */
+.collab-gantt-workspace .b-gantt-task-wrap.look-status-active .b-gantt-task:not(.b-segmented) {
+  --look-edge: inset 0 1px 0 oklch(1 0 0 / 0.22);
+  --look-lift:
+    0 1px 2px oklch(0.21 0.02 255 / 0.18),
+    0 4px 10px -5px color-mix(in oklch, var(--look-phase) 70%, transparent);
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.look-status-active .look-bar-name {
+  text-shadow: 0 1px 1px oklch(0.21 0.02 255 / 0.25);
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap:not(.b-gantt-task-parent, .b-milestone-wrap) .b-task-percent-bar {
+  --b-percent-bar-background: oklch(0.21 0.02 255 / 0.24);
+  mix-blend-mode: normal;
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.look-status-active .b-task-percent-bar:not([data-percent='0']) {
+  box-shadow: inset -2px 0 0 oklch(1 0 0 / 0.8);
+}
+
+/* Done: flat, grayed and quiet, with a check mark: history, not news. */
+.collab-gantt-workspace .b-gantt-task-wrap.look-status-done .b-gantt-task:not(.b-segmented) {
+  background-color: color-mix(in oklch, var(--look-phase) 10%, var(--canvas));
+  color: color-mix(in oklch, var(--look-phase) 40%, var(--gray-700));
+  --look-edge: inset 0 0 0 1px color-mix(in oklch, var(--look-phase) 20%, transparent);
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.look-status-done .b-task-percent-bar {
+  --b-percent-bar-background: transparent;
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.look-status-done .look-bar-icon {
+  color: var(--success);
+  opacity: 1;
+}
+
+/* A light crew color carries ink instead of white text. */
+.collab-gantt-workspace .b-gantt-task-wrap.look-status-active .b-gantt-task.look-ink-dark {
+  color: var(--ink);
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.look-status-active .look-ink-dark .look-bar-name {
+  text-shadow: none;
+}
+
+/* Critical path: a heavy keel along the bottom edge (and a full-strength outline on ghosts). */
+.collab-gantt-workspace .b-gantt-task-wrap.look-critical .b-gantt-task:not(.b-segmented) {
+  --look-keel: inset 0 -3px 0 color-mix(in oklch, var(--look-phase) 70%, var(--ink));
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.look-critical.look-status-todo .b-gantt-task:not(.b-segmented) {
+  --look-edge: inset 0 0 0 1.5px var(--look-phase);
+}
+
+/* Late against the plan: the slipped days as a hatched red tail ending in a red cap. */
+.collab-gantt-workspace .b-gantt-task-wrap.look-late .b-gantt-task:not(.b-segmented) {
+  --look-tail: repeating-linear-gradient(-45deg, color-mix(in oklch, var(--danger) 55%, transparent) 0 3px, oklch(1 0 0 / 0.28) 3px 6px);
+  --look-cap: inset -3px 0 0 var(--danger);
+}
+
+/* A plan that moved on purpose is not late: the marks wait for Planned dates in the View menu. */
+.collab-gantt-workspace.hides-slips .look-late-pill {
+  display: none;
+}
+
+.collab-gantt-workspace.hides-slips .b-gantt-task-wrap.look-late .b-gantt-task:not(.b-segmented) {
+  --look-tail: linear-gradient(transparent, transparent);
+  --look-cap: 0 0 transparent;
+}
+
+/* Checks and hold points: hexagon ends, a gate the next work waits behind. */
+.collab-gantt-workspace .b-gantt-task-wrap.look-checkpoint .b-gantt-task:not(.b-segmented) {
+  border-radius: 9px / 50%;
+  corner-shape: bevel;
+}
+
+@supports not (corner-shape: bevel) {
+  .collab-gantt-workspace .b-gantt-task-wrap.look-checkpoint .b-gantt-task:not(.b-segmented) {
+    border-radius: 0;
+    clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%);
+  }
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.look-checkpoint .b-gantt-task-content {
+  padding-inline: 0.6rem;
+}
+
+/* Rented equipment: a capsule led by the machine's icon in a white disc. */
+.collab-gantt-workspace .b-gantt-task-wrap.look-equipment .b-gantt-task:not(.b-segmented) {
+  border-radius: 999px;
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.look-equipment .b-gantt-task-content {
+  padding-inline-start: 0.2rem;
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.look-equipment .look-bar-icon {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--look-phase);
+  font-size: var(--fs-2xs);
+  opacity: 1;
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--look-phase) 35%, transparent);
+}
+
+/* Money moving at PayPal: a PayPal-blue ring that breathes until PayPal answers. */
+.collab-gantt-workspace .b-gantt-task-wrap.look-paying .b-gantt-task:not(.b-segmented) {
+  --look-ring: 0 0 0 2px var(--look-paypal);
+  animation: look-pay-glow 1.8s var(--ease-in-out) infinite;
+}
+
+@keyframes look-pay-glow {
+  50% {
+    filter: drop-shadow(0 0 6px color-mix(in oklch, var(--paypal-blue) 75%, transparent));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collab-gantt-workspace .b-gantt-task-wrap.look-paying .b-gantt-task {
+    animation: none;
+  }
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap:not(.b-gantt-task-parent, .b-milestone-wrap):hover .b-gantt-task {
+  filter: brightness(1.04) saturate(1.06);
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.b-task-selected .b-gantt-task,
+.collab-gantt-workspace .b-gantt-task-wrap.b-sch-event-selected .b-gantt-task {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.look-bar-icon {
+  flex: 0 0 auto;
+  font-size: var(--fs-2xs);
+  opacity: 0.92;
+  margin-inline-end: 0.35rem;
+}
+
+/* Short bars keep their icon only; the name is in the grid and the hover card. */
+@container (max-width: 84px) {
+  .look-bar-name {
+    display: none;
+  }
+}
+
+.look-bar-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collab-gantt-workspace .b-gantt-task-content {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Phases and work packages: brackets (Bryntum's shape) holding their tasks; a phase is bolder. */
+
+.collab-gantt-workspace .b-gantt-task-parent:not(.b-milestone-wrap) .b-gantt-task {
+  background: color-mix(in oklch, var(--look-phase) 22%, var(--surface));
+  box-shadow: none;
+}
+
+.collab-gantt-workspace .b-gantt-task-parent:not(.b-milestone-wrap) .b-task-percent-bar {
+  --b-percent-bar-background: var(--look-phase);
+  mix-blend-mode: normal;
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.look-summary-phase {
+  --b-gantt-parent-task-max-height: 14px;
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.look-summary-package {
+  --b-gantt-parent-task-max-height: 10px;
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.look-summary-package .b-gantt-task {
+  background: color-mix(in oklch, var(--look-phase) 13%, var(--surface));
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.look-summary-package .b-task-percent-bar {
+  --b-percent-bar-background: color-mix(in oklch, var(--look-phase) 65%, var(--surface));
+}
+
+/* A finished phase or package recedes like a finished task. */
+.collab-gantt-workspace .b-gantt-task-wrap.look-summary.look-done .b-gantt-task {
+  background: color-mix(in oklch, var(--look-phase) 10%, var(--line));
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.look-summary.look-done .b-task-percent-bar {
+  --b-percent-bar-background: color-mix(in oklch, var(--look-phase) 35%, var(--gray-400));
+}
+
+/* Milestones: an ink diamond (a date that matters, not a warning). */
+
+.collab-gantt-workspace .b-milestone-wrap {
+  --b-primary: var(--gray-800);
+}
+
+.collab-gantt-workspace .b-milestone-wrap .b-gantt-task {
+  filter: drop-shadow(0 1px 2px oklch(0.21 0.02 255 / 0.3));
+}
+
+.look-milestone-label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+}
+
+/*
+ * Payment gates (gantt/pay-gates.ts, gantt/hold-look.ts): a diamond the work after it waits for. Hollow and in caution
+ * amber while the money is due (waiting on someone), breathing PayPal blue while PayPal pays, solid PayPal blue once
+ * paid. The work it holds is hatched in amber, and the link into it is drawn blocked, until then.
+ */
+
+.collab-gantt-workspace .b-milestone-wrap.look-pay-gate {
+  --b-primary: var(--paypal-blue);
+}
+
+.collab-gantt-workspace .b-milestone-wrap.look-pay-gate-waiting .b-milestone .b-gantt-task-content::before,
+.collab-gantt-workspace .b-milestone-wrap.look-pay-gate-failed .b-milestone .b-gantt-task-content::before {
+  background: var(--surface);
+  box-shadow: inset 0 0 0 2.5px var(--warning);
+}
+
+.collab-gantt-workspace .b-milestone-wrap.look-pay-gate-paying .b-gantt-task {
+  animation: look-pay-glow 1.8s var(--ease-in-out) infinite;
+}
+
+.look-gate-label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  border: 1px solid color-mix(in oklch, var(--paypal-blue) 45%, var(--line-strong));
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+
+.look-gate-label .fa-paypal {
+  color: var(--paypal-navy);
+}
+
+.look-gate-label.is-waiting {
+  border-color: var(--warning-line);
+  background: var(--warning-soft);
+}
+
+.look-gate-label.is-waiting .fa-lock {
+  color: var(--warning);
+  font-size: var(--fs-2xs);
+}
+
+.look-gate-label strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.look-gate-label.is-paid {
+  border-color: var(--paypal-blue);
+  background: color-mix(in oklch, var(--paypal-blue) 8%, var(--surface));
+}
+
+.look-gate-label.is-paid .fa-paypal {
+  color: var(--paypal-blue);
+}
+
+.look-gate-label.is-failed {
+  border-color: var(--danger);
+}
+
+/* The held work's tag: "Ground-floor slab held until paid", in caution amber; once paid, "cleared to start" a moment. */
+.look-held-label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0.1rem 0.55rem;
+  border: 1px solid var(--warning-line);
+  border-radius: var(--radius-pill);
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+}
+
+.look-held-label .fa-lock,
+.look-held-label .fa-lock-open {
+  font-size: var(--fs-2xs);
+}
+
+/* The held work by the name it goes by on the call, in ink like the payment's name on its tag. */
+.look-held-label strong {
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+}
+
+.look-held-label.is-released strong {
+  color: inherit;
+}
+
+.look-held-label.is-released {
+  border-color: color-mix(in oklch, var(--paypal-blue) 45%, var(--line));
+  background: color-mix(in oklch, var(--paypal-blue) 8%, var(--surface));
+  color: var(--paypal-navy);
+  animation: look-released-tag var(--look-lift, 3600ms) var(--ease-out) forwards;
+}
+
+@keyframes look-released-tag {
+  0% {
+    opacity: 0;
+    translate: -6px 0;
+  }
+  12%,
+  78% {
+    opacity: 1;
+    translate: 0 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/*
+ * Held work: hatched in caution amber over its own color, and a little quieter, until the payment is made. On a task
+ * the hatching is the bar's full-size layer, under its late tail: in the tail's place it would be as wide as the tail,
+ * which is nothing while the task is on time.
+ */
+.collab-gantt-workspace .b-gantt-task-wrap.look-held:not(.b-milestone-wrap) .b-gantt-task {
+  --look-fill: repeating-linear-gradient(-45deg, transparent 0 5px, color-mix(in oklch, var(--warning-fill) 55%, transparent) 5px 8px);
+  background-image: var(--look-tail, none), var(--look-fill);
+  filter: saturate(0.6);
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.look-held:not(.b-milestone-wrap):hover .b-gantt-task {
+  filter: saturate(0.75);
+}
+
+/* Released: the hatching fades as the block lifts (gantt/hold-look.ts). */
+.collab-gantt-workspace .b-gantt-task-wrap.look-lifting:not(.b-milestone-wrap) .b-gantt-task {
+  background-image: var(--look-tail, none), repeating-linear-gradient(-45deg, transparent 0 5px, color-mix(in oklch, var(--warning-fill) 55%, transparent) 5px 8px);
+  animation: look-unhatch 1600ms var(--ease-out) 300ms forwards;
+}
+
+@keyframes look-unhatch {
+  to {
+    background-image: var(--look-tail, none), repeating-linear-gradient(-45deg, transparent 0 5px, transparent 5px 8px);
+    filter: none;
+  }
+}
+
+/*
+ * The link out of a payment not yet made, drawn blocked: caution amber, broken by a stop mark (a circle with an X in
+ * it), wider while the walkthrough lights it. Once paid, it runs PayPal blue into the held work while the block lifts.
+ * The wide invisible click area Bryntum draws along each link keeps its own look.
+ */
+.collab-gantt-workspace .b-sch-dependency.look-dep-hold:not(.b-click-area) {
+  stroke: var(--warning);
+  stroke-width: 1.75px;
+  stroke-linecap: round;
+}
+
+.collab-gantt-workspace .b-sch-dependency.look-dep-hold.is-lit:not(.b-click-area) {
+  stroke-width: 2.5px;
+}
+
+.collab-gantt-workspace .b-sch-dependency.look-dep-lifted:not(.b-click-area) {
+  stroke: var(--paypal-blue);
+  stroke-width: 2.25px;
+  stroke-dasharray: 8 5;
+  animation: look-dep-flow 700ms linear infinite;
+}
+
+@keyframes look-dep-flow {
+  to {
+    stroke-dashoffset: -13;
+  }
+}
+
+/*
+ * A hold lit by the walkthrough (gantt/hold-look.ts): the rest of the chart steps back, slowly, and the lit bars are
+ * outlined: the payment and the work it pays for, then the held work. Bars fade through Bryntum's own transition
+ * variable, slowed for opacity; while Bryntum animates a move it uses its own (so bars still slide).
+ */
+.collab-gantt-workspace .b-gantt.look-spotlight:not(.b-animating) .b-gantt-task-wrap {
+  --b-gantt-task-transition: border 0.15s, border-radius 0.15s, background-color 0.15s, padding 0.15s, opacity 900ms var(--ease-in-out);
+}
+
+.collab-gantt-workspace .b-gantt.look-spotlight .b-gantt-task-wrap:not(.look-lit) {
+  opacity: 0.22;
+}
+
+.collab-gantt-workspace .b-gantt.look-spotlight .b-sch-dependency {
+  transition: stroke-width 0.2s linear, stroke 0.2s linear, opacity 900ms var(--ease-in-out);
+}
+
+.collab-gantt-workspace .b-gantt.look-spotlight .b-sch-dependency:not(.look-dep-hold):not(.look-dep-lifted) {
+  opacity: 0.18;
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.look-lit:not(.b-milestone-wrap) > .b-gantt-task {
+  outline: 2px solid var(--look-lit-ring);
+  outline-offset: 2px;
+  animation: look-lit-in 900ms var(--ease-out) both;
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.look-lit-holding {
+  --look-lit-ring: color-mix(in oklch, var(--ink) 70%, var(--surface));
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.look-lit-held {
+  --look-lit-ring: var(--warning);
+}
+
+.collab-gantt-workspace .b-milestone-wrap.look-lit .b-milestone {
+  animation: look-lit-in 900ms var(--ease-out) both;
+}
+
+@keyframes look-lit-in {
+  from {
+    outline-color: transparent;
+  }
+}
+
+/* A late payment's what-if: where moved work would land, as dashed outlines (gantt/pay-late-preview.ts). */
+.collab-gantt-workspace .b-indicator.pay-late-preview {
+  z-index: 0;
+  box-sizing: border-box;
+  border: 1.5px dashed var(--paypal-blue);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklch, var(--paypal-blue) 10%, transparent);
+  opacity: 0.95;
+}
+
+.collab-gantt-workspace .b-indicator.pay-late-preview::before {
+  display: none;
+}
+
+/* A deadline (the handover's contract date): Bryntum's own flag, in ink; red only once the work would finish after it. */
+.collab-gantt-workspace .b-indicator.b-deadline-date {
+  --b-indicator-deadline-color: var(--ink-soft);
+  --b-indicator-deadline-hover-color: var(--ink);
+}
+
+.collab-gantt-workspace .b-indicator.b-deadline-date.is-missed {
+  --b-indicator-deadline-color: var(--danger);
+  --b-indicator-deadline-hover-color: var(--danger-strong);
+}
+
+/* Baselines: a thin "planned" line under a bar, only where the plan has moved. A bar whose
+ * planned dates match keeps its full height (look.ts adds look-on-plan, hides the baseline). */
+
+.collab-gantt-workspace .b-task-baseline {
+  opacity: 0.9;
+}
+
+.collab-gantt-workspace .b-task-baseline.look-baseline-on-plan {
+  display: none;
+}
+
+.collab-gantt-workspace.b-baselines .b-gantt-task-wrap.b-has-baselines.look-on-plan,
+.collab-gantt-workspace .b-baselines .b-gantt-task-wrap.b-has-baselines.look-on-plan {
+  height: calc(1px * var(--b-event-size));
+}
+
+.collab-gantt-workspace .b-baselines .b-gantt-task-wrap.b-has-baselines.b-milestone-wrap.look-on-plan {
+  --b-milestone-size: calc(var(--b-event-size) * 1px);
+}
+
+/* Critical path: everything else steps back */
+
+.collab-gantt-workspace .b-gantt-critical-paths .b-gantt-task-wrap.b-critical {
+  --look-phase: var(--danger);
+}
+
+.collab-gantt-workspace .b-gantt-critical-paths .b-gantt-task-wrap:not(.b-critical) {
+  opacity: 0.28;
+}
+
+/* Calendar and project lines: quiet context, not content */
+
+.collab-gantt-workspace .b-sch-non-working-time.b-narrow-range label {
+  display: none;
+}
+
+.collab-gantt-workspace .b-sch-non-working-time:not(.b-narrow-range) label {
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.collab-gantt-workspace .b-gantt-project-line {
+  --b-primary: var(--ink-faint);
+  border-inline-start-style: dashed;
+}
+
+/*
+ * Lines on the time axis (the project's start and end, today): the line runs on up through the row of days, and
+ * a name, where there is one, sits in a small light chip in the row above, beside the line, clear of the day
+ * letters. Bryntum's own header slab under the name is gone.
+ */
+.collab-gantt-workspace .b-time-ranges-header-canvas .b-sch-line {
+  inset-block: 0;
+  height: auto;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 0;
+  overflow: visible;
+  background: none;
+  border: 0;
+  border-radius: 0;
+}
+
+.collab-gantt-workspace .b-time-ranges-header-canvas .b-sch-line::after {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  bottom: 0;
+  height: 50%;
+  border-inline-start: 1.5px dashed var(--ink-faint);
+}
+
+.collab-gantt-workspace .b-time-ranges-header-canvas .b-sch-line label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 4px 0 0 3px;
+  padding: 0 0.4rem;
+  height: 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.collab-gantt-workspace .b-time-ranges-header-canvas .b-sch-line label:empty {
+  display: none;
+}
+
+/* Today: a solid line in the accent; its day in the header is filled in (axis-marks.ts), so it needs no chip. */
+.collab-gantt-workspace .b-time-ranges-header-canvas .b-sch-current-time::after {
+  border-inline-start: 2px solid var(--accent);
+}
+
+.collab-gantt-workspace .b-time-ranges-header-canvas .b-sch-current-time label {
+  display: none;
+}
+
+.collab-gantt-workspace .b-sch-header-time-axis-cell.look-today .b-sch-header-text {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 0.3rem;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--ink-inverse);
+  font-weight: var(--fw-strong);
+}
+
+.collab-gantt-workspace .b-timeline-sub-grid .b-sch-current-time {
+  --b-primary: var(--accent);
+  border-inline-start-width: 2px;
+}
+
+/* Labels beside the bars ------------------------------------------------------------------------- */
+
+.collab-gantt-workspace .b-gantt-task-wrap .b-sch-label {
+  background: transparent;
+  overflow: visible;
+}
+
+.look-after {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+  font-size: var(--fs-xs);
+}
+
+.look-money {
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.look-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  line-height: 1.3;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.look-pill i {
+  font-size: var(--fs-2xs);
+}
+
+/* --tone-ink is the tone darkened for text on --tone-soft (4.5:1 or better). */
+.look-tone-ok { --tone: var(--success); --tone-soft: var(--success-soft); --tone-ink: var(--success); }
+.look-tone-busy { --tone: var(--accent); --tone-soft: var(--accent-soft); --tone-ink: var(--accent-strong); }
+.look-tone-warn { --tone: var(--warning); --tone-soft: var(--warning-soft); --tone-ink: var(--warning); }
+.look-tone-alert { --tone: var(--danger); --tone-soft: var(--danger-soft); --tone-ink: var(--danger-strong); }
+.look-tone-neutral { --tone: var(--ink-soft); --tone-soft: var(--gray-100); --tone-ink: var(--ink-soft); }
+
+.look-pill {
+  color: var(--tone-ink, var(--tone));
+  background: var(--tone-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--tone) 22%, transparent);
+}
+
+/* Beside a bar a pill sits on the grid's white, so it carries a hairline shadow to lift it. */
+.look-after > .look-pill {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklch, var(--tone) 28%, transparent),
+    var(--shadow-xs);
+}
+
+.look-pill.look-tone-busy i {
+  animation: look-pulse 1.4s var(--ease-in-out) infinite;
+}
+
+@keyframes look-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* A fix's payment, beside the bar: one pill --------------------------------
+ * Bryntum's labels let the mouse through to the row. This one takes it, so hovering over it opens the
+ * task's hover card. Solid PayPal blue for the payment.
+ */
+
+.collab-gantt-workspace .look-status {
+  pointer-events: auto;
+}
+
+.look-status {
+  height: 1.32rem;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.look-status.is-paypal {
+  color: var(--ink-inverse);
+  background: var(--paypal-blue);
+  box-shadow: var(--shadow-xs);
+}
+
+.look-status-mark {
+  width: auto;
+  height: 0.8rem;
+}
+
+.look-status.is-paying .look-status-mark {
+  animation: look-pulse 1.4s var(--ease-in-out) infinite;
+}
+
+/* Rented equipment on site: a dashed box around the work, with a tab naming it ---------------
+ * Facts only (delivered → collected). The box runs behind the bar; any days before the work starts
+ * show as empty box, for the viewer (and the assistant, when asked) to judge.
+ */
+
+/* Bryntum sizes an indicator to the bar (inline height); padding plus a lift make the box reach
+ * above and below the bar, so it reads as the period around the work. */
+.collab-gantt-workspace .b-indicator.look-rental-band {
+  --rental-reach: 7px;
+  z-index: 0;
+  box-sizing: content-box;
+  padding-block: var(--rental-reach);
+  transform: translateY(calc(-1 * var(--rental-reach) - 1px));
+  border: 1px dashed var(--gray-400);
+  border-radius: var(--radius-md);
+  background: repeating-linear-gradient(-45deg, transparent 0 6px, color-mix(in oklch, var(--gray-200) 55%, transparent) 6px 7px);
+  overflow: visible;
+}
+
+.collab-gantt-workspace .b-indicator.look-rental-band::after {
+  content: var(--rental-label, 'On rent');
+  position: absolute;
+  inset-block-start: -1px;
+  inset-inline-start: -1px;
+  max-width: calc(100% + 2px);
+  overflow: hidden;
+  padding: 0 0.4rem;
+  border-radius: var(--radius-md) 0 var(--radius-sm) 0;
+  color: var(--ink-soft);
+  background: var(--gray-100);
+  box-shadow: inset 0 0 0 1px var(--gray-300);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+  line-height: 0.9rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Generated group rows (Group by crew / status / budget) -------------------------------------- */
+
+.collab-gantt-workspace .b-generated-parent {
+  background: var(--surface-sunken);
+}
+
+.look-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.look-group-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-sm);
+  color: var(--tone);
+  background: var(--tone-soft);
+  font-size: var(--fs-sm);
+}
+
+.look-group.look-tone-neutral .look-group-icon {
+  color: var(--ink-soft);
+  background: var(--gray-100);
+}
+
+.look-group-name {
+  font-weight: var(--fw-strong);
+  font-size: var(--fs-md);
+}
+
+.look-group-count {
+  padding: 0.05rem 0.45rem;
+  border-radius: var(--radius-pill);
+  background: var(--gray-100);
+  color: var(--ink-soft);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+}
+
+.collab-gantt-workspace .look-group-bar .b-gantt-task {
+  background: color-mix(in oklch, var(--ink-faint) 22%, var(--surface));
+}
+
+/*
+ * A Bryntum widget sizes itself to its parent and collapses to 10em when no ancestor has a
+ * real height, so the workspace is a full-height flex column and every link down to the
+ * widget is a flex item with min-height: 0.
+ */
+.collab-gantt-workspace {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  background: var(--surface);
+  container-type: inline-size;
+}
+
+.collab-gantt-main {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
+  min-height: 0;
+}
+
+.collab-gantt-main > .b-react-gantt-container {
+  flex: 1 1 0%;
+  min-height: 0;
+  height: auto;
+}
+
+.collab-histogram-pane {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-height: 0;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.collab-histogram-pane.is-open {
+  flex: 0 0 220px;
+}
+
+.collab-pane-header {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 0 0.5rem;
+  min-height: 2.2rem;
+  background: var(--surface-sunken);
+}
+
+.collab-pane-hint {
+  font-weight: var(--fw-regular);
+  color: var(--ink-faint);
+}
+
+.collab-histogram-host {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
+  min-height: 0;
+}
+
+.collab-histogram-host > .b-widget {
+  flex: 1 1 0%;
+  min-height: 0;
+  height: auto;
+}
+
+/* Schedule cell: dates, working days and progress in one --------------------------------------- */
+
+.look-when {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.28rem;
+  width: 100%;
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.look-when-dates {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.1;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.look-when-start,
+.look-when-end {
+  font-weight: var(--fw-medium);
+}
+
+.look-when-arrow {
+  font-size: var(--fs-2xs);
+  color: var(--ink-faint);
+}
+
+.look-when-days {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-inline-start: auto;
+  padding: 0.05rem 0.4rem;
+  border-radius: var(--radius-pill);
+  background: var(--gray-100);
+  color: var(--ink-soft);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+}
+
+.look-when-days i {
+  font-size: var(--fs-2xs);
+  color: var(--accent);
+}
+
+.look-when-diamond {
+  font-size: var(--fs-2xs);
+  color: var(--gray-800);
+}
+
+.look-when-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: var(--fs-2xs);
+  color: var(--ink-soft);
+}
+
+.look-when-progress .look-progress-track {
+  height: 0.3rem;
+}
+
+.look-when-progress .look-progress-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  flex: 0 0 2.6rem;
+  font-weight: var(--fw-strong);
+}
+
+.look-when-progress.is-zero .look-progress-value {
+  color: var(--ink-faint);
+}
+
+.look-when-progress.is-done .look-progress-fill {
+  background: var(--success-fill);
+}
+
+.look-when-progress.is-done .look-progress-value {
+  color: var(--success);
+}
+
+.look-when.is-rollup .look-when-dates {
+  font-weight: var(--fw-heavy);
+}
+
+.look-when.is-rollup .look-progress-fill {
+  background: var(--ink-soft);
+}
+
+.look-when-empty {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+/* Cost cells: two figures and a bar in one ----------------------------------------------------- */
+
+.look-cost {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.2rem;
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+.look-cost-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.look-cost-value {
+  font-weight: var(--fw-strong);
+  color: var(--ink);
+}
+
+.look-cost-sub {
+  font-size: var(--fs-2xs);
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.look-cost.is-rollup .look-cost-value {
+  font-weight: var(--fw-heavy);
+}
+
+.look-cost.is-settled .look-cost-main > i {
+  color: var(--success);
+  font-size: var(--fs-xs);
+}
+
+.look-cost-bar {
+  position: relative;
+  width: 100%;
+  height: 0.3rem;
+  border-radius: var(--radius-pill);
+  background: var(--line);
+  overflow: hidden;
+}
+
+.look-cost-spent,
+.look-cost-paid {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+}
+
+.look-cost-spent {
+  background: var(--gray-400);
+}
+
+.look-cost-paid {
+  background: var(--success-fill);
+}
+
+/* Package rows (the level between a phase and its tasks) */
+
+.collab-gantt-workspace .b-grid-row.look-row-package {
+  background: color-mix(in oklch, var(--surface-sunken) 50%, var(--surface));
+}
+
+.collab-gantt-workspace .b-grid-row.look-row-package .look-name-phase {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-strong);
+  font-stretch: var(--stretch-ui);
+}
+
+.collab-gantt-workspace .b-grid-row.look-row-package .look-phase-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  box-shadow: none;
+}
+
+/* Row reorder grip, cell selection and the fill handle --------------------------------------- */
+
+.collab-gantt-workspace .b-row-reorder-grip::before {
+  color: var(--line);
+}
+
+.collab-gantt-workspace .b-grid-row:hover .b-row-reorder-grip::before {
+  color: var(--ink-faint);
+}
+
+.collab-gantt-workspace .b-grid-cell.b-selected {
+  background: color-mix(in oklch, var(--accent) 9%, transparent);
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklch, var(--accent) 55%, transparent);
+}
+
+/* Crew badges (grid, histogram) ---------------------------------------------------------------- */
+
+.look-avatars {
+  display: inline-flex;
+  align-items: center;
+}
+
+.look-avatar {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: var(--crew, var(--ink-faint));
+  color: var(--ink-inverse);
+  font-size: var(--fs-2xs);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.look-avatars .look-avatar + .look-avatar {
+  margin-inline-start: -0.45rem;
+}
+
+.look-avatar-more {
+  background: var(--gray-100);
+  color: var(--ink-soft);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-heavy);
+}
+
+.look-histogram-crew {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  font-weight: var(--fw-strong);
+}
+
+.look-histogram-crew .look-avatar {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: var(--fs-2xs);
+  box-shadow: none;
+}
+
+/* Deep plans: a tighter indent, and no leaf bullet (every task carries its own crew icon). */
+.collab-gantt-workspace .b-gantt {
+  --b-tree-indent-size: 1.05rem;
+}
+
+.collab-gantt-workspace .b-tree-leaf-cell .b-icon-tree-leaf {
+  visibility: hidden;
+  width: 0.4rem;
+}
+
+/* Equipment cell: the rented item and when it is on site ---------------------------------------- */
+
+.look-equipment-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.look-equipment-cell .look-avatar {
+  border-radius: var(--radius-sm);
+}
+
+.look-equipment-text {
+  display: grid;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.look-equipment-name {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.look-equipment-when {
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

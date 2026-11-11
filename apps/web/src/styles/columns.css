@@ -1,0 +1,431 @@
+/*
+ * The column selector ("+" at the right end of the grid's header row) and the column editor: two
+ * .popover surfaces built from ui.css (.input, .field, .segmented, .button); this file lays them out.
+ */
+
+/* The "+" header ---------------------------------------------------------------------------------- */
+
+/* It stays at the visible right end of the header row when the columns are wider than the region. */
+.collab-gantt-workspace .b-grid-header.look-column-add-header {
+  position: sticky;
+  inset-inline-end: 0;
+  z-index: 2;
+  padding: 0;
+  justify-content: center;
+  background: var(--surface);
+}
+
+.collab-gantt-workspace .b-grid-headers-locked.b-horizontal-overflow .b-grid-header.look-column-add-header {
+  box-shadow: -8px 0 8px -8px oklch(0.21 0.02 255 / 0.25);
+}
+
+.collab-gantt-workspace .b-grid-header.look-column-add-header .b-grid-header-text {
+  display: flex;
+  justify-content: center;
+  padding: 0;
+}
+
+.collab-gantt-workspace .b-grid-header.look-column-add-header .b-grid-header-text-content {
+  overflow: visible;
+}
+
+/* Rendered by the grid's header (gantt/columns.ts): a small icon button with a dashed edge. */
+.look-column-add {
+  display: grid;
+  place-items: center;
+  width: var(--control-sm);
+  height: var(--control-sm);
+  padding: 0;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  color: var(--ink-soft);
+  background: var(--surface);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.look-column-add:hover,
+.look-column-add.is-open {
+  border-style: solid;
+  border-color: var(--accent);
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+
+/* The selector's own column has no content: keep it quiet. */
+.collab-gantt-workspace .b-grid-cell.look-column-add-cell {
+  padding: 0;
+  cursor: default;
+}
+
+/*
+ * Bryntum places body cells where their header is; while the sticky "+" header is held at the right
+ * edge of an overflowing region, its empty cells lie over other cells: let them be see-through.
+ */
+.collab-gantt-workspace .b-grid-sub-grid-locked.b-horizontal-overflow .b-grid-cell.look-column-add-cell {
+  background: transparent !important;
+  outline: none;
+  pointer-events: none;
+}
+
+/* Pop-over surface (a .popover; doubled class because panel stylesheets load before ui.css) ------- */
+
+.popover.gcol-popover {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  font-size: var(--fs-sm);
+  animation: gt-menu-in var(--dur-fast) var(--ease-out);
+}
+
+.gcol-popover:focus {
+  outline: none;
+}
+
+.gcol-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-md) var(--space-sm);
+}
+
+.gcol-editor-head {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gcol-title {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-stretch: var(--stretch-display);
+  font-weight: var(--fw-heavy);
+}
+
+.gcol-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.gcol-search > .fa {
+  position: absolute;
+  inset-inline-start: var(--space-sm);
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+  pointer-events: none;
+}
+
+.gcol-search .input {
+  padding-inline-start: 1.85rem;
+  background: var(--surface-sunken);
+}
+
+.gcol-search .input:focus-visible {
+  background: var(--surface);
+}
+
+.gcol-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0 var(--space-xs) var(--space-xs);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.gcol-section + .gcol-section {
+  margin-top: var(--space-2xs);
+  padding-top: var(--space-2xs);
+  border-top: 1px solid var(--line-soft);
+}
+
+.section-label.gcol-section-title {
+  padding: var(--space-sm) var(--space-xs) var(--space-2xs);
+}
+
+.gcol-section-title span {
+  font-weight: var(--fw-medium);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.gcol-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gcol-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3xs);
+  border-radius: var(--radius-sm);
+}
+
+.gcol-row:hover {
+  background: var(--surface-hover);
+}
+
+.gcol-row.is-dragging {
+  opacity: 0.45;
+  background: var(--accent-soft);
+}
+
+.gcol-row.is-drop-before::before,
+.gcol-row.is-drop-after::after {
+  content: '';
+  position: absolute;
+  inset-inline: var(--space-xs);
+  height: 2px;
+  border-radius: 1px;
+  background: var(--accent);
+}
+
+.gcol-row.is-drop-before::before {
+  top: -1px;
+}
+
+.gcol-row.is-drop-after::after {
+  bottom: -1px;
+}
+
+.gcol-grip {
+  display: grid;
+  flex: 0 0 1.4rem;
+  place-items: center;
+  width: 1.4rem;
+  height: var(--control-md);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-xs);
+  color: var(--gray-400);
+  background: transparent;
+  font-size: var(--fs-xs);
+  cursor: grab;
+}
+
+.gcol-grip:hover {
+  color: var(--ink-soft);
+}
+
+.gcol-grip:not(.is-locked, .is-blank) {
+  touch-action: none;
+}
+
+.gcol-list.is-sorting,
+.gcol-list.is-sorting * {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.gcol-list.is-sorting .gcol-row:hover {
+  background: transparent;
+}
+
+.gcol-grip.is-locked {
+  color: var(--line-strong);
+  font-size: var(--fs-2xs);
+  cursor: default;
+}
+
+.gcol-grip.is-blank {
+  cursor: default;
+}
+
+/* A row's checkbox and label: one button with role=checkbox. */
+.gcol-option {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+  padding: var(--space-xs) var(--space-2xs);
+  border: 0;
+  border-radius: var(--radius-xs);
+  color: var(--ink);
+  background: transparent;
+  text-align: start;
+  cursor: pointer;
+}
+
+.gcol-option[aria-disabled='true'] {
+  cursor: default;
+}
+
+.gcol-check {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 1rem;
+  height: 1rem;
+  box-sizing: border-box;
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius-xs);
+  color: var(--accent-ink);
+  background: var(--surface);
+  font-size: 0.55rem;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.gcol-check.is-checked {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.gcol-option[aria-disabled='true'] .gcol-check.is-checked {
+  border-color: var(--accent-line);
+  background: var(--accent-line);
+}
+
+.gcol-option:hover .gcol-check:not(.is-checked) {
+  border-color: var(--accent);
+}
+
+.gcol-option-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.gcol-option-label {
+  overflow: hidden;
+  font-weight: var(--fw-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gcol-option-text small {
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The row's edit button (a quiet .button) shows on hover or focus. */
+.button.gcol-edit {
+  flex: 0 0 auto;
+  margin-inline-end: var(--space-2xs);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.gcol-row:hover .gcol-edit,
+.gcol-edit:focus-visible {
+  opacity: 1;
+}
+
+.gcol-empty {
+  margin: 0;
+  padding: var(--space-lg) var(--space-sm);
+  color: var(--ink-faint);
+  text-align: center;
+}
+
+.gcol-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-top: 1px solid var(--line-soft);
+  background: var(--surface-sunken);
+}
+
+.gcol-foot-hint {
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+/* Editor fields ---------------------------------------------------------------------------------- */
+
+.gcol-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-3xs) var(--space-md) var(--space-md);
+}
+
+.gcol-fields .field {
+  min-width: 0;
+}
+
+.gcol-field-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.gcol-input-row {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.gcol-input-row .input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.gcol-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+
+.gcol-stepper .input {
+  width: 3.6rem;
+  padding: 0 var(--space-xs);
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.gcol-stepper .input::-webkit-inner-spin-button,
+.gcol-stepper .input::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+.gcol-unit {
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+/* Align: an icon-only .segmented (its aria-checked look is in toolbar.css). */
+.gcol-segmented {
+  justify-self: start;
+}
+
+.segmented.gcol-segmented > button {
+  justify-content: center;
+  width: 1.85rem;
+  padding: 0;
+}
+
+.gcol-move {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.gcol-move .button {
+  flex: 1 1 0;
+}
+
+/* Composite cells follow the column's alignment. */
+.collab-gantt-workspace .b-grid-cell-align-start .look-cost {
+  align-items: flex-start;
+}
+
+.collab-gantt-workspace .b-grid-cell-align-center .look-cost {
+  align-items: center;
+}

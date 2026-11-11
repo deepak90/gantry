@@ -1,0 +1,456 @@
+/* The Watch tab (alerts/AlertsPanel.tsx) and the toasts that spring up when something new needs a look. */
+
+.alerts-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--surface-sunken);
+}
+
+.alerts-scroll {
+  display: grid;
+  align-content: start;
+  gap: var(--space-lg);
+  min-height: 0;
+  padding: var(--space-md) var(--space-md) var(--space-xl);
+  overflow-y: auto;
+}
+
+.alerts-section {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+/* A .section-label with a count, and the section's action on the right. */
+.alerts-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: var(--control-sm);
+}
+
+.alerts-heading .pill {
+  letter-spacing: 0;
+}
+
+.alerts-heading .button {
+  margin-left: auto;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.alerts-muted,
+.alerts-empty {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.alerts-empty .fa {
+  color: var(--success);
+}
+
+.alerts-list,
+.watch-rules {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* An alert: a card with a leading icon in its severity (red only for high). */
+.alert-item,
+.alert-toast {
+  display: flex;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--warning-line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.alert-item.is-high,
+.alert-toast.is-high {
+  border-color: var(--danger-line);
+}
+
+.alert-item.is-low,
+.alert-toast.is-low {
+  border-color: var(--line);
+}
+
+.alert-icon {
+  margin-top: 0.1rem;
+  color: var(--warning);
+}
+
+.is-high > .alert-icon {
+  color: var(--danger);
+}
+
+.is-low > .alert-icon {
+  color: var(--ink-faint);
+}
+
+.alert-body {
+  display: grid;
+  flex: 1;
+  gap: var(--space-2xs);
+  min-width: 0;
+}
+
+.alert-body p {
+  margin: 0;
+}
+
+.alert-kicker {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.alert-title {
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+  line-height: 1.35;
+}
+
+.alert-detail {
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+}
+
+.alert-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+  margin-top: var(--space-3xs);
+}
+
+/* The watch list */
+.watch-rule {
+  display: flex;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.watch-rule.is-off {
+  opacity: 0.65;
+}
+
+.watch-rule-icon {
+  width: 1rem;
+  margin-top: 0.15rem;
+  color: var(--ink-faint);
+}
+
+.watch-rule-body {
+  display: grid;
+  flex: 1;
+  gap: var(--space-3xs);
+  min-width: 0;
+}
+
+.watch-rule-body p {
+  margin: 0;
+}
+
+.watch-rule-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+}
+
+.watch-rule-actions,
+.watch-rule-confirm {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-top: var(--space-2xs) !important;
+  font-size: var(--fs-xs);
+}
+
+.watch-rule-actions .button.is-link,
+.watch-rule-confirm .button.is-link {
+  font-size: inherit;
+}
+
+.watch-rule-state {
+  margin-left: calc(-1 * var(--space-xs));
+  color: var(--ink-soft);
+}
+
+.watch-rule-meta {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+/* Now / Rules / History */
+.segmented.watch-parts {
+  display: flex;
+  margin: var(--space-sm) var(--space-md) 0;
+}
+
+.segmented.watch-parts > button {
+  flex: 1;
+  justify-content: center;
+}
+
+.watch-parts .pill {
+  min-height: 1rem;
+  padding: 0 var(--space-2xs);
+}
+
+.note.watch-error {
+  margin: var(--space-sm) var(--space-md) 0;
+}
+
+.empty-state.watch-empty {
+  padding: var(--space-lg) var(--space-sm);
+}
+
+.watch-empty p {
+  margin: 0;
+}
+
+/* A rule as a sentence: the joining words small and quiet, what they join in ink. */
+.watch-sentence {
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  line-height: 1.55;
+}
+
+.watch-word {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Recipes */
+.watch-recipes,
+.watch-history {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.watch-recipe {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.watch-recipe-text {
+  display: grid;
+  flex: 1;
+  gap: var(--space-3xs);
+  min-width: 0;
+  font-size: var(--fs-xs);
+}
+
+.watch-recipe-text > span {
+  color: var(--ink-soft);
+}
+
+.watch-recipe-text .watch-sentence {
+  margin: var(--space-3xs) 0 0;
+}
+
+.watch-recipe-actions {
+  display: grid;
+  justify-items: end;
+  gap: var(--space-2xs);
+}
+
+.watch-recipe-actions .button.is-link {
+  font-size: var(--fs-xs);
+}
+
+/* History: a run that cleared is quiet. */
+.watch-run {
+  display: flex;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.watch-run.is-high:not(.is-cleared) {
+  border-color: var(--danger-line);
+}
+
+.watch-run.is-cleared .alert-icon {
+  color: var(--success);
+}
+
+.watch-run.is-cleared .alert-title {
+  color: var(--ink-soft);
+}
+
+/* The rule form */
+.card.rule-form {
+  gap: var(--space-md);
+  border-color: var(--accent-line);
+  box-shadow: var(--shadow-sm);
+  font-size: var(--fs-xs);
+}
+
+.rule-form fieldset {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.rule-form legend {
+  margin-bottom: var(--space-xs);
+  padding: 0;
+}
+
+/* The sentence's joining words lead each part of the form. */
+.rule-word {
+  color: var(--accent-strong);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-heavy);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.rule-form .segmented {
+  justify-self: start;
+}
+
+.rule-form textarea.input {
+  resize: vertical;
+}
+
+.rule-choices {
+  display: grid;
+  gap: var(--space-2xs);
+}
+
+.rule-choices label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--gray-700);
+}
+
+.rule-choices input {
+  accent-color: var(--accent);
+}
+
+.rule-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--ink-soft);
+}
+
+.rule-form .input {
+  width: auto;
+  min-height: var(--control-sm);
+  font-size: var(--fs-xs);
+}
+
+.rule-form input[type='number'].input {
+  width: 4.5rem;
+}
+
+.rule-form .field .input {
+  width: 100%;
+}
+
+.rule-form fieldset .button.is-link {
+  justify-self: start;
+  font-size: inherit;
+}
+
+.rule-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.rule-buttons .button.is-link {
+  font-size: var(--fs-xs);
+}
+
+/* Toasts: bottom right, over the plan */
+.alert-toasts {
+  position: fixed;
+  z-index: 70;
+  right: var(--space-lg);
+  bottom: 3.6rem;
+  display: grid;
+  gap: var(--space-sm);
+  width: min(22rem, calc(100vw - 2rem));
+}
+
+.alert-toast {
+  position: relative;
+  padding-right: var(--space-2xl);
+  box-shadow: var(--shadow-lg);
+  animation: alert-toast-in var(--dur-slow) var(--ease-out);
+}
+
+@keyframes alert-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+}
+
+/* The assistant took a situation up: the toast leads with its mark. */
+.alert-toast.is-assistant {
+  border-color: var(--accent-line);
+}
+
+.alert-toast.is-assistant > .alert-icon {
+  color: var(--accent);
+}
+
+.alert-toast-close {
+  position: absolute;
+  top: var(--space-xs);
+  right: var(--space-xs);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alert-toast {
+    animation: none;
+  }
+}
+
+.watch-describe {
+  display: flex;
+  gap: var(--space-2xs);
+  padding: var(--space-xs) var(--space-md);
+}
+
+.watch-describe .input {
+  flex: 1;
+}

@@ -1,0 +1,113 @@
+/* The PayPal invoice for a change to the plan (assistant/change-invoice-card.tsx). Layout only: colors, type and
+   the button and pill come from tokens.css and ui.css. */
+
+.ci-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.ci-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs) var(--space-md);
+  margin: 0;
+}
+
+.ci-facts div {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2xs);
+}
+
+.ci-facts dt {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+}
+
+.ci-facts dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.ci-lines {
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--line-soft);
+  list-style: none;
+}
+
+.ci-lines li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-2xs) 0;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+}
+
+.ci-line-label {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ci-line-detail {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.ci-line-amount {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ci-total {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--fs-sm);
+}
+
+.ci-total strong {
+  font-weight: var(--fw-heavy);
+  font-variant-numeric: tabular-nums;
+}
+
+.ci-send {
+  align-items: center;
+}
+
+.ci-outcome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2xs);
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--fs-xs);
+}
+
+.ci-outcome.is-paid .fa {
+  color: var(--success);
+}
+
+/* Who sent it and when, under what became of it. */
+.ci-sent-by {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+}
+
+.ci-fine {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}

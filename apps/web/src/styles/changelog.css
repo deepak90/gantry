@@ -1,0 +1,348 @@
+/*
+ * The changelog side panel: a .panel-head, kind filters (.segmented) and Bryntum's VersionGrid
+ * restyled as a quiet activity stream. Each entry is an avatar, a sentence and a meta line; PayPal
+ * entries carry PayPal's own blue.
+ */
+.changelog-panel {
+  display: flex;
+  flex: 0 0 clamp(340px, 30vw, 440px);
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  color: var(--ink);
+  background: var(--surface-sunken);
+  border-left: 1px solid var(--line);
+  font-size: var(--fs-md);
+  line-height: 1.45;
+}
+
+/* Header ------------------------------------------------------------------------------------- */
+
+.changelog-heading-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-md);
+  color: var(--ink-soft);
+  background: var(--gray-100);
+}
+
+/* Filters ------------------------------------------------------------------------------------ */
+
+.segmented.changelog-filters {
+  display: flex;
+  margin: var(--space-sm) var(--space-md) var(--space-xs);
+}
+
+.segmented > .changelog-filter {
+  flex: 1 1 0;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-width: 0;
+  padding: 0 var(--space-xs);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.changelog-count {
+  min-width: 1.1rem;
+  padding: 0 var(--space-2xs);
+  border-radius: var(--radius-pill);
+  color: var(--ink-soft);
+  background: var(--surface);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.changelog-filter[aria-selected='true'] .changelog-count {
+  color: var(--ink);
+  background: var(--gray-100);
+}
+
+.note.changelog-error {
+  margin: var(--space-sm) var(--space-md) 0;
+}
+
+/* The grid ------------------------------------------------------------------------------------ */
+
+.changelog-grid-host {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.changelog-panel .b-version-grid {
+  --b-grid-background: var(--surface-sunken);
+  --b-grid-cell-background: transparent;
+  --b-grid-cell-color: var(--ink);
+  --b-grid-cell-font-size: var(--fs-md);
+  --b-grid-cell-padding-inline: var(--space-md);
+  --b-grid-cell-auto-height-padding-block: 0;
+  --b-grid-cell-border-color: transparent;
+  --b-grid-row-border-color: var(--line);
+  --b-grid-cell-hover-background: var(--surface-hover);
+  --b-grid-cell-selected-background: var(--accent-soft);
+  --b-grid-cell-hover-selected-background: var(--accent-soft);
+  --b-grid-empty-color: var(--ink-faint);
+  --b-tree-expander-color: var(--ink-faint);
+  --b-tree-parent-font-weight: var(--fw-regular);
+  --b-tree-indent-size: 1.1rem;
+  --b-version-grid-property-font-size: var(--fs-xs);
+  --b-version-grid-property-value-background: var(--gray-100);
+  --b-widget-font-family: inherit;
+
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.changelog-panel .b-version-grid .b-grid-cell {
+  white-space: normal;
+}
+
+.changelog-panel .b-version-grid .b-tree-expander {
+  align-self: flex-start;
+  margin-top: 0.85rem;
+}
+
+.changelog-panel .b-version-grid .b-empty-text {
+  padding: var(--space-2xl) var(--space-xl);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+/* Entries ------------------------------------------------------------------------------------- */
+
+.changelog-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  width: 100%;
+  margin: var(--space-3xs) 0;
+  padding: var(--space-sm) var(--space-xs) var(--space-sm) 0;
+  border-radius: var(--radius-md);
+  line-height: 1.4;
+}
+
+/* Who: initials in their color (set inline), or an icon; the kind of change as a corner badge. */
+.changelog-avatar {
+  position: relative;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 1.95rem;
+  height: 1.95rem;
+  border-radius: 50%;
+  color: var(--ink-inverse);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-heavy);
+  letter-spacing: 0.02em;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.changelog-avatar.is-icon > :first-child {
+  font-size: var(--fs-sm);
+}
+
+/* Remy's crane fills her avatar the way it fills the tile beside her messages. */
+.changelog-avatar.is-icon > .remy-glyph {
+  display: grid;
+  font-size: 1.15rem;
+}
+
+.changelog-avatar.is-system {
+  color: var(--ink-soft);
+  background: var(--gray-200);
+}
+
+.changelog-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.changelog-line {
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.changelog-actor {
+  font-weight: var(--fw-heavy);
+}
+
+.changelog-panel .b-version-grid-highlighted-entity {
+  font-weight: var(--fw-strong);
+}
+
+.changelog-link {
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--accent-line);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 2px;
+}
+
+.changelog-link:hover {
+  color: var(--accent-strong);
+  text-decoration-color: currentColor;
+}
+
+.changelog-note {
+  margin-top: var(--space-3xs);
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+}
+
+.changelog-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-2xs);
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.changelog-meta > * + *::before {
+  content: '·';
+  margin-right: var(--space-xs);
+}
+
+.changelog-badge {
+  position: absolute;
+  right: -0.5rem;
+  bottom: -0.4rem;
+  display: grid;
+  place-items: center;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  color: var(--ink-soft);
+  background: var(--gray-200);
+  box-shadow: 0 0 0 2px var(--surface-sunken);
+  font-size: var(--fs-2xs);
+  letter-spacing: 0;
+}
+
+.changelog-kind {
+  color: var(--ink-soft);
+  font-weight: var(--fw-strong);
+}
+
+.changelog-time {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Kinds and tones (red only for what failed) --------------------------------------------------- */
+
+.changelog-kind-fix .changelog-badge,
+.changelog-tone-warn .changelog-badge {
+  color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.changelog-tone-ok .changelog-badge {
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.changelog-tone-warn .changelog-note {
+  color: var(--warning);
+}
+
+.changelog-tone-error .changelog-badge {
+  color: var(--ink-inverse);
+  background: var(--danger);
+}
+
+.changelog-tone-error .changelog-note {
+  color: var(--danger-strong);
+}
+
+.changelog-tone-assistant .changelog-badge {
+  color: var(--cat-5);
+  background: color-mix(in oklch, var(--cat-5) 14%, var(--surface));
+}
+
+.changelog-kind-payment .changelog-badge {
+  color: var(--paypal-navy);
+  background: color-mix(in oklch, var(--paypal-blue) 16%, var(--surface));
+}
+
+.changelog-kind-payment .changelog-kind {
+  color: var(--paypal-navy);
+}
+
+/* PayPal: the money moving, on a light tint of PayPal's blue. */
+.changelog-tone-paypal {
+  padding-left: var(--space-sm);
+  background: color-mix(in oklch, var(--paypal-blue) 7%, transparent);
+}
+
+.changelog-tone-paypal .changelog-badge {
+  color: var(--ink-inverse);
+  background: var(--paypal-blue);
+}
+
+.changelog-tone-paypal .b-version-grid-highlighted-entity {
+  color: var(--paypal-navy);
+}
+
+.changelog-tone-paypal .changelog-avatar.is-icon > :first-child {
+  font-size: var(--fs-lg);
+}
+
+/* Details: action rows and Bryntum's property-update rows --------------------------------------- */
+
+.changelog-action {
+  padding: var(--space-xs) 0;
+  color: var(--gray-700);
+  font-size: var(--fs-sm);
+}
+
+.changelog-panel .b-version-grid-property-update-desc {
+  flex-wrap: wrap;
+  padding: var(--space-3xs) 0;
+  color: var(--gray-700);
+}
+
+.changelog-panel .b-version-grid-property-name {
+  color: var(--ink-faint);
+  font-weight: var(--fw-strong);
+}
+
+.changelog-panel .b-version-grid-property-before {
+  color: var(--ink-faint);
+  text-decoration: line-through;
+  text-decoration-color: var(--line-strong);
+}
+
+.changelog-panel .b-version-grid-property-after {
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+}
+
+.changelog-panel .b-version-grid-property-update-desc .b-icon-right {
+  color: var(--ink-faint);
+  font-size: 0.7em;
+}
+
+.changelog-panel .changelog-fact .b-version-grid-property-after {
+  background: transparent;
+  padding-inline: 0;
+}
+
+@media (max-width: 900px) {
+  .changelog-panel {
+    flex: 0 0 auto;
+    max-height: 50%;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+}

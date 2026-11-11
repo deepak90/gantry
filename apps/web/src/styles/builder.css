@@ -1,0 +1,585 @@
+/*
+ * The snippet builder dialog (library/SnippetBuilder.tsx) and its Gantt (library/SnippetGanttEditor.tsx).
+ * Tokens come from tokens.css; buttons, inputs, fields and popovers from ui.css.
+ */
+
+.builder-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: grid;
+  place-items: center;
+  padding: 2vh 2vw;
+  background: oklch(0.21 0.02 255 / 0.42);
+  animation: builder-fade var(--dur-fast) var(--ease-out);
+}
+
+.builder {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  width: min(1280px, 96vw);
+  height: min(860px, 94vh);
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--fs-md);
+  animation: builder-rise var(--dur-slow) var(--ease-out);
+}
+
+@keyframes builder-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes builder-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* Head ------------------------------------------------------------------------------------------ */
+
+.builder-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-lg) var(--space-md) var(--space-xl);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.builder-icon-wrap {
+  position: relative;
+  align-self: start;
+}
+
+.builder-icon {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: var(--fs-xl);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+
+.builder-icon:hover {
+  border-color: var(--accent);
+}
+
+.builder-icon:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.popover.builder-icons {
+  position: absolute;
+  top: calc(100% + var(--space-2xs));
+  left: 0;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: repeat(6, 2.1rem);
+  gap: var(--space-3xs);
+}
+
+.builder-icons button {
+  display: grid;
+  place-items: center;
+  height: 2.1rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.builder-icons button:hover,
+.builder-icons button.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.builder-title {
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.builder-eyebrow {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* The name and the card line read as text until pointed at; they are plain inputs. */
+.builder-name,
+.builder-summary {
+  min-width: 0;
+  margin-left: calc(-1 * var(--space-2xs));
+  padding: var(--space-3xs) var(--space-2xs);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+}
+
+.builder-name {
+  font-size: var(--fs-2xl);
+  font-stretch: var(--stretch-display);
+  font-weight: var(--fw-heavy);
+  line-height: 1.2;
+}
+
+.builder-summary {
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+}
+
+.builder-summary::placeholder {
+  color: var(--ink-faint);
+}
+
+.builder-name:hover,
+.builder-summary:hover {
+  border-color: var(--line);
+}
+
+.builder-name:focus,
+.builder-summary:focus {
+  border-color: var(--accent);
+  background: var(--surface);
+  outline: none;
+}
+
+.builder-stats {
+  display: flex;
+  gap: var(--space-xl);
+  margin: 0;
+}
+
+.builder-stats div {
+  display: grid;
+  text-align: right;
+}
+
+.builder-stats dt {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.builder-stats dd {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-strong);
+}
+
+.builder-close {
+  align-self: start;
+}
+
+/* Toolbar --------------------------------------------------------------------------------------- */
+
+.builder-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs) var(--space-md);
+  padding: var(--space-xs) var(--space-lg);
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--surface-sunken);
+}
+
+.builder-tool-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3xs);
+}
+
+.builder-tool-group + .builder-tool-group {
+  padding-left: var(--space-md);
+  border-left: 1px solid var(--line);
+}
+
+.builder-tool-spacer {
+  flex: 1 1 auto;
+}
+
+.builder-legend {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.builder-legend span:last-child {
+  margin-left: var(--space-sm);
+}
+
+.builder-legend-critical {
+  display: inline-block;
+  width: 1.1rem;
+  height: 0.55rem;
+  border-radius: var(--radius-xs);
+  background: var(--gray-400);
+  box-shadow: 0 0 0 1.5px var(--ink);
+}
+
+/* The Gantt ------------------------------------------------------------------------------------- */
+
+.builder-main {
+  min-height: 0;
+}
+
+.snippet-gantt {
+  height: 100%;
+  min-height: 0;
+}
+
+/* A cost typed right into its cell (a task with one cost line): a box over the cell, above the builder. */
+.snippet-cost-input {
+  position: fixed;
+  z-index: 13500;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0 var(--space-sm);
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  font: inherit;
+  font-size: var(--fs-md);
+  text-align: right;
+  outline: none;
+  animation: snippet-cost-in var(--dur) var(--ease-out);
+}
+
+@keyframes snippet-cost-in {
+  from {
+    opacity: 0;
+    scale: 0.96;
+  }
+}
+
+.snippet-gantt > .b-gantt {
+  height: 100%;
+}
+
+/* Bryntum's popups (task editor, menus, tooltips) above the builder dialog. */
+body:has(.builder-backdrop) .b-float-root {
+  z-index: 13000;
+}
+
+/* Bands: the same tones as the plan's bands (library.css), never red. */
+.snippet-gantt .snippet-gantt-band-amber { --band: var(--warning-fill); }
+.snippet-gantt .snippet-gantt-band-sky { --band: var(--cat-1); }
+.snippet-gantt .snippet-gantt-band-rose { --band: var(--cat-3); }
+.snippet-gantt .snippet-gantt-band-violet { --band: var(--cat-5); }
+.snippet-gantt .snippet-gantt-band-green { --band: var(--cat-2); }
+.snippet-gantt .snippet-gantt-band-slate { --band: var(--cat-4); }
+
+.snippet-gantt .b-sch-range.snippet-gantt-band {
+  border-inline: 1px dashed color-mix(in oklch, var(--band) 60%, transparent);
+  background: color-mix(in oklch, var(--band) 12%, transparent);
+}
+
+/* The header label: a light tint of the tone with dark ink, so a title reads on every tone. */
+.snippet-gantt .b-sch-timerange.snippet-gantt-band {
+  border-inline: 1px solid color-mix(in oklch, var(--band, var(--cat-none)) 55%, transparent);
+  background: color-mix(in oklch, var(--band, var(--cat-none)) 22%, var(--surface));
+  color: color-mix(in oklch, var(--band, var(--cat-none)) 40%, var(--ink));
+  font-weight: var(--fw-strong);
+}
+
+.snippet-gantt .b-sch-timerange.snippet-gantt-band label {
+  color: inherit;
+}
+
+.snippet-gantt-tip {
+  display: grid;
+  gap: var(--space-3xs);
+}
+
+/* Bands and checks ------------------------------------------------------------------------------ */
+
+.builder-lower {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.3fr) minmax(0, 1fr);
+  max-height: 30vh;
+  overflow: auto;
+  border-top: 1px solid var(--line);
+}
+
+.builder-section {
+  display: grid;
+  align-content: start;
+  gap: var(--space-sm);
+  min-width: 0;
+  padding: var(--space-md) var(--space-xl);
+}
+
+.builder-section + .builder-section {
+  border-left: 1px solid var(--line-soft);
+}
+
+.builder-section header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2xs) var(--space-md);
+}
+
+.builder-section h3 i {
+  margin-right: var(--space-2xs);
+}
+
+.builder-checks h3 i.fa-circle-exclamation {
+  color: var(--danger);
+}
+
+.builder-checks h3 i.fa-circle-check {
+  color: var(--success);
+}
+
+.builder-hint,
+.builder-empty {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.builder-ranges,
+.builder-problems {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.builder-range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-lg);
+  background: var(--surface-sunken);
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+}
+
+.input.builder-range-name {
+  width: 14rem;
+}
+
+.builder-range-span {
+  display: inline-flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.builder-range-edge {
+  display: inline-flex;
+  gap: var(--space-3xs);
+}
+
+.builder-range-edge .input {
+  width: auto;
+}
+
+.builder-range-edge .input:last-child {
+  max-width: 11rem;
+}
+
+.builder-tones {
+  display: inline-flex;
+  gap: var(--space-3xs);
+}
+
+.builder-tones button {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--surface);
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px var(--line);
+  cursor: pointer;
+}
+
+.builder-tones button.is-active {
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+.builder-tones button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.builder-problems li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+  font-size: var(--fs-xs);
+}
+
+.builder-problems li.is-error i {
+  color: var(--danger);
+}
+
+.builder-problems li.is-warning i {
+  color: var(--warning);
+}
+
+.builder-problems button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.builder-problems button:hover {
+  text-decoration: underline;
+}
+
+/* Foot ------------------------------------------------------------------------------------------ */
+
+.builder-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg) var(--space-md) var(--space-xl);
+  border-top: 1px solid var(--line);
+  background: var(--surface-sunken);
+}
+
+.builder-filing {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.builder-filed {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+}
+
+.builder-filed .input {
+  width: auto;
+  max-width: 14rem;
+}
+
+.builder-unit-wrap {
+  position: relative;
+}
+
+.popover.builder-unit {
+  position: absolute;
+  bottom: calc(100% + var(--space-xs));
+  left: 0;
+  z-index: 30;
+  display: grid;
+  gap: var(--space-sm);
+  width: 17rem;
+}
+
+.builder-notice {
+  flex: 1 1 12rem;
+  min-width: 0;
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+@media (max-width: 900px) {
+  .builder-lower {
+    grid-template-columns: 1fr;
+  }
+
+  .builder-section + .builder-section {
+    border-left: 0;
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .builder-stats {
+    display: none;
+  }
+}
+
+/* Costs: the selected task's lines (what for, who is paid, how much, when), or totals by payee. */
+.builder-cost-editor {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-xs);
+}
+
+.builder-cost-rows {
+  display: grid;
+  gap: var(--space-2xs);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.builder-cost-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.2fr) 92px 118px auto;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+
+.builder-cost-amount {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--ink-soft);
+}
+
+.builder-cost-amount input {
+  min-width: 0;
+  text-align: right;
+}
+
+.builder-payees {
+  display: grid;
+  gap: var(--space-3xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+}
+
+.builder-payees li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}

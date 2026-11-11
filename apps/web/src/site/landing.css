@@ -1,0 +1,1747 @@
+/*
+ * The landing page (landing.html), on top of site.css: a set of drawing sheets on the paper the app's own 3D model
+ * stands on. One sheet for each part of the story: the model of Harbor going up once the footings are paid, the film,
+ * the call drawn in code, the odds as marbles, the money with PayPal, and the way in. Ink on paper, hairline rules and a
+ * title block on the model. Hi-vis yellow belongs to the hold alone, and PayPal's colors mark Paid only. Things move
+ * when their state changes (the hold, the slab, the marbles, a ledger row), never for decoration; under reduced motion
+ * each shows its last frame.
+ */
+
+.landing {
+  /* The model's own ground (building-stage.ts PAPER_COLOR), so the 3D sits on the page, not in a box. */
+  --paper: #f3f4ef;
+  --sheet: oklch(0.985 0.004 110);
+  --ink: oklch(0.22 0.02 260);
+  --ink-soft: oklch(0.42 0.02 260);
+  --ink-faint: oklch(0.54 0.015 260);
+  --rule: oklch(0.22 0.02 260 / 0.16);
+  --rule-strong: oklch(0.22 0.02 260 / 0.55);
+  --grid-fine: oklch(0.22 0.02 260 / 0.045);
+  --grid-bold: oklch(0.22 0.02 260 / 0.085);
+  --hivis: oklch(0.89 0.17 102);
+  --display-stretch: 125%;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+/* Layout: each part of the page is a sheet in the site's column, ruled off from the one before. */
+
+.landing main > section {
+  --pad-x: max(var(--site-gutter), (100% - var(--site-max)) / 2);
+  padding: var(--site-section) var(--pad-x);
+  border-top: 1px solid var(--rule);
+}
+
+.landing main > section:first-child {
+  border-top: 0;
+}
+
+/* A sheet's number and title, set like a drawing's, once per sheet. */
+.sheet-label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-lg);
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.sheet-label b {
+  color: var(--ink);
+  font-weight: var(--fw-heavy);
+}
+
+.landing h2 {
+  max-width: 22ch;
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--site-h2);
+  font-stretch: var(--display-stretch);
+  font-weight: var(--fw-heavy);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.sheet-head {
+  margin-bottom: clamp(1.75rem, 1rem + 2.5vw, 3rem);
+}
+
+.sheet-lead {
+  max-width: 40rem;
+  margin: var(--space-md) 0 0;
+  color: var(--ink-soft);
+  font-size: var(--site-lead);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+/* Hero: the claim and the way in on the left, the model of the building on the right -------------------- */
+
+.hero {
+  display: grid;
+  gap: clamp(2rem, 1rem + 3vw, 4rem);
+  align-items: center;
+}
+
+.landing main > .hero {
+  padding-top: clamp(2.5rem, 1.25rem + 3.5vw, 5rem);
+  padding-bottom: clamp(3rem, 1.5rem + 4vw, 6rem);
+}
+
+@media (min-width: 62rem) {
+  .hero {
+    grid-template-columns: minmax(0, 5.5fr) minmax(0, 6.5fr);
+  }
+}
+
+.hero-copy {
+  container-type: inline-size;
+  display: grid;
+  justify-items: start;
+  gap: var(--space-lg);
+}
+
+/* Two lines, each a whole phrase: sized to the column, so "Pour the slab." never breaks. */
+.hero h1 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(2.25rem, 12.1cqi, 6.25rem);
+  font-stretch: var(--display-stretch);
+  font-weight: 800;
+  line-height: 0.93;
+  letter-spacing: -0.03em;
+}
+
+.hero h1 span {
+  display: block;
+  white-space: nowrap;
+}
+
+.hero-sub {
+  max-width: 30rem;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--site-lead);
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-md) var(--space-xl);
+  margin-top: var(--space-xs);
+}
+
+.hero-film {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.3em;
+}
+
+.hero-film:hover {
+  text-decoration-color: currentColor;
+}
+
+/* A play mark: an ink circle with a triangle cut out of it. */
+.hero-film-play {
+  display: inline-grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.hero-film-play::before {
+  content: '';
+  margin-left: 0.15rem;
+  border-top: 0.32rem solid transparent;
+  border-bottom: 0.32rem solid transparent;
+  border-left: 0.5rem solid var(--paper);
+}
+
+.hero-note {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-md);
+}
+
+/* The model, framed as a drawing: graph paper behind it, and a title block along its foot. */
+.hero-model {
+  position: relative;
+  margin: 0;
+  border: 1px solid var(--rule-strong);
+  background:
+    linear-gradient(var(--grid-bold) 1px, transparent 1px) 0 0 / 2.5rem 2.5rem,
+    linear-gradient(90deg, var(--grid-bold) 1px, transparent 1px) 0 0 / 2.5rem 2.5rem,
+    linear-gradient(var(--grid-fine) 1px, transparent 1px) 0 0 / 0.5rem 0.5rem,
+    linear-gradient(90deg, var(--grid-fine) 1px, transparent 1px) 0 0 / 0.5rem 0.5rem,
+    var(--paper);
+}
+
+/* Registration marks at two corners, as on a printed sheet. */
+.hero-model::before,
+.hero-model::after {
+  content: '';
+  position: absolute;
+  width: 0.9rem;
+  height: 0.9rem;
+  pointer-events: none;
+}
+
+.hero-model::before {
+  top: -0.45rem;
+  left: -0.45rem;
+  border-top: 1px solid var(--ink);
+  border-left: 1px solid var(--ink);
+}
+
+.hero-model::after {
+  right: -0.45rem;
+  bottom: -0.45rem;
+  border-right: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+}
+
+/* The picture keeps 16:10 of the width and the schedule strip (about 8.7rem) sits under it (landing/model.ts); the
+ * height is held from the start so nothing moves when the model is built in. */
+.hero-model {
+  container-type: inline-size;
+}
+
+.model {
+  position: relative;
+  min-height: calc(62.5cqi + 8.7rem);
+  overflow: hidden;
+}
+
+.title-block {
+  display: grid;
+  grid-template-columns: 2fr 0.8fr 1.1fr 1.6fr;
+  border-top: 1px solid var(--rule-strong);
+  background: var(--sheet);
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.tb-cell {
+  display: grid;
+  gap: 0.125rem;
+  padding: var(--space-xs) var(--space-sm);
+  border-left: 1px solid var(--rule);
+  white-space: nowrap;
+}
+
+.tb-cell.is-project {
+  border-left: 0;
+  font-stretch: var(--display-stretch);
+  font-weight: var(--fw-heavy);
+}
+
+.tb-cell small {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-stretch: 100%;
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 37.5rem) {
+  .title-block {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .tb-cell:nth-child(4) {
+    border-left: 0;
+  }
+
+  .tb-cell:nth-child(n + 4) {
+    border-top: 1px solid var(--rule);
+  }
+}
+
+/* Join with a code: a quiet link, not a second button; the card opens under it. */
+.join.is-quiet > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  color: var(--ink-soft);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 0.3em;
+}
+
+.join.is-quiet > summary:hover {
+  color: var(--ink);
+}
+
+.join.is-quiet > summary::after {
+  width: 0.35rem;
+  height: 0.35rem;
+  border-width: 1.5px;
+}
+
+/* The film: one sheet on the paper, the poster framed in ink, the chapters under it -------------------------- */
+
+.chapters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  column-gap: var(--space-xl);
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--rule);
+  list-style: none;
+}
+
+.chapters li {
+  border-bottom: 1px solid var(--rule);
+}
+
+.chapters a {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-sm) 0;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.chapters time {
+  min-width: 2.5rem;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.chapters a:hover span,
+.chapters a:focus-visible span {
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+/* The odds: the app's own marble tower, on the same paper ------------------------------------------------ */
+
+.odds-frame {
+  position: relative;
+  min-height: 24rem;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper);
+}
+
+/* Phones get the board's own still (landing/odds.ts, below 600px), drawn at 4:3. */
+@media (max-width: 599.98px) {
+  .odds-frame {
+    min-height: 0;
+    aspect-ratio: 4 / 3;
+  }
+}
+
+/* The money: the ledger, and where it comes from in the film --------------------------------------------- */
+
+.pay-sheet .ledger {
+  max-width: 62rem;
+}
+
+.ledger-from {
+  margin: var(--space-md) 0 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-md);
+}
+
+.ledger-from a,
+.scene-foot a {
+  color: var(--ink);
+  text-underline-offset: 0.25em;
+}
+
+/* The way in, once more, plainly ------------------------------------------------------------------------ */
+
+.closing {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-lg);
+}
+
+.closing .sheet-label {
+  margin-bottom: 0;
+}
+
+.closing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-md) var(--space-xl);
+}
+
+.closing-facts {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-md);
+}
+
+.closing-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-xl);
+  margin: var(--space-sm) 0 0;
+  padding: var(--space-lg) 0 0;
+  border-top: 1px solid var(--rule);
+  list-style: none;
+}
+
+.closing-links a {
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 0.3em;
+}
+
+.closing-links a:hover {
+  text-decoration-color: currentColor;
+}
+
+/* Phones: the claim first and the model under it; the way in as wide as the column. */
+@media (max-width: 37.5rem) {
+  .hero-actions {
+    display: grid;
+    width: 100%;
+  }
+
+  .hero-actions .button,
+  .closing-actions .button {
+    box-sizing: border-box;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .closing-actions {
+    display: grid;
+    width: 100%;
+  }
+}
+
+/* Join with a code: a small card under the button ----------------------------------------------- */
+
+.join {
+  position: relative;
+}
+
+.join > summary {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.join > summary::-webkit-details-marker {
+  display: none;
+}
+
+.join > summary::after {
+  content: '';
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-left: var(--space-2xs);
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-0.12rem) rotate(45deg);
+  transition: transform var(--dur) var(--ease-out);
+}
+
+.join[open] > summary::after {
+  transform: translateY(0.12rem) rotate(-135deg);
+}
+
+.join-form {
+  position: absolute;
+  z-index: 6;
+  top: calc(100% + var(--space-sm));
+  left: 0;
+  display: grid;
+  gap: var(--space-xs);
+  width: min(23rem, calc(100vw - 2 * var(--site-gutter)));
+  box-sizing: border-box;
+  padding: var(--space-lg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  text-align: left;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .join[open] > .join-form {
+    animation: join-in 260ms var(--ease-out-expo);
+  }
+}
+
+@keyframes join-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.375rem);
+  }
+}
+
+.join-label {
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+}
+
+.join-row {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.join-input {
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0 var(--space-md);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  background: var(--surface);
+  font-family: var(--font-ui);
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.08em;
+}
+
+.join-input::placeholder {
+  color: var(--gray-400);
+}
+
+.join-input:focus-visible {
+  border-color: var(--accent);
+}
+
+/* The card is light even on the ink bands: the app's own focus ring. */
+.join-form :focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.join-input[aria-invalid='true'] {
+  border-color: var(--warning);
+}
+
+.join-hint {
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.join-error {
+  color: var(--warning);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.join .join-form .button.is-primary {
+  border-color: var(--ink);
+  color: var(--ink-inverse);
+  background: var(--ink);
+}
+
+.join .join-form .button.is-primary:hover:not(:disabled) {
+  border-color: var(--gray-700);
+  background: var(--gray-700);
+}
+
+
+/* One payment, start to finish: Gantry drawn in code, playing the film's last scene ----------------- */
+
+.scene {
+  display: grid;
+  gap: clamp(1.75rem, 1rem + 2.5vw, 3rem);
+}
+
+.scene-text {
+  display: grid;
+  justify-items: start;
+  max-width: 46rem;
+}
+
+.scene-figure {
+  margin: 0;
+}
+
+.app {
+  --span: 35;
+  --origin: 0;
+  --row: 2.125rem;
+  --names: 13.5rem;
+  --bar-h: 1.375rem;
+  --concrete: oklch(0.49 0.025 245);
+  --sitework: oklch(0.5 0.06 75);
+  --inspector: var(--accent);
+  --held: var(--warning-fill);
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow:
+    0 0 0 1px oklch(1 0 0 / 0.1),
+    0 2px 4px oklch(0.15 0.02 255 / 0.2),
+    0 40px 80px -30px oklch(0.15 0.02 255 / 0.55);
+  font-size: var(--fs-sm);
+  line-height: 1.3;
+  user-select: none;
+}
+
+.app-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  height: 2.75rem;
+  padding: 0 var(--space-lg);
+  color: var(--header-ink);
+  background: var(--header);
+  border-bottom: 1px solid var(--header-line);
+  white-space: nowrap;
+}
+
+.app-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-heavy);
+}
+
+/* The crane, drawn small: a mast and a jib. */
+.app-mark {
+  position: relative;
+  width: 1rem;
+  height: 1.125rem;
+  border-left: 3px solid oklch(0.62 0.19 262);
+  margin-left: 0.25rem;
+}
+
+.app-mark::before {
+  content: '';
+  position: absolute;
+  top: 0.125rem;
+  left: -0.4rem;
+  width: 1.15rem;
+  height: 3px;
+  border-radius: 1px;
+  background: oklch(0.8 0.11 240);
+}
+
+.app-project {
+  font-weight: var(--fw-strong);
+}
+
+.app-handover {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--header-ink-soft);
+  font-size: var(--fs-xs);
+}
+
+.app-dates {
+  position: relative;
+  display: inline-grid;
+}
+
+.app-date {
+  grid-area: 1 / 1;
+  color: var(--header-ink);
+  font-weight: var(--fw-strong);
+  font-variant-numeric: tabular-nums;
+  transition:
+    opacity 300ms var(--ease-out),
+    transform 600ms var(--spring);
+}
+
+.app-date.is-late {
+  color: var(--warning-fill);
+  opacity: 0;
+  transform: translateY(0.75rem);
+}
+
+.app-date.is-late b {
+  margin-left: var(--space-2xs);
+  padding: 0 var(--space-2xs);
+  border-radius: var(--radius-xs);
+  color: var(--ink);
+  background: var(--warning-fill);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-heavy);
+}
+
+.app.is-forecast .app-date.is-plan {
+  opacity: 0;
+  transform: translateY(-0.75rem);
+}
+
+.app.is-forecast .app-date.is-late {
+  opacity: 1;
+  transform: none;
+}
+
+.app-people {
+  display: inline-flex;
+  gap: var(--space-2xs);
+  margin-left: auto;
+}
+
+.face {
+  display: inline-grid;
+  place-items: center;
+  width: 1.625rem;
+  height: 1.625rem;
+  border-radius: 50%;
+  color: var(--gray-0);
+  font-size: 0.625rem;
+  font-weight: var(--fw-heavy);
+  letter-spacing: 0.02em;
+}
+
+.face.is-deepak {
+  background: oklch(0.5 0.12 320);
+}
+
+.face.is-chris {
+  background: oklch(0.55 0.17 258);
+}
+
+/* The chart: task names on the left, the weeks on the right. */
+.chart {
+  display: grid;
+  grid-template-columns: var(--names) minmax(0, 1fr);
+  padding-bottom: 5.25rem;
+}
+
+.chart-names {
+  border-right: 1px solid var(--line);
+}
+
+.chart-corner,
+.chart-head {
+  height: 2.5rem;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--line);
+}
+
+.chart-corner {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-lg);
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  height: var(--row);
+  padding: 0 var(--space-lg) 0 2rem;
+  overflow: hidden;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.name .is-short {
+  display: none;
+}
+
+.name.is-group {
+  padding-left: var(--space-lg);
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+}
+
+.name.is-hold {
+  color: var(--ink);
+  font-weight: var(--fw-medium);
+}
+
+.chart-time {
+  position: relative;
+  min-width: 0;
+}
+
+.chart-head {
+  position: relative;
+  overflow: hidden;
+}
+
+.chart-month {
+  position: absolute;
+  top: 0.3rem;
+  left: var(--space-sm);
+  color: var(--ink);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+}
+
+.chart-week {
+  position: absolute;
+  bottom: 0.3rem;
+  left: calc((var(--at) - var(--origin)) / var(--span) * 100%);
+  padding-left: var(--space-2xs);
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.chart-grid {
+  position: relative;
+  container-type: inline-size;
+  overflow: hidden;
+  /* Weekends, a day in two of seven, and a line at the start of each week. */
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      var(--line-soft) 0 1px,
+      transparent 1px calc(500% / var(--span)),
+      var(--surface-sunken) calc(500% / var(--span)) calc(700% / var(--span))
+    );
+}
+
+.track {
+  position: relative;
+  height: var(--row);
+}
+
+.chart-away {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc((var(--from) - var(--origin)) / var(--span) * 100%);
+  width: calc(var(--days) / var(--span) * 100%);
+  background: repeating-linear-gradient(135deg, oklch(0.8 0.14 80 / 0.16) 0 6px, oklch(0.8 0.14 80 / 0.07) 6px 12px);
+  box-shadow:
+    inset 1px 0 oklch(0.8 0.14 80 / 0.5),
+    inset -1px 0 oklch(0.8 0.14 80 / 0.5);
+}
+
+.chart-away span {
+  position: absolute;
+  top: 0.35rem;
+  left: 50%;
+  translate: -50% 0;
+  padding: 0.05rem var(--space-xs);
+  border-radius: var(--radius-xs);
+  color: var(--warning);
+  background: var(--warning-soft);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  white-space: nowrap;
+}
+
+.chart-today {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc((var(--at) - var(--origin)) / var(--span) * 100%);
+  width: 2px;
+  margin-left: -1px;
+  background: var(--accent);
+}
+
+.bar,
+.ghost {
+  position: absolute;
+  top: calc((var(--row) - var(--bar-h)) / 2);
+  left: calc((var(--from) - var(--origin)) / var(--span) * 100%);
+  width: calc(var(--days) / var(--span) * 100% - 3px);
+  min-width: 0.625rem;
+  height: var(--bar-h);
+  box-sizing: border-box;
+  border-radius: 6px;
+}
+
+.bar {
+  border: 1.5px solid var(--concrete);
+  background: var(--surface);
+  box-shadow: 0 1px 1px oklch(0.21 0.02 255 / 0.06);
+  transform-origin: left center;
+  transition:
+    border-color 400ms var(--ease-out),
+    background-color 400ms var(--ease-out);
+}
+
+.bar.is-gravel {
+  border-color: var(--sitework);
+}
+
+.bar.is-inspection {
+  border-color: var(--inspector);
+}
+
+.bar.is-done {
+  display: grid;
+  place-items: center end;
+  padding-right: var(--space-xs);
+  border-color: var(--gray-300);
+  background: var(--gray-100);
+}
+
+.bar-check {
+  width: 0.4rem;
+  height: 0.7rem;
+  margin-top: -0.15rem;
+  border-right: 2px solid var(--success);
+  border-bottom: 2px solid var(--success);
+  transform: rotate(45deg);
+}
+
+/* Held: the work behind the payment waits, outlined in amber like the app draws it. */
+.app.is-held .bar.is-slab {
+  border-color: var(--held);
+  background: var(--warning-soft);
+}
+
+.ghost {
+  border: 1.5px dashed var(--warning);
+  background: repeating-linear-gradient(135deg, oklch(0.8 0.14 80 / 0.22) 0 4px, transparent 4px 8px);
+  opacity: 0;
+  translate: calc((var(--was) - var(--from)) * 100cqw / var(--span)) 0;
+  transition:
+    translate 900ms var(--spring) calc(var(--i) * 70ms),
+    opacity 240ms var(--ease-out) calc(var(--i) * 70ms);
+}
+
+.app.is-forecast .ghost {
+  opacity: 1;
+  translate: 0 0;
+}
+
+.forecast-tag {
+  position: absolute;
+  top: calc(var(--row) * 4 + (var(--row) - 1.1rem) / 2);
+  left: calc((var(--at) - var(--origin) + 1.2) / var(--span) * 100%);
+  padding: 0.05rem var(--space-xs);
+  border-radius: var(--radius-xs);
+  color: var(--ink);
+  background: var(--warning-fill);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-heavy);
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(-0.5rem);
+  transition:
+    opacity 300ms var(--ease-out) 500ms,
+    transform 600ms var(--spring) 500ms;
+}
+
+.app.is-forecast .forecast-tag {
+  opacity: 1;
+  transform: none;
+}
+
+.release-tag {
+  position: absolute;
+  top: calc(var(--row) * 2 + (var(--row) - 1.25rem) / 2);
+  left: calc((var(--at) - var(--origin)) / var(--span) * 100%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  height: 1.25rem;
+  padding: 0 var(--space-xs);
+  border: 1px solid var(--success-line);
+  border-radius: var(--radius-pill);
+  color: var(--success);
+  background: var(--success-soft);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(-0.5rem);
+  transition:
+    opacity 300ms var(--ease-out),
+    transform 600ms var(--spring);
+}
+
+.app.is-paid .release-tag {
+  opacity: 1;
+  transform: none;
+  transition-delay: 450ms;
+}
+
+.held-line {
+  position: absolute;
+  top: calc(var(--row) * 1.5 + 0.45rem);
+  left: calc((var(--from) - var(--origin)) / var(--span) * 100%);
+  height: calc(var(--row) - 0.45rem);
+  border-left: 2px dashed var(--concrete);
+  opacity: 0.35;
+  transition:
+    border-color 400ms var(--ease-out),
+    opacity 400ms var(--ease-out);
+}
+
+.app.is-held .held-line {
+  border-color: var(--warning);
+  opacity: 1;
+}
+
+/* The payment milestone: a diamond and its chip, from due to paid. */
+.gate {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc((var(--at) - var(--origin)) / var(--span) * 100%);
+  display: flex;
+  align-items: center;
+}
+
+.gate-mark {
+  flex: none;
+  width: 0.8rem;
+  height: 0.8rem;
+  margin-left: -0.4rem;
+  border: 2px solid var(--warning);
+  border-radius: 2px;
+  background: var(--surface);
+  transform: rotate(45deg);
+  transition:
+    background-color 300ms var(--ease-out),
+    border-color 300ms var(--ease-out);
+}
+
+.app.is-paid .gate-mark {
+  border-color: var(--paypal-blue);
+  background: var(--paypal-blue);
+}
+
+.gate-chip {
+  display: inline-grid;
+  justify-items: start;
+  margin-left: var(--space-sm);
+}
+
+.gate-state {
+  grid-area: 1 / 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: 0.1rem var(--space-sm) 0.1rem var(--space-xs);
+  border: 1px solid var(--warning-line);
+  border-radius: var(--radius-pill);
+  color: var(--ink);
+  background: var(--warning-soft);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(0.4rem);
+  transition:
+    opacity 220ms var(--ease-out),
+    transform 500ms var(--spring);
+}
+
+.gate-state b {
+  color: var(--warning);
+  font-weight: var(--fw-strong);
+}
+
+.gate-state.is-due {
+  opacity: 1;
+  transform: none;
+}
+
+.gate-lock {
+  position: relative;
+  width: 0.55rem;
+  height: 0.45rem;
+  margin: 0.2rem 0.1rem 0 0.15rem;
+  border-radius: 1.5px;
+  background: var(--warning);
+}
+
+.gate-lock::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  width: 0.3rem;
+  height: 0.28rem;
+  translate: -50% 0;
+  border: 1.5px solid var(--warning);
+  border-bottom: 0;
+  border-radius: 0.2rem 0.2rem 0 0;
+}
+
+.gate-state.is-approved,
+.gate-state.is-processing {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.gate-state.is-paid {
+  border-color: oklch(0.8 0.08 255);
+  color: var(--paypal-navy);
+  background: oklch(0.96 0.02 255);
+}
+
+.gate-state.is-paid b {
+  color: var(--paypal-navy);
+}
+
+.gate-paypal {
+  width: 0.75rem;
+  height: auto;
+}
+
+.app.is-paying .gate-state.is-due,
+.app.is-processing .gate-state.is-due,
+.app.is-paid .gate-state.is-due,
+.app.is-processing .gate-state.is-approved,
+.app.is-paid .gate-state.is-approved,
+.app.is-paid .gate-state.is-processing {
+  opacity: 0;
+  transform: translateY(-0.4rem);
+}
+
+.app.is-paying .gate-state.is-approved,
+.app.is-processing .gate-state.is-processing,
+.app.is-paid .gate-state.is-paid {
+  opacity: 1;
+  transform: none;
+}
+
+/* The call: Remy, Deepak and Chris, and the line being said. */
+.call {
+  position: absolute;
+  z-index: 2;
+  right: var(--space-lg);
+  bottom: var(--space-lg);
+  left: var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  max-width: 44rem;
+  min-height: 3.75rem;
+  margin: 0 auto;
+  padding: var(--space-sm) var(--space-lg) var(--space-sm) var(--space-md);
+  border-radius: var(--radius-xl);
+  color: var(--header-ink);
+  background: oklch(0.24 0.022 255 / 0.97);
+  box-shadow: 0 12px 30px -12px oklch(0.15 0.02 255 / 0.6);
+}
+
+.call-people {
+  display: flex;
+  flex: none;
+  gap: var(--space-md);
+  padding-right: var(--space-lg);
+  border-right: 1px solid var(--header-line);
+}
+
+.call-face {
+  display: grid;
+  justify-items: center;
+  gap: 0.15rem;
+}
+
+.call-face small {
+  color: var(--header-ink-soft);
+  font-size: 0.625rem;
+  font-weight: var(--fw-strong);
+  white-space: nowrap;
+}
+
+.call-face small i {
+  margin-left: 0.15rem;
+  padding: 0 0.2rem;
+  border-radius: var(--radius-xs);
+  color: var(--gray-0);
+  background: var(--accent);
+  font-style: normal;
+  font-size: 0.5625rem;
+}
+
+.call-face > .face,
+.call-face > .remy-mark {
+  transition:
+    box-shadow 200ms var(--ease-out),
+    transform 300ms var(--spring);
+}
+
+.call[data-speaking='remy'] .is-remy > .remy-mark,
+.call[data-speaking='deepak'] .is-deepak > .face,
+.call[data-speaking='chris'] .is-chris > .face {
+  box-shadow: 0 0 0 2px oklch(0.24 0.022 255), 0 0 0 4px oklch(0.75 0.12 250);
+  transform: scale(1.06);
+}
+
+/* Remy's mark: a spark in an open ring. */
+.remy-mark {
+  position: relative;
+  display: inline-block;
+  width: 1.625rem;
+  height: 1.625rem;
+  border-radius: 50%;
+  background: oklch(0.3 0.06 260);
+}
+
+.remy-mark::before {
+  content: '';
+  position: absolute;
+  inset: 0.2rem;
+  border: 2px solid oklch(0.78 0.11 245);
+  border-right-color: transparent;
+  border-radius: 50%;
+  transform: rotate(-45deg);
+}
+
+.remy-mark::after {
+  content: '';
+  position: absolute;
+  inset: 0.5rem;
+  background: oklch(0.92 0.05 240);
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+}
+
+.call-line {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+  min-height: 2.6rem;
+}
+
+.call-who {
+  color: oklch(0.78 0.11 245);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-heavy);
+  letter-spacing: 0.04em;
+}
+
+.call-said {
+  color: var(--header-ink);
+  font-size: var(--fs-md);
+  line-height: 1.35;
+}
+
+.call-said .w {
+  display: inline-block;
+  white-space: pre;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .call-said .w {
+    animation: word-in 260ms var(--ease-out) both;
+    animation-delay: calc(var(--w) * 42ms);
+  }
+}
+
+@keyframes word-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.3rem);
+  }
+}
+
+/* The bars draw in once, left to right, as the drawing arrives (CSS alone: without scripts they still show). */
+@media (prefers-reduced-motion: no-preference) {
+  .bar {
+    animation: bar-in 800ms var(--ease-out-expo) both;
+    animation-delay: calc(350ms + var(--i) * 90ms);
+  }
+
+  .app.is-resetting,
+  .app.is-resetting * {
+    transition: none !important;
+  }
+}
+
+@keyframes bar-in {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.scene-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm) var(--space-lg);
+  margin-top: var(--space-md);
+  color: var(--ink-faint);
+  font-size: var(--fs-sm);
+}
+
+.scene-control {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: var(--control-md);
+  padding: 0 var(--space-md);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  color: var(--ink-soft);
+  background: var(--surface);
+  font: inherit;
+  font-weight: var(--fw-strong);
+  cursor: pointer;
+}
+
+.scene-control:hover {
+  color: var(--ink);
+  border-color: var(--gray-400);
+}
+
+/* Small screens: the short names, and the weeks from Nov 9. */
+@media (max-width: 40rem) {
+  .app {
+    --names: 6.25rem;
+    --origin: 7;
+    --span: 28;
+    --row: 2.125rem;
+    --bar-h: 1.125rem;
+    font-size: var(--fs-xs);
+  }
+
+  .app-bar {
+    gap: var(--space-sm);
+    padding: 0 var(--space-md);
+  }
+
+  .app-project,
+  .chart-month {
+    display: none;
+  }
+
+  .name {
+    padding: 0 var(--space-sm) 0 var(--space-md);
+  }
+
+  .name.is-group {
+    padding-left: var(--space-sm);
+  }
+
+  .name .is-long {
+    display: none;
+  }
+
+  .name .is-short {
+    display: inline;
+  }
+
+  .chart-corner {
+    padding: 0 var(--space-sm);
+  }
+
+  .gate-state {
+    font-size: var(--fs-2xs);
+  }
+
+  .gate-word,
+  .forecast-tag,
+  .bar-check {
+    display: none;
+  }
+
+  .chart-away span {
+    font-size: 0.5625rem;
+  }
+
+  .call {
+    right: var(--space-sm);
+    bottom: var(--space-sm);
+    left: var(--space-sm);
+    gap: var(--space-sm);
+    padding: var(--space-xs) var(--space-sm);
+  }
+
+  .call-people {
+    gap: var(--space-xs);
+    padding-right: var(--space-sm);
+  }
+
+  .call-face small {
+    display: none;
+  }
+
+  .call-said {
+    font-size: var(--fs-sm);
+  }
+
+  .chart {
+    padding-bottom: 4.75rem;
+  }
+}
+
+
+/* The money: each row with its status, as the app shows it -------------------------------------------- */
+
+.ledger {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: 0 30px 60px -36px oklch(0.21 0.02 255 / 0.3);
+  list-style: none;
+}
+
+.ledger-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'kind status'
+    'who amount'
+    'via via';
+  gap: var(--space-2xs) var(--space-md);
+  padding: var(--space-lg);
+}
+
+.ledger-row + .ledger-row {
+  border-top: 1px solid var(--line-soft);
+}
+
+.ledger-kind {
+  grid-area: kind;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ledger-who {
+  grid-area: who;
+  display: grid;
+  color: var(--ink);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-strong);
+}
+
+.ledger-who small {
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-regular);
+}
+
+.ledger-amount {
+  grid-area: amount;
+  align-self: start;
+  justify-self: end;
+  color: var(--ink);
+  font-size: var(--fs-xl);
+  font-stretch: 112%;
+  font-weight: var(--fw-heavy);
+  font-variant-numeric: tabular-nums;
+}
+
+.ledger-via {
+  grid-area: via;
+  justify-self: start;
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+}
+
+.ledger-status {
+  grid-area: status;
+  display: inline-grid;
+  justify-items: end;
+}
+
+.ledger-status .pill {
+  grid-area: 1 / 1;
+  visibility: hidden;
+}
+
+.ledger-status .pill.is-current {
+  visibility: visible;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ledger-status .pill.is-current {
+    animation: pill-in 520ms var(--spring) both;
+  }
+}
+
+@keyframes pill-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.35rem);
+  }
+}
+
+.pill.is-paid {
+  gap: 0.25rem;
+  color: var(--paypal-navy);
+  background: oklch(0.95 0.025 255);
+}
+
+.pill.is-paid img {
+  width: 0.5rem;
+  height: auto;
+}
+
+.ledger-row.is-chart {
+  grid-template-areas:
+    'kind status'
+    'who amount';
+  background: var(--surface-sunken);
+}
+
+.ledger-diamond {
+  grid-area: amount;
+  align-self: center;
+  justify-self: end;
+  width: 0.85rem;
+  height: 0.85rem;
+  margin-right: 0.3rem;
+  border: 2px solid var(--warning);
+  border-radius: 2px;
+  background: var(--surface);
+  transform: rotate(45deg);
+  transition:
+    background-color 300ms var(--ease-out),
+    border-color 300ms var(--ease-out);
+}
+
+.ledger.is-released .ledger-diamond {
+  border-color: var(--paypal-blue);
+  background: var(--paypal-blue);
+}
+
+/* A row arrives, and flashes once when its status changes. */
+@media (prefers-reduced-motion: no-preference) {
+  .ledger.is-waiting .ledger-row {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+
+  .ledger-row {
+    transition:
+      opacity 400ms var(--ease-out) calc(var(--i) * 110ms),
+      transform 700ms var(--spring) calc(var(--i) * 110ms),
+      background-color 600ms var(--ease-out);
+  }
+
+  .ledger-row.is-changed {
+    background-color: var(--accent-soft);
+    transition-duration: 0ms, 0ms, 0ms;
+  }
+}
+
+
+/* The film ---------------------------------------------------------------------------------------- */
+
+.film-band {
+  color: var(--header-ink-soft);
+  background: var(--header);
+}
+
+.film-inner {
+  display: grid;
+  gap: clamp(1.75rem, 1rem + 2.5vw, 3rem);
+}
+
+.film-head h2 {
+  color: var(--header-ink);
+}
+
+.film-lead {
+  max-width: 40rem;
+  margin-top: var(--space-md);
+  color: var(--header-ink-soft);
+  font-size: var(--site-lead);
+}
+
+.film-figure {
+  margin: 0;
+}
+
+.film {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-xl);
+  background: var(--gray-800);
+  box-shadow:
+    0 0 0 1px var(--header-line),
+    0 40px 80px -30px oklch(0.05 0.02 255 / 0.8);
+}
+
+.film-poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 900ms var(--ease-out-expo);
+}
+
+.film:hover .film-poster {
+  transform: scale(1.015);
+}
+
+.film-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg) var(--space-md) var(--space-md);
+  border: 1px solid var(--header-line);
+  border-radius: var(--radius-pill);
+  color: var(--ink-inverse);
+  background: var(--ink);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-strong);
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  transition:
+    background-color var(--dur) var(--ease-out),
+    transform 500ms var(--spring);
+}
+
+.film-play svg {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0.4rem 0.35rem 0.4rem 0.45rem;
+  border-radius: 50%;
+  color: var(--ink);
+  background: var(--surface);
+  fill: currentColor;
+}
+
+.film-length {
+  color: var(--header-ink-soft);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-medium);
+}
+
+.film:hover .film-play,
+.film:focus-visible .film-play {
+  background: var(--gray-700);
+  transform: translate(-50%, -50%) scale(1.04);
+}
+
+.film:focus-visible {
+  box-shadow:
+    0 0 0 3px var(--header),
+    0 0 0 6px var(--accent-line);
+}
+
+@media (max-width: 30rem) {
+  .film-play {
+    gap: var(--space-xs);
+    padding: var(--space-2xs) var(--space-md) var(--space-2xs) var(--space-2xs);
+    font-size: var(--fs-sm);
+  }
+
+  .film-play svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+}
+
+.film-note {
+  max-width: 46rem;
+  margin-top: var(--space-md);
+  color: var(--header-ink-soft);
+  font-size: var(--fs-sm);
+}
+
+
+/* The pieces above, set on the paper ------------------------------------------------------------------- */
+
+/* The film: a sheet like the others, not an ink band; the poster framed in ink. */
+.landing .film-band {
+  color: var(--ink-soft);
+  background: transparent;
+}
+
+.landing .film-head h2 {
+  color: var(--ink);
+}
+
+.landing .film {
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 0 0 1px var(--rule-strong),
+    0 24px 48px -32px oklch(0.22 0.02 260 / 0.5);
+}
+
+.landing .film-note {
+  color: var(--ink-faint);
+}
+
+/* The scene drawn as a sheet: a crisp ink edge instead of a deep shadow. */
+.call-sheet .app {
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 0 0 1px var(--rule-strong),
+    0 18px 40px -28px oklch(0.22 0.02 260 / 0.45);
+}
+
+.call-sheet .scene-foot {
+  color: var(--ink-faint);
+}
+
+/* Paid: the released work fills in, left to right, so the scene ends on work starting, not on an empty chart. */
+.app.is-paid .bar.is-slab {
+  border-color: var(--concrete);
+  background: color-mix(in oklch, var(--concrete) 80%, var(--surface));
+  transition-delay: calc(var(--i, 0) * 90ms);
+}
+
+.app.is-paid .bar.is-gravel {
+  border-color: var(--sitework);
+  background: color-mix(in oklch, var(--sitework) 76%, var(--surface));
+}
+
+.app.is-paid .bar.is-inspection {
+  border-color: var(--inspector);
+  background: color-mix(in oklch, var(--inspector) 70%, var(--surface));
+}
+
+/* Reduced motion: the scenes change state without moving. */
+@media (prefers-reduced-motion: reduce) {
+  .app,
+  .app *,
+  .ledger * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Touch screens: small controls grow to a finger's width. */
+@media (pointer: coarse) {
+  .scene-control,
+  .join.is-quiet > summary,
+  .chapters a {
+    min-height: 2.75rem;
+  }
+}

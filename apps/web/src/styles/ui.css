@@ -1,0 +1,755 @@
+/*
+ * Shared components: one button family, one pill family, cards, panel headers, empty states, form
+ * fields, segmented controls and menus. Panels compose these instead of styling their own; a panel
+ * stylesheet only lays things out. Tokens come from tokens.css; docs/DESIGN.md shows usage.
+ */
+
+/* Base ---------------------------------------------------------------------------------------- */
+
+body {
+  font-family: var(--font-ui);
+  font-stretch: var(--stretch-ui);
+  font-weight: var(--fw-regular);
+  font-optical-sizing: auto;
+  color: var(--ink);
+  background: var(--canvas);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  font-stretch: inherit;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-stretch: var(--stretch-display);
+  font-weight: var(--fw-heavy);
+  letter-spacing: -0.005em;
+}
+
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Buttons ------------------------------------------------------------------------------------- */
+/*
+ * .button            secondary: a bordered surface button (the default)
+ * .button.is-primary the one main action in a place (ink)
+ * .button.is-quiet   no border until hovered (toolbars, rows, secondary actions in cards)
+ * .button.is-danger  destructive (red text; filled with .is-primary)
+ * .button.is-link    inline text action
+ * .button.is-icon    square, icon only (needs aria-label)
+ * .is-sm / .is-lg    sizes; .is-block fills the width
+ */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-height: var(--control-md);
+  padding: 0 var(--space-md);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+  line-height: 1.2;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.button:hover:not(:disabled) {
+  background: var(--surface-hover);
+  border-color: var(--gray-400);
+}
+
+.button:active:not(:disabled) {
+  background: var(--gray-100);
+}
+
+.button:disabled,
+.button[aria-disabled='true'] {
+  color: var(--ink-disabled);
+  background: var(--surface-sunken);
+  border-color: var(--line);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.button > .fa,
+.button > svg {
+  flex: 0 0 auto;
+  font-size: 0.9em;
+}
+
+.button.is-primary {
+  border-color: var(--ink);
+  color: var(--ink-inverse);
+  background: var(--ink);
+}
+
+.button.is-primary:hover:not(:disabled) {
+  border-color: var(--gray-700);
+  background: var(--gray-700);
+}
+
+.button.is-primary:disabled {
+  border-color: var(--gray-300);
+  color: var(--gray-0);
+  background: var(--gray-300);
+}
+
+.button.is-quiet {
+  border-color: transparent;
+  color: var(--ink-soft);
+  background: transparent;
+  box-shadow: none;
+}
+
+.button.is-quiet:hover:not(:disabled) {
+  border-color: transparent;
+  color: var(--ink);
+  background: var(--gray-100);
+}
+
+.button.is-quiet[aria-pressed='true'],
+.button.is-quiet[aria-haspopup][aria-expanded='true'] {
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+
+.button.is-danger {
+  color: var(--danger-strong);
+  border-color: var(--danger-line);
+}
+
+.button.is-danger:hover:not(:disabled) {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.button.is-danger.is-primary {
+  border-color: var(--danger);
+  color: var(--ink-inverse);
+  background: var(--danger);
+}
+
+.button.is-danger.is-primary:hover:not(:disabled) {
+  background: var(--danger-strong);
+}
+
+.button.is-link {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  color: var(--accent-strong);
+  background: none;
+  box-shadow: none;
+  font-weight: var(--fw-medium);
+  text-decoration: underline;
+  text-decoration-color: var(--accent-line);
+  text-underline-offset: 0.18em;
+}
+
+.button.is-link:hover:not(:disabled) {
+  background: none;
+  text-decoration-color: currentColor;
+}
+
+.button.is-icon {
+  width: var(--control-md);
+  padding: 0;
+}
+
+/* A link keeps its inline size at any size modifier. */
+.button.is-link.is-sm,
+.button.is-link.is-lg {
+  min-height: 0;
+  padding: 0;
+}
+
+.button.is-sm {
+  min-height: var(--control-sm);
+  padding: 0 var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-xs);
+}
+
+.button.is-sm.is-icon {
+  width: var(--control-sm);
+  padding: 0;
+}
+
+.button.is-lg {
+  min-height: var(--control-lg);
+  padding: 0 var(--space-lg);
+  font-size: var(--fs-md);
+}
+
+.button.is-block {
+  width: 100%;
+}
+
+/* On the ink header. */
+.button.is-on-ink {
+  border-color: var(--header-line);
+  color: var(--header-ink);
+  background: var(--header-raised);
+  box-shadow: none;
+}
+
+.button.is-on-ink:hover:not(:disabled) {
+  border-color: var(--gray-600);
+  background: var(--gray-700);
+}
+
+.button.is-on-ink.is-quiet {
+  border-color: transparent;
+  color: var(--header-ink-soft);
+  background: transparent;
+}
+
+.button.is-on-ink.is-quiet:hover:not(:disabled) {
+  color: var(--header-ink);
+  background: var(--header-raised);
+}
+
+/* Pills --------------------------------------------------------------------------------------- */
+/*
+ * .pill               a status word or count (neutral by default)
+ * .is-info / .is-success / .is-warning / .is-danger   state tones (danger only for real trouble)
+ * .pill.is-label      a label (a trade, a tag): outlined, with an optional .pill-dot
+ */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  min-height: 1.25rem;
+  padding: 0 var(--space-sm);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  color: var(--ink-soft);
+  background: var(--gray-100);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  line-height: 1.2;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.pill.is-info {
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+
+.pill.is-success {
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+.pill.is-warning {
+  color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.pill.is-danger {
+  color: var(--danger-strong);
+  background: var(--danger-soft);
+}
+
+.pill.is-label {
+  border-color: var(--line-strong);
+  color: var(--ink-soft);
+  background: var(--surface);
+  font-weight: var(--fw-medium);
+}
+
+.pill.is-sm {
+  min-height: 1.05rem;
+  padding: 0 var(--space-xs);
+}
+
+/* A pill that does something (selects a task, opens a filter). */
+button.pill {
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+
+button.pill:hover {
+  border-color: var(--line-strong);
+  background: var(--gray-200);
+}
+
+button.pill.is-label:hover,
+button.pill.is-info:hover {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+/* A pill with its own remove button: <span class="pill">Name<button class="pill-remove" aria-label="…">×</button></span> */
+.pill-remove {
+  display: inline-grid;
+  place-items: center;
+  width: 0.95rem;
+  height: 0.95rem;
+  margin-inline: 0.05rem -0.3rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: inherit;
+  background: transparent;
+  font-size: 0.65rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.pill-remove:hover {
+  opacity: 1;
+  background: oklch(0.21 0.02 255 / 0.08);
+}
+
+.pill-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--pill-dot, var(--ink-faint));
+}
+
+/* Cards and panel parts ------------------------------------------------------------------------ */
+
+.card {
+  display: grid;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.card.is-interactive {
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.card.is-interactive:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.card.is-selected,
+.card.is-interactive.is-selected:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* A panel's header: a title in the wide cut, a line under it, actions on the right. */
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  min-height: 3.25rem;
+  padding: var(--space-sm) var(--space-lg);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+/* An optional icon tile before the title (neutral; the title carries the meaning). */
+.panel-head-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-md);
+  color: var(--ink-soft);
+  background: var(--gray-100);
+  font-size: var(--fs-sm);
+}
+
+.panel-head-text {
+  display: grid;
+  flex: 1 1 auto;
+  gap: var(--space-3xs);
+  min-width: 0;
+}
+
+.panel-head-title {
+  margin: 0;
+  overflow: hidden;
+  font-size: var(--fs-lg);
+  font-stretch: var(--stretch-display);
+  font-weight: var(--fw-heavy);
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel-head-sub {
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel-head-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+
+/* A small heading inside a panel. */
+.section-label {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* An empty state teaches: what goes here, and the one action that fills it. */
+.empty-state {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-xs);
+  padding: var(--space-xl) var(--space-lg);
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.empty-state-title {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-strong);
+}
+
+.empty-state p {
+  margin: 0;
+  max-width: 42ch;
+}
+
+.empty-state .button {
+  margin-top: var(--space-xs);
+}
+
+/* Notes inside a panel: a tinted block with an icon; tone classes as for pills. */
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  color: var(--ink-soft);
+  background: var(--surface-sunken);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+
+.note > .fa {
+  margin-top: 0.2em;
+  color: var(--ink-faint);
+}
+
+/* Remy's mark in a note's icon place, centered on the first line. */
+.note > .remy-mark {
+  margin-top: 0.125em;
+}
+
+.note.is-sm {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--fs-xs);
+}
+
+.note.is-info {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.note.is-info > .fa {
+  color: var(--accent);
+}
+
+.note.is-success {
+  border-color: var(--success-line);
+  background: var(--success-soft);
+}
+
+.note.is-success > .fa {
+  color: var(--success);
+}
+
+.note.is-warning {
+  border-color: var(--warning-line);
+  background: var(--warning-soft);
+}
+
+.note.is-warning > .fa {
+  color: var(--warning);
+}
+
+.note.is-danger {
+  border-color: var(--danger-line);
+  background: var(--danger-soft);
+}
+
+.note.is-danger > .fa {
+  color: var(--danger);
+}
+
+/* Form fields --------------------------------------------------------------------------------- */
+
+.field {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2xs);
+  font-size: var(--fs-sm);
+}
+
+.field-label {
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+}
+
+.field-hint {
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--control-md);
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  background: var(--surface);
+  font-size: var(--fs-sm);
+}
+
+textarea.input {
+  padding: var(--space-xs) var(--space-sm);
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.input.is-sm {
+  min-height: var(--control-sm);
+  padding: 0 var(--space-xs);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-xs);
+}
+
+/* A field with a leading icon: <label class="input-icon"><i class="fa fa-magnifying-glass"></i><input class="input"></label> */
+.input-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon > .fa {
+  position: absolute;
+  inset-inline-start: var(--space-sm);
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+  pointer-events: none;
+}
+
+.input-icon > .input {
+  padding-inline-start: calc(var(--space-sm) + 1.25rem);
+}
+
+.input::placeholder {
+  color: var(--ink-faint);
+}
+
+.input:hover:not(:disabled) {
+  border-color: var(--gray-400);
+}
+
+.input:focus-visible {
+  border-color: var(--accent);
+}
+
+/* Segmented control: buttons with aria-pressed inside one frame. */
+.segmented {
+  display: inline-flex;
+  gap: var(--space-3xs);
+  padding: var(--space-3xs);
+  border-radius: var(--radius-md);
+  background: var(--gray-100);
+}
+
+.segmented > button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: calc(var(--control-md) - 0.25rem);
+  padding: 0 var(--space-md);
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--ink-soft);
+  background: transparent;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+}
+
+.segmented > button:hover {
+  color: var(--ink);
+}
+
+.segmented > button[aria-pressed='true'],
+.segmented > button[aria-selected='true'],
+.segmented > button[aria-checked='true'] {
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  font-weight: var(--fw-strong);
+}
+
+/* The pressed shadow must not hide the focus ring. */
+.segmented > button:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+/* A switch: <button class="switch" role="switch" aria-checked="true"><span></span></button> */
+.switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 1.9rem;
+  height: 1.1rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--gray-300);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.switch > span {
+  position: absolute;
+  inset-block-start: 0.15rem;
+  inset-inline-start: 0.15rem;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+  transition: translate var(--dur-fast) var(--ease-out);
+}
+
+.switch[aria-checked='true'] {
+  background: var(--accent);
+}
+
+.switch[aria-checked='true'] > span {
+  translate: 0.8rem 0;
+}
+
+/* Menus and popovers -------------------------------------------------------------------------- */
+
+.popover {
+  z-index: 60;
+  padding: var(--space-xs);
+  border-radius: var(--radius-lg);
+  color: var(--ink);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-lg);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  min-height: var(--control-md);
+  padding: 0 var(--space-sm);
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  background: none;
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu-item:hover,
+.menu-item:focus-visible {
+  background: var(--gray-100);
+}
+
+.menu-item > .fa {
+  width: 1rem;
+  color: var(--ink-faint);
+  text-align: center;
+}
+
+.menu-item:disabled,
+.menu-item[aria-disabled='true'] {
+  color: var(--ink-disabled);
+  background: none;
+  cursor: not-allowed;
+}
+
+.menu-item:disabled > .fa,
+.menu-item[aria-disabled='true'] > .fa {
+  color: var(--ink-disabled);
+}
+
+.menu-item.is-danger {
+  color: var(--danger-strong);
+}
+
+.menu-item.is-danger > .fa {
+  color: var(--danger);
+}
+
+.menu-divider {
+  height: 1px;
+  margin: var(--space-2xs) 0;
+  background: var(--line);
+}
+
+/* Keyboard keys in hints. */
+.kbd {
+  display: inline-block;
+  min-width: 1.2em;
+  padding: 0 0.3em;
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-xs);
+  color: var(--ink-soft);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  text-align: center;
+}

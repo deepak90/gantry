@@ -1,0 +1,465 @@
+/*
+ * The crews tab (inspector/CrewsPanel.tsx): one compact row per crew or machine, its firm's name
+ * first and its trade as a label; the drag proxy and drop feedback (gantt/crew-drop.ts). Tokens and
+ * components come from tokens.css / ui.css; each crew carries its own color as --crew.
+ */
+
+/* Panel ----------------------------------------------------------------------------------------- */
+
+.crews-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.crews-tools {
+  display: grid;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg) var(--space-sm);
+}
+
+.crews-filter {
+  justify-self: start;
+}
+
+.crews-filter-count,
+.crews-trade-count {
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-medium);
+}
+
+.crews-trades {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+}
+
+.crews-trade-count {
+  margin-inline-start: 0.1rem;
+}
+
+.crews-error {
+  margin: 0 var(--space-lg) var(--space-sm);
+}
+
+.crews-groups {
+  display: grid;
+  gap: var(--space-md);
+  padding: var(--space-2xs) var(--space-lg) var(--space-xl);
+}
+
+.crews-group-label {
+  display: flex;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-2xs);
+}
+
+.crews-group-label > span {
+  color: var(--ink-disabled);
+}
+
+.crews-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  list-style: none;
+  overflow: hidden;
+}
+
+/* One row per crew -------------------------------------------------------------------------------- */
+
+.crew-row + .crew-row {
+  border-top: 1px solid var(--line-soft);
+}
+
+.crew-row-main {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-md);
+  cursor: grab;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.crew-row-main:hover,
+.crew-row.is-editing .crew-row-main {
+  background: var(--surface-hover);
+}
+
+/* The row a drag started from stays in place, faded, while its proxy travels. */
+.crew-row.b-drag-original {
+  opacity: 0.45;
+}
+
+.crew-logo {
+  position: relative;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  color: var(--ink-inverse);
+  background: var(--crew);
+  font-size: var(--fs-sm);
+}
+
+.crew-logo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.crew-row-text {
+  display: grid;
+  flex: 1 1 auto;
+  gap: var(--space-3xs);
+  min-width: 0;
+}
+
+.crew-row-name {
+  overflow: hidden;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crew-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2xs) var(--space-sm);
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.crew-row-company {
+  color: var(--ink-soft);
+}
+
+.crew-row-tasks.button.is-link {
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  text-decoration-color: var(--line-strong);
+}
+
+.crew-row-tasks.button.is-link:hover:not(:disabled) {
+  color: var(--accent-strong);
+}
+
+.crew-row-tasks.button.is-link:disabled {
+  color: var(--ink-faint);
+  background: none;
+  text-decoration: none;
+}
+
+.crew-row-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--space-3xs);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.crew-row-main:hover .crew-row-actions,
+.crew-row-main:focus-within .crew-row-actions,
+.crew-row.is-editing .crew-row-actions {
+  opacity: 1;
+}
+
+/* "Put this crew on the selected task" is the row's main action while a task is selected. */
+.crew-row-actions .crew-put {
+  color: var(--accent-strong);
+}
+
+/* Editor ------------------------------------------------------------------------------------------ */
+
+.crew-editor {
+  display: grid;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md) var(--space-md);
+  border-top: 1px solid var(--line-soft);
+  background: var(--surface-sunken);
+  cursor: auto;
+}
+
+.crew-swatches,
+.crew-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+}
+
+.crew-swatches button {
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.crew-swatches button[aria-checked='true'] {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ink);
+}
+
+.crew-icons button {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--ink-soft);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.crew-icons button:hover {
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+
+.crew-icons button[aria-checked='true'] {
+  border-color: var(--crew);
+  color: var(--ink-inverse);
+  background: var(--crew);
+}
+
+.crew-remove {
+  justify-self: start;
+}
+
+.crew-confirm {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.crew-confirm > span {
+  flex: 1 1 10rem;
+}
+
+/* Drag proxy (appended to <body> by Bryntum's DragHelper) --------------------------------------- */
+
+/*
+ * DragHelper centers the proxy on the pointer (it moves it with `translate`); the extra `transform`
+ * puts it below-right of the pointer instead, so the bar under the pointer stays in sight. A fixed
+ * width keeps that offset steady while the hint text changes.
+ */
+.crew-drag-proxy.b-drag-proxy.b-dragging {
+  z-index: 10000;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 18rem;
+  transform: translate(calc(50% + 14px), calc(50% + 10px));
+  padding: 0.3rem 0.85rem 0.3rem 0.3rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+  opacity: 1;
+  box-shadow: var(--shadow-lg);
+}
+
+.crew-drag-badge {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 2.1rem;
+  height: 2.1rem;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--crew);
+  color: var(--ink-inverse);
+}
+
+.crew-drag-badge img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.crew-drag-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.crew-drag-text strong {
+  overflow: hidden;
+  font-weight: var(--fw-strong);
+  text-overflow: ellipsis;
+}
+
+.crew-drag-hint {
+  overflow: hidden;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--ink-soft);
+  text-overflow: ellipsis;
+}
+
+.crew-drag-proxy.is-valid {
+  border-color: var(--success);
+}
+
+.crew-drag-proxy.is-valid .crew-drag-hint {
+  color: var(--success);
+}
+
+.crew-drag-proxy.b-drag-invalid .crew-drag-hint {
+  color: var(--danger);
+}
+
+/* On a good drop the proxy folds down to its badge and flies to the task's crew cell. */
+.crew-drag-proxy.is-landing.b-dragging {
+  width: auto;
+  transform: none;
+  gap: 0;
+  padding: 0;
+  border-color: transparent;
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--crew) 30%, transparent);
+}
+
+.crew-drag-proxy.is-landing .crew-drag-text {
+  display: none;
+}
+
+.crew-drag-proxy.is-landing .crew-drag-badge {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+/* Drop targets on the plan ---------------------------------------------------------------------- */
+
+.collab-gantt-workspace .b-gantt.crew-dragging .b-grid-row {
+  cursor: copy;
+}
+
+.collab-gantt-workspace .b-grid-row.crew-drop-target::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.collab-gantt-workspace .b-grid-row.crew-drop-target.is-valid::before {
+  background: color-mix(in oklch, var(--success) 9%, transparent);
+  box-shadow:
+    inset 0 2px 0 color-mix(in oklch, var(--success) 70%, transparent),
+    inset 0 -2px 0 color-mix(in oklch, var(--success) 70%, transparent);
+}
+
+.collab-gantt-workspace .b-grid-row.crew-drop-target.is-invalid::before {
+  background: color-mix(in oklch, var(--danger) 6%, transparent);
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.crew-drop-target.is-valid .b-gantt-task {
+  outline: 2px solid var(--success);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px color-mix(in oklch, var(--success) 22%, transparent);
+}
+
+.collab-gantt-workspace .b-gantt-task-wrap.crew-drop-target.is-invalid .b-gantt-task {
+  outline: 2px dashed var(--danger);
+  outline-offset: 2px;
+}
+
+/* Confirmation after a drop: a ring pulses around the bar and a chip rises from it. */
+.crew-drop-pulse {
+  position: fixed;
+  z-index: 10000;
+  border-radius: var(--radius-md);
+  pointer-events: none;
+  animation: crew-drop-ring 0.9s ease-out forwards;
+}
+
+.crew-drop-chip {
+  position: absolute;
+  left: 50%;
+  top: -0.35rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--crew);
+  color: var(--ink-inverse);
+  font-family: var(--font-ui);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+  transform: translate(-50%, -100%);
+  animation: crew-drop-chip 1.5s ease-out forwards;
+}
+
+@keyframes crew-drop-ring {
+  0% {
+    box-shadow:
+      0 0 0 0 color-mix(in oklch, var(--crew) 65%, transparent),
+      inset 0 0 0 2px var(--crew);
+  }
+  70% {
+    box-shadow:
+      0 0 0 14px transparent,
+      inset 0 0 0 2px var(--crew);
+  }
+  100% {
+    box-shadow:
+      0 0 0 18px transparent,
+      inset 0 0 0 2px transparent;
+  }
+}
+
+@keyframes crew-drop-chip {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -40%) scale(0.9);
+  }
+  15%,
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -100%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -150%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crew-drop-pulse {
+    animation: none;
+    box-shadow: inset 0 0 0 2px var(--crew);
+  }
+
+  .crew-drop-chip {
+    animation: none;
+  }
+}
+
+/* Crew badges with a company logo (grid Crew column, workload histogram) ------------------------ */
+
+.look-avatar.has-logo {
+  background: var(--crew);
+}
+
+.look-avatar-logo {
+  pointer-events: none;
+}

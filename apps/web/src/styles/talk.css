@@ -1,0 +1,376 @@
+/*
+ * The spark button: a light runs round the rim with a warm spark riding it, over a soft bloom. It moves
+ * in breaths, not a constant spin: a quick sweep, then a slow drift, every 7.5 s. The star turns a
+ * quarter, two small ones twinkle and a sheen crosses the label, all on the sweep. Hover quickens the
+ * rhythm (spark.ts); a press throws sparks; while Remy joins the rim is a comet; on the call it calms.
+ *
+ * The call with Remy wears it with Remy's mark: "Call Remy" and "Join" in the header, and Remy's seat on the
+ * call bar until she comes (call/CallStrip.tsx).
+ */
+
+@property --talk-spin {
+  syntax: '<angle>';
+  inherits: true;
+  initial-value: 0deg;
+}
+
+.talk-spark {
+  /* The light: cobalt from the assistant, ice and white where it catches, and a warm spark. */
+  --talk-cobalt: oklch(0.62 0.19 262);
+  --talk-cobalt-deep: oklch(0.42 0.16 264);
+  --talk-ice: oklch(0.88 0.07 232);
+  --talk-white: oklch(0.98 0.012 250);
+  --talk-warm: oklch(0.85 0.15 78);
+  --talk-glow: 0.55;
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  color: var(--header-ink);
+  background: none;
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  isolation: isolate;
+  animation: talk-breath 7.5s infinite;
+}
+
+.talk-spark:focus-visible {
+  outline: 2px solid var(--talk-ice);
+  outline-offset: 4px;
+}
+
+.talk-spark:hover {
+  --talk-glow: 0.95;
+}
+
+.talk-spark:disabled {
+  cursor: progress;
+}
+
+/* A quick sweep, then a slow drift: two thirds of a turn in a second and a half, the rest in six. */
+@keyframes talk-breath {
+  0% {
+    --talk-spin: 0deg;
+    animation-timing-function: cubic-bezier(0.55, 0, 0.25, 1);
+  }
+
+  20% {
+    --talk-spin: 235deg;
+    animation-timing-function: linear;
+  }
+
+  100% {
+    --talk-spin: 360deg;
+  }
+}
+
+.talk-spark-ring,
+.talk-spark-bloom {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--talk-spin),
+    var(--talk-cobalt) 0deg,
+    var(--talk-ice) 55deg,
+    var(--talk-white) 92deg,
+    var(--talk-cobalt) 150deg,
+    var(--talk-cobalt-deep) 215deg,
+    var(--talk-warm) 288deg,
+    var(--talk-cobalt) 335deg
+  );
+}
+
+.talk-spark-bloom {
+  inset: -3px;
+  z-index: -1;
+  opacity: var(--talk-glow);
+  filter: blur(11px);
+  transition: opacity var(--dur-slow) var(--ease-out);
+  animation: talk-swell 7.5s infinite;
+}
+
+/* The bloom swells with the sweep and settles with the drift. */
+@keyframes talk-swell {
+  0%,
+  100% {
+    scale: 1;
+  }
+
+  16% {
+    scale: 1.09;
+  }
+
+  42% {
+    scale: 1.02;
+  }
+}
+
+.talk-spark-face {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 1.5px;
+  padding: 0 var(--space-md) 0 calc(var(--space-sm) + 2px);
+  border-radius: inherit;
+  background: oklch(0.17 0.022 262);
+  overflow: hidden;
+}
+
+/* A sheen crosses the label just after each sweep. */
+.talk-spark-face::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, oklch(1 0 0 / 0.14) 46%, oklch(1 0 0 / 0.3) 50%, oklch(1 0 0 / 0.14) 54%, transparent 70%);
+  transform: translateX(-130%);
+  pointer-events: none;
+  animation: talk-sheen 7.5s ease-in-out infinite;
+}
+
+@keyframes talk-sheen {
+  0%,
+  18% {
+    transform: translateX(-130%);
+  }
+
+  44%,
+  100% {
+    transform: translateX(130%);
+  }
+}
+
+.talk-start,
+.talk-control {
+  display: inline-flex;
+}
+
+/* The label rolls over to the next one (the face clips the roll). */
+.talk-spark-label {
+  position: relative;
+  display: inline-grid;
+  white-space: nowrap;
+}
+
+.talk-spark-text {
+  display: inline-block;
+}
+
+.talk-spark-glyph {
+  display: grid;
+  place-items: center;
+}
+
+/* On the call bar, Talk and Send keep one width, so the swap never shifts the bar. */
+.rail-call-controls .talk-spark-face {
+  justify-content: center;
+  min-width: 6.5rem;
+}
+
+/* Each Send throws a little paper plane. */
+.talk-spark-flight {
+  position: absolute;
+  color: var(--talk-ice);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.talk-spark-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+}
+
+.talk-spark-icon .fa {
+  font-size: 13px;
+}
+
+.talk-spark-star {
+  width: 16px;
+  height: 16px;
+  filter: drop-shadow(0 0 4px oklch(0.88 0.07 232 / 0.75));
+  animation: talk-turn 7.5s infinite;
+}
+
+/* Remy's mark in the spark's place (the call's buttons): a size up, so the crane reads. Its trolley runs and its
+   load sways on the button's breath (remy.css), and its spark turns with the sweep. */
+.talk-spark.has-mark .talk-spark-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.talk-spark .remy-mark.talk-spark-mark {
+  width: 22px;
+  height: 22px;
+  filter: drop-shadow(0 0 3px oklch(0.88 0.07 232 / 0.55));
+}
+
+/* "Join": how many are on the call. */
+.talk-spark-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border-radius: var(--radius-pill);
+  color: var(--header);
+  background: var(--talk-ice);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-heavy);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A quarter turn with the sweep (the star looks the same every quarter, so the loop never shows). */
+@keyframes talk-turn {
+  0% {
+    rotate: 0deg;
+    scale: 1;
+    animation-timing-function: cubic-bezier(0.55, 0, 0.25, 1);
+  }
+
+  16% {
+    rotate: 90deg;
+    scale: 1.2;
+  }
+
+  30%,
+  100% {
+    rotate: 90deg;
+    scale: 1;
+  }
+}
+
+.talk-spark-twinkle {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  fill: var(--talk-white);
+  scale: 0;
+  animation: talk-twinkle 7.5s ease-in-out infinite;
+}
+
+.talk-spark-twinkle.is-first {
+  top: -4px;
+  right: -5px;
+}
+
+.talk-spark-twinkle.is-second {
+  bottom: -3px;
+  left: -5px;
+  width: 5px;
+  height: 5px;
+  fill: var(--talk-warm);
+  animation-delay: 0.35s;
+}
+
+@keyframes talk-twinkle {
+  0%,
+  12%,
+  34%,
+  100% {
+    scale: 0;
+    rotate: 0deg;
+  }
+
+  22% {
+    scale: 1;
+    rotate: 45deg;
+  }
+}
+
+/* Sparks thrown by a press. */
+.talk-spark-bit {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  z-index: 3;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  fill: var(--c);
+  pointer-events: none;
+  animation: talk-fly 0.75s var(--ease-out) forwards;
+}
+
+@keyframes talk-fly {
+  from {
+    opacity: 1;
+    translate: 0 0;
+    rotate: 0deg;
+    scale: 0.4;
+  }
+
+  to {
+    opacity: 0;
+    translate: var(--dx) var(--dy);
+    rotate: var(--r);
+    scale: 1;
+  }
+}
+
+/* Remy is joining: the rim becomes a comet racing round, and the star whirls. */
+.talk-spark[data-state='connecting'] {
+  --talk-glow: 0.8;
+  animation: talk-race 1.1s linear infinite;
+}
+
+.talk-spark[data-state='connecting'] .talk-spark-ring {
+  background: conic-gradient(from var(--talk-spin), transparent 0deg 220deg, var(--talk-ice) 300deg, var(--talk-white) 350deg, transparent 360deg);
+}
+
+.talk-spark[data-state='connecting'] .talk-spark-star {
+  animation: talk-whirl 0.9s linear infinite;
+}
+
+.talk-spark[data-state='connecting'] .talk-spark-twinkle,
+.talk-spark[data-state='connecting'] .talk-spark-face::after {
+  display: none;
+}
+
+@keyframes talk-race {
+  to {
+    --talk-spin: 360deg;
+  }
+}
+
+@keyframes talk-whirl {
+  to {
+    rotate: 1turn;
+  }
+}
+
+/* On the call: the light keeps its rhythm, dimmer, and the sheen stops. */
+.talk-spark:is([data-state='ready'], [data-state='waiting'], [data-state='speaking']) {
+  --talk-glow: 0.3;
+}
+
+.talk-spark:is([data-state='ready'], [data-state='waiting'], [data-state='speaking'], [data-state='talking']) .talk-spark-face::after {
+  display: none;
+}
+
+/* Talking: Send glows full and pulses, so it is easy to find without looking. */
+.talk-spark[data-state='talking'] {
+  --talk-glow: 1;
+}
+
+.talk-spark[data-state='talking'] .talk-spark-face {
+  background: color-mix(in oklch, var(--talk-cobalt) 70%, oklch(0.17 0.022 262));
+}
+
+/* While you talk, the glow follows your voice (--level, written every frame from the microphone). */
+.talk-spark[data-state='talking'] .talk-spark-bloom {
+  opacity: calc(0.6 + var(--level, 0) * 0.4);
+  animation: none;
+  scale: calc(1.02 + var(--level, 0) * 0.32);
+  transition: none;
+}

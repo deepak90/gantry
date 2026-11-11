@@ -1,0 +1,1563 @@
+/*
+ * The building's 3D view (gantt/fx3d/building-view.ts): over the chart's side of the Gantt, with the plan's rows left
+ * as they are beside it. Quiet glass panels on the paper, the date large and plain, color only where it means
+ * something: a phase's own color on the rail, amber for a machine on rent with nothing to do, PayPal blue for paid.
+ */
+
+/* The canvas covers the chart's side only; the rows, the toolbar and the side panel stay usable. */
+.fx3d-canvas.is-inset {
+  position: fixed;
+  inset: auto;
+  z-index: 40;
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+
+
+/* Chart or site: one control in the toolbar that says which is on show. */
+.fx3d-toggle {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+}
+
+.fx3d-toggle-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.fx3d-toggle-option:hover {
+  color: var(--ink);
+}
+
+.fx3d-toggle-option.is-on {
+  background: var(--ink);
+  color: var(--ink-inverse);
+  box-shadow: var(--shadow-xs);
+}
+
+.fx3d-toggle-option:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+html.fx3d-inset.fx3d-covered .collab-gantt-workspace .b-grid-sub-grid-normal,
+html.fx3d-inset.fx3d-covered .collab-gantt-workspace .b-grid-header-scroller-normal {
+  visibility: hidden;
+}
+
+.fxb {
+  position: fixed;
+  z-index: 41;
+  pointer-events: none;
+  font-family: var(--font-ui);
+  color: var(--ink);
+  opacity: 0;
+  transition: opacity 420ms var(--ease-out);
+}
+
+.fxb.is-shown {
+  opacity: 1;
+}
+
+.fxb > * {
+  pointer-events: auto;
+}
+
+.fxb [hidden] {
+  display: none !important;
+}
+
+.fxb-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* ---- What is on show ------------------------------------------------------------------ */
+
+/* On a card of its own, so it reads over anything the scene puts behind it (the crane, the sky over the jib). */
+.fxb-readout {
+  position: absolute;
+  top: var(--space-md);
+  left: var(--space-md);
+  padding: 8px 14px 9px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklab, var(--surface) 86%, transparent);
+  backdrop-filter: blur(12px) saturate(1.2);
+  box-shadow: var(--shadow-sm);
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+/* A piece's card needs the corner in a short view: the readout steps aside while it is up. */
+.fxb-readout.is-covered {
+  opacity: 0;
+}
+
+.fxb-date {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-strong);
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.fxb-what {
+  margin-top: 2px;
+  font-size: var(--fs-sm);
+  color: var(--ink-soft);
+  max-width: 42ch;
+}
+
+/* ---- The floors ------------------------------------------------------------------------- */
+
+.fxb-floors {
+  position: absolute;
+  top: 50%;
+  right: var(--space-md);
+  transform: translateY(-58%);
+  width: 13.5rem;
+  padding: var(--space-xs);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklab, var(--surface) 86%, transparent);
+  backdrop-filter: blur(12px) saturate(1.2);
+  box-shadow: var(--shadow-md);
+}
+
+.fxb-apart {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  width: 100%;
+  margin-bottom: var(--space-2xs);
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+}
+
+.fxb-apart:hover {
+  background: var(--surface-hover);
+}
+
+.fxb-apart.is-on {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--ink-inverse);
+}
+
+.fxb-floors ol {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fxb-floors li button {
+  display: grid;
+  grid-template-columns: 2rem 1fr auto;
+  align-items: center;
+  gap: var(--space-xs);
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.fxb-floors li button:hover,
+.fxb-floors li.is-near button {
+  background: var(--surface-hover);
+}
+
+.fxb-floors li.is-focus button {
+  background: var(--ink);
+  color: var(--ink-inverse);
+}
+
+.fxb-floors li.is-focus .fxb-short {
+  border-color: transparent;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.fxb-floors li.is-focus .fxb-state {
+  color: var(--ink-inverse);
+}
+
+.fxb-short {
+  display: inline-grid;
+  place-items: center;
+  height: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+
+.fxb-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-xs);
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A dot that is empty, half full or full: built, under way, not started, in words on hover. */
+.fxb-state::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border: 1.5px solid var(--gray-400);
+  border-radius: 50%;
+  background: transparent;
+}
+
+.fxb-state[data-state='going']::before {
+  border-color: var(--ink);
+  background: linear-gradient(90deg, var(--ink) 50%, transparent 50%);
+}
+
+.fxb-state[data-state='waiting']::before {
+  border-color: var(--gray-500);
+  background: linear-gradient(90deg, var(--gray-500) 50%, transparent 50%);
+}
+
+.fxb-state[data-state='done']::before {
+  border-color: var(--ink);
+  background: var(--ink);
+}
+
+/* ---- The bar: play, the date rail, the lens --------------------------------------------- */
+
+/*
+ * The middle of the room the view leaves for the scene: the whole width, or, with the side panel over the scene, what
+ * is left of it (building-view.ts measures --fxb-panel-space), so nothing centered goes under the panel.
+ */
+.fxb {
+  --fxb-room-width: calc(100% - var(--fxb-panel-space, 0px));
+}
+
+.fxb-bar {
+  position: absolute;
+  left: calc(var(--fxb-room-width) / 2);
+  bottom: calc(var(--space-md) + var(--fxb-call-space, 0px));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px var(--space-sm);
+  /* Its own padding and border (20px) inside the room's margins, so it keeps clear of the window's edge and the panel. */
+  width: min(calc(var(--fxb-room-width) - 2 * var(--space-md) - 20px), 56rem);
+  padding: 8px 10px 8px 8px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklab, var(--surface) 88%, transparent);
+  backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow: var(--shadow-lg);
+  transform: translateX(-50%);
+}
+
+.fxb-play {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--ink-inverse);
+  cursor: pointer;
+}
+
+.fxb-play::before {
+  content: '';
+  margin-left: 3px;
+  border-style: solid;
+  border-width: 7px 0 7px 11px;
+  border-color: transparent transparent transparent currentColor;
+}
+
+.fxb-play.is-playing::before {
+  width: 10px;
+  height: 13px;
+  margin-left: 0;
+  border: 0;
+  border-left: 3.5px solid currentColor;
+  border-right: 3.5px solid currentColor;
+}
+
+.fxb-play:focus-visible,
+.fxb-rail:focus-visible,
+.fxb-icon:focus-visible,
+.fxb-lens button:focus-visible,
+.fxb-floors button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.fxb-rail {
+  position: relative;
+  flex: 1;
+  min-width: 8rem;
+  height: 38px;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.fxb-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 9px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--gray-100);
+  overflow: hidden;
+}
+
+.fxb-band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: color-mix(in oklab, var(--band) 72%, white);
+  box-shadow: inset -1px 0 0 var(--surface);
+}
+
+.fxb-idle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--warning);
+  opacity: 0.9;
+}
+
+.fxb-months {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 21px;
+  height: 14px;
+  font-size: var(--fs-2xs);
+  color: var(--ink-faint);
+  pointer-events: none;
+}
+
+.fxb-months span {
+  position: absolute;
+  padding-left: 3px;
+  border-left: 1px solid var(--line);
+  line-height: 1;
+}
+
+.fxb-head {
+  position: absolute;
+  top: 3px;
+  width: 0;
+  height: 20px;
+  pointer-events: none;
+}
+
+.fxb-head::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 0;
+  width: 2px;
+  height: 20px;
+  border-radius: 1px;
+  background: var(--ink);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.fxb-tip {
+  position: absolute;
+  bottom: 22px;
+  left: 0;
+  padding: 3px 7px;
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: var(--ink-inverse);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity var(--dur-fast);
+}
+
+.fxb-rail:hover .fxb-tip,
+.fxb-rail.is-dragging .fxb-tip,
+.fxb-rail:focus-visible .fxb-tip {
+  opacity: 1;
+}
+
+.fxb-lens {
+  flex: none;
+  display: inline-flex;
+  padding: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--gray-100);
+}
+
+.fxb-lens button {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+}
+
+.fxb-lens button.is-on {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-xs);
+}
+
+.fxb-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.fxb-icon:hover {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+
+/* Flying around: the floors step aside, so the whole width is the site's. */
+.fxb-floors {
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+}
+
+.fxb.is-flying .fxb-floors {
+  opacity: 0;
+  transform: translate(16px, -58%);
+  pointer-events: none;
+}
+
+/* While it is on, the button is lit. */
+.fxb-icon.is-on {
+  background: var(--ink);
+  color: var(--surface);
+}
+
+/* A word where no icon says it as well. */
+.fxb-icon.is-word {
+  width: auto;
+  padding-inline: var(--space-sm);
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+/* ---- How to move around ------------------------------------------------------------------ */
+
+.fxb-hint {
+  position: absolute;
+  left: calc(var(--fxb-room-width) / 2);
+  bottom: calc(var(--space-md) + 76px + var(--fxb-call-space, 0px));
+  display: flex;
+  gap: 16px;
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklab, var(--ink) 84%, transparent);
+  color: var(--surface);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, 6px);
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s ease;
+  pointer-events: none;
+}
+
+.fxb-hint.is-shown {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.fxb-hint b {
+  font-weight: var(--fw-strong);
+}
+
+/* ---- The key for a lens ------------------------------------------------------------------ */
+
+.fxb-legend {
+  position: absolute;
+  left: calc(var(--fxb-room-width) / 2);
+  bottom: calc(var(--space-md) + 68px + var(--fxb-call-space, 0px));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
+  max-width: min(calc(var(--fxb-room-width) - 2 * var(--space-md)), 52rem);
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklab, var(--surface) 84%, transparent);
+  backdrop-filter: blur(10px);
+  font-size: var(--fs-xs);
+  color: var(--ink-soft);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.fxb-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fxb-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+/* ---- Callouts in the scene ------------------------------------------------------------ */
+
+.fxb-layer-tags {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 320ms var(--ease-out);
+  pointer-events: none;
+}
+
+.fxb-layer-tags.is-shown {
+  opacity: 1;
+}
+
+.fxb-layer-tags.is-shown .fxb-layer-tag {
+  pointer-events: auto;
+}
+
+.fxb-layer-tag {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 10px 3px 3px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklab, var(--surface) 90%, transparent);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  translate: calc(-100% - 10px) -50%;
+}
+
+.fxb-layer-tag b {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.6rem;
+  height: 1.3rem;
+  padding: 0 4px;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--ink-inverse);
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.04em;
+}
+
+.fxb-layer-tag.is-focus {
+  border-color: var(--ink);
+}
+
+
+.fxb-callout {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 14rem;
+  max-width: 20rem;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--surface) 94%, transparent);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--fs-sm);
+  pointer-events: auto;
+}
+
+/* The arrow points at the piece: down from under the card, or up from its top when the card sits below the piece. */
+.fxb-callout::after {
+  content: '';
+  position: absolute;
+  left: var(--arrow-x, 50%);
+  bottom: -6px;
+  width: 10px;
+  height: 10px;
+  border-right: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--surface);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.fxb-callout.is-below::after {
+  top: -6px;
+  bottom: auto;
+  transform: translateX(-50%) rotate(225deg);
+}
+
+.fxb-callout.is-adrift::after {
+  display: none;
+}
+
+.fxb-callout strong {
+  font-weight: var(--fw-strong);
+}
+
+.fxb-callout span {
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+}
+
+.fxb-callout .fxb-money {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.fxb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.fxb-actions button {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+}
+
+.fxb-actions button:hover {
+  background: var(--surface-hover);
+}
+
+/* The way to a payment: the main action of the callout, our own ink button. */
+.fxb-actions button.is-pay {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--ink-inverse);
+}
+
+.fxb-actions button.is-pay:hover {
+  border-color: var(--gray-700);
+  background: var(--gray-700);
+}
+
+.fxb-machine {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: 17rem;
+  padding: 6px 10px 6px 24px;
+  border: 1px solid var(--warning-line);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--warning-soft) 92%, transparent);
+  color: var(--ink);
+  font-size: var(--fs-xs);
+  line-height: 1.35;
+  box-shadow: var(--shadow-sm);
+  translate: 18px -50%;
+  font: inherit;
+  font-size: var(--fs-xs);
+  text-align: left;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.fxb-machine::after {
+  content: 'See its days \203A';
+  display: block;
+  margin-top: 2px;
+  font-weight: var(--fw-strong);
+  color: var(--ink);
+}
+
+.fxb-machine::before {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--warning);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--warning) 30%, transparent);
+  transform: translateY(-50%);
+  animation: fxb-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes fxb-pulse {
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in oklab, var(--warning) 10%, transparent);
+  }
+}
+
+/* At the top of the view, clear of the date bar and of the call bar that sits over the bottom of the page. */
+.fxb-toast {
+  position: absolute;
+  left: calc(var(--fxb-room-width) / 2);
+  top: calc(var(--space-md) + 52px);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  max-width: min(calc(var(--fxb-room-width) - 2 * var(--space-md)), 34rem);
+  padding: 8px 8px 8px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--ink-inverse);
+  font-size: var(--fs-sm);
+  box-shadow: var(--shadow-lg);
+  transform: translateX(-50%);
+  animation: fxb-rise 360ms var(--ease-out);
+}
+
+/* Its action, light on the ink toast (the close button keeps its own look). */
+.fxb-toast button:not(.fxb-x) {
+  padding: 5px 12px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+  cursor: pointer;
+}
+
+.fxb-toast button:not(.fxb-x):hover {
+  background: var(--gray-100);
+}
+
+@keyframes fxb-rise {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fxb,
+  .fxb-toast,
+  .fxb-machine::before {
+    transition: none;
+    animation: none;
+  }
+}
+
+/*
+ * Too narrow for the controls in one row (a side panel open over a small window, say): the dates take the first row
+ * with the play button, the buttons the second, and what sits over the controls moves up by a row.
+ */
+.fxb.is-tight .fxb-bar {
+  border-radius: var(--radius-xl);
+}
+
+.fxb.is-tight .fxb-rail {
+  flex-basis: calc(100% - 38px - var(--space-sm));
+}
+
+.fxb.is-tight {
+  --fxb-bar-rows: 48px;
+}
+
+/* A narrow chart side (a side panel open beside it): the floors fold to their short names. */
+.fxb.is-narrow .fxb-name,
+.fxb.is-narrow .fxb-apart span,
+.fxb.is-narrow .fxb-state {
+  display: none;
+}
+
+.fxb.is-narrow .fxb-floors {
+  width: auto;
+}
+
+.fxb.is-narrow .fxb-floors li button {
+  grid-template-columns: 2rem;
+}
+
+.fxb.is-narrow .fxb-apart {
+  justify-content: center;
+}
+
+.fxb.is-narrow .fxb-lens button {
+  padding: 6px 9px;
+}
+
+/* ---- Ways out, and what is what ------------------------------------------------------------ */
+
+.fxb-kicker {
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* Close: always in the same corner, always labeled. */
+.fxb-close {
+  position: absolute;
+  top: var(--space-md);
+  right: var(--space-md);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklab, var(--surface) 92%, transparent);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+}
+
+.fxb-close:hover {
+  background: var(--surface);
+  border-color: var(--line-strong);
+}
+
+.fxb-close:focus-visible,
+.fxb-chip:focus-visible,
+.fxb-x:focus-visible,
+.fxb-apart:focus-visible,
+.fxb-layer-tag:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* One floor open: what it is, and the way back to all of them. */
+.fxb-chip {
+  position: absolute;
+  top: var(--space-md);
+  left: calc(var(--fxb-room-width) / 2);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px 6px 14px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--ink-inverse);
+  font: inherit;
+  font-size: var(--fs-sm);
+  box-shadow: var(--shadow-md);
+  transform: translateX(-50%);
+  cursor: pointer;
+}
+
+.fxb-chip span {
+  font-weight: var(--fw-strong);
+}
+
+.fxb-chip b {
+  font-weight: var(--fw-regular);
+  opacity: 0.78;
+}
+
+.fxb-floors-title {
+  padding: 2px 8px 6px;
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.fxb-floors .fxb-apart {
+  margin: 6px 0 0;
+}
+
+/* What the pointer is on, beside it. */
+.fxb-hovertip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-width: 16rem;
+  padding: 7px 10px;
+  border-radius: var(--radius-md);
+  background: var(--ink);
+  color: var(--ink-inverse);
+  font-size: var(--fs-xs);
+  line-height: 1.35;
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+}
+
+.fxb-hovertip strong {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+}
+
+.fxb-hovertip span {
+  opacity: 0.82;
+}
+
+.fxb-hovertip .fxb-hovertip-state {
+  opacity: 1;
+  color: color-mix(in oklab, var(--ink-inverse) 70%, var(--accent));
+}
+
+.fxb-callout-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.fxb-callout .fxb-callout-state {
+  color: var(--ink);
+  font-weight: var(--fw-medium);
+}
+
+.fxb-x {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin: -4px -6px 0 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.fxb-x:hover {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+
+.fxb-x.is-inverse {
+  margin: 0;
+  color: color-mix(in oklab, var(--ink-inverse) 75%, transparent);
+}
+
+.fxb-x.is-inverse:hover {
+  background: color-mix(in oklab, var(--ink-inverse) 16%, transparent);
+  color: var(--ink-inverse);
+}
+
+/* The bar's own color, all over the view, as the camera goes through it. */
+.fxb-light {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The plan's rows beside the building: what each is doing on the date on show, and the one pointed at. */
+html.fx3d-inset .b-grid-sub-grid-locked .b-grid-row.fxb-row-now {
+  box-shadow: inset 3px 0 0 var(--accent);
+  background: color-mix(in oklab, var(--accent-soft) 55%, transparent);
+}
+
+html.fx3d-inset .b-grid-sub-grid-locked .b-grid-row.fxb-row-ahead .b-grid-cell {
+  color: var(--ink-faint);
+}
+
+html.fx3d-inset .b-grid-sub-grid-locked .b-grid-row.fxb-row-near {
+  background: color-mix(in oklab, var(--accent-soft) 85%, transparent);
+}
+
+/* The first-run coach points at the chart's controls: it waits while the site view is up, and comes back after. */
+html.fx3d-inset .story-coach {
+  display: none;
+}
+
+/* The work under way on the date, named where it stands, with its dates. */
+.fxb-now-tags {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fxb-now-tag {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  max-width: 15rem;
+  padding: 4px 9px 5px;
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklab, var(--surface) 92%, transparent);
+  box-shadow: var(--shadow-sm);
+  font-size: var(--fs-xs);
+  line-height: 1.3;
+  translate: -50% calc(-100% - 8px);
+  transition: transform 120ms linear;
+}
+
+.fxb-now-tag strong {
+  font-weight: var(--fw-strong);
+  color: var(--ink);
+}
+
+.fxb-now-tag span {
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The crane's strip of days: its name and what the idle days come to, at its left end. */
+.fxb-calendar-tag {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  max-width: 19rem;
+  padding: 5px 10px;
+  border: 1px solid var(--line-soft);
+  border-left: 3px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklab, var(--surface) 94%, transparent);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-xs);
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+  pointer-events: auto;
+  translate: 0 calc(-100% - 6px);
+}
+
+.fxb-calendar-tag.is-idle {
+  border-left-color: var(--warning);
+}
+
+.fxb-calendar-tag strong {
+  font-weight: var(--fw-strong);
+}
+
+.fxb-calendar-tag span {
+  color: var(--ink-soft);
+}
+
+/*
+ * The crane's rental, told day by day (building-view.ts, rental-story.ts): the date large enough to read as the days go
+ * by, what the crane is doing that day in a word, IDLE over the crane on a day it has nothing to lift, and the calendar's
+ * tag lit as Remy names its dates or its idle days, then with what new dates saved.
+ */
+.fxb-readout.is-story {
+  padding: 10px 16px 11px;
+}
+
+.fxb-readout.is-story .fxb-date {
+  font-size: var(--fs-3xl);
+  line-height: 1.1;
+}
+
+.fxb-readout.is-story .fxb-what {
+  max-width: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  color: var(--ink);
+  font-size: var(--fs-md);
+}
+
+.fxb-day-badge {
+  flex: none;
+  padding: 2px 9px 3px;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-heavy);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fxb-day-badge.is-idle {
+  background: var(--warning-fill);
+  color: var(--ink);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--warning-fill) 35%, transparent);
+}
+
+.fxb-day-badge.is-work {
+  background: var(--ink);
+  color: var(--ink-inverse);
+}
+
+.fxb-day-badge.is-paid {
+  background: var(--gray-200);
+  color: var(--ink);
+}
+
+.fxb-day-badge.is-cover {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 2px var(--ink-soft);
+}
+
+.fxb-idle-tag {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 5px 12px 6px;
+  border-radius: var(--radius-md);
+  background: var(--warning-fill);
+  color: var(--ink);
+  box-shadow: var(--shadow-md);
+  line-height: 1.15;
+  translate: -50% -50%;
+  pointer-events: none;
+  animation: fxb-tag-in 260ms var(--ease-out);
+}
+
+.fxb-idle-tag b {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-heavy);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.fxb-idle-tag span {
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+}
+
+@keyframes fxb-tag-in {
+  from {
+    opacity: 0;
+    scale: 0.9;
+  }
+}
+
+.fxb.is-story .fxb-calendar-tag {
+  max-width: 24rem;
+  padding: 7px 12px 8px;
+  font-size: var(--fs-sm);
+  transition: box-shadow 300ms var(--ease-out), border-color 300ms var(--ease-out);
+}
+
+.fxb.is-story .fxb-calendar-tag strong {
+  font-size: var(--fs-md);
+}
+
+/* Under the calendar, centered on it; over it when the call leaves no room under it. */
+.fxb-calendar-tag.is-under {
+  translate: -50% 10px;
+}
+
+.fxb-calendar-tag.is-under.is-over {
+  translate: -50% calc(-100% - 10px);
+}
+
+/*
+ * Held close on the calendar for a change of dates: the tag runs as a wide band under it, what the rental is on the left
+ * and what the change saved, large, on the right. The calendar has the days, so the strip of them stands down.
+ */
+.fxb.is-holding .fxb-calendar-tag {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  column-gap: 2.5rem;
+  max-width: none;
+  min-width: 46rem;
+  min-height: 5.5rem;
+  padding: 10px 22px 11px;
+  font-size: var(--fs-md);
+  white-space: nowrap;
+}
+
+.fxb.is-holding .fxb-calendar-tag strong {
+  grid-area: 1 / 1;
+  font-size: var(--fs-xl);
+}
+
+.fxb.is-holding .fxb-calendar-tag > span {
+  grid-area: 2 / 1;
+}
+
+.fxb.is-holding .fxb-day-strip {
+  display: none;
+}
+
+.fxb.is-holding .fxb-saving {
+  grid-area: 1 / 2 / 3 / 3;
+  margin: 0;
+  font-size: calc(var(--fs-3xl) * 2);
+  line-height: 1;
+}
+
+/* A payment's hold has its own moment in the film: while the crane's rental is told, it stays out of the frame. */
+.fxb.is-story .fxb-hold-tags {
+  display: none;
+}
+
+.fxb-calendar-tag.is-span {
+  border-left-color: var(--ink);
+  box-shadow: var(--shadow-md), 0 0 0 2px var(--ink);
+}
+
+.fxb-calendar-tag.is-idle-focus {
+  border-left-color: var(--warning);
+  box-shadow: var(--shadow-md), 0 0 0 3px var(--warning-fill);
+}
+
+.fxb-calendar-tag.is-idle-focus span {
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+}
+
+/* The rental's days as a strip in the tag: a cell a day; new dates fold the cells that go and turn those that change. */
+.fxb-day-strip {
+  display: flex;
+  gap: 2px;
+  height: 14px;
+  margin: 7px 0 2px;
+}
+
+.fxb-day-strip[hidden] {
+  display: none;
+}
+
+.fxb-day-strip i {
+  /* The width sets how wide the tag wants to be; past its limit the days narrow to stay inside it. */
+  flex: 0 1 12px;
+  width: 12px;
+  min-width: 0;
+  border-radius: 2px;
+  background: var(--gray-200);
+  transition:
+    flex-basis 1.17s var(--ease-out),
+    margin 1.17s var(--ease-out),
+    opacity 1.17s var(--ease-out),
+    background-color 600ms var(--ease-out),
+    box-shadow 300ms var(--ease-out);
+}
+
+.fxb-day-strip i.is-idle {
+  background: var(--warning-fill);
+}
+
+.fxb-day-strip i.is-work {
+  background: var(--strip-work, var(--ink-soft));
+}
+
+.fxb-day-strip i.is-paid {
+  background: var(--gray-300);
+}
+
+.fxb-day-strip i.is-cover {
+  background: repeating-linear-gradient(135deg, var(--surface) 0 3px, color-mix(in oklab, var(--strip-work, var(--ink-soft)) 35%, var(--surface)) 3px 5px);
+  box-shadow: inset 0 0 0 1.5px var(--strip-work, var(--ink-soft));
+}
+
+.fxb-day-strip i.is-gone,
+.fxb-day-strip i.is-new {
+  flex-basis: 0;
+  margin-left: -2px;
+  opacity: 0;
+}
+
+.fxb-day-strip i.is-today {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+
+.fxb-calendar-tag.is-span .fxb-day-strip i:not(.is-gone) {
+  box-shadow: 0 0 0 1px var(--ink);
+}
+
+.fxb-calendar-tag.is-idle-focus .fxb-day-strip i.is-idle {
+  box-shadow: 0 0 0 2px var(--warning);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fxb-day-strip i {
+    transition: none;
+  }
+}
+
+/* What new dates saved: a figure, not a decoration. */
+.fxb-saving {
+  display: block;
+  margin-top: 4px;
+  color: var(--success);
+  font-size: var(--fs-3xl);
+  font-weight: var(--fw-heavy);
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  animation: fxb-tag-in 420ms var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fxb-idle-tag,
+  .fxb-saving {
+    animation: none;
+  }
+}
+
+/* The chart below keeps its zoom hidden while the site covers its time axis. */
+html.fx3d-inset .gt-zoom {
+  visibility: hidden;
+}
+
+/*
+ * The walkthrough's call sits at the bottom of the window: over the site, the controls sit above one line of it.
+ * Longer lines grow up over the scene, not the controls.
+ */
+html.has-rail-call .fxb {
+  --fxb-call-space: 112px;
+}
+
+/* ---------------------------------------------------------------------------------------------
+ * The site view over the whole window, under the app's header (building-view.ts). The page under it fades as the
+ * plan's chrome dissolves into its bars on the ground, and comes back the same way.
+ * ------------------------------------------------------------------------------------------- */
+
+html.fxb-full main.app-body {
+  opacity: var(--fxb-page, 1);
+}
+
+/* The side panel over the scene starts under the header and reaches the bottom. */
+html.fxb-full .fx3d-panelbar {
+  top: calc(var(--fxb-top, 0px) + var(--space-md));
+}
+
+html.fxb-full .inspector-host.is-lifted > .inspector {
+  top: calc(var(--fxb-top, 0px) + var(--space-md) + var(--fx3d-panelbar-height));
+  bottom: var(--space-md);
+}
+
+/* One quiet line for the date, beside the way back. */
+html.fxb-full .fxb-close {
+  top: var(--space-md);
+  right: auto;
+  left: var(--space-md);
+}
+
+html.fxb-full .fxb-readout {
+  top: var(--space-md);
+  left: calc(var(--space-md) + 6.5rem);
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+  max-width: min(46rem, calc(100% - 30rem));
+  padding: var(--space-2xs) var(--space-sm);
+  border-radius: 999px;
+}
+
+html.fxb-full .fxb-kicker {
+  display: none;
+}
+
+html.fxb-full .fxb-date {
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
+html.fxb-full .fxb-what {
+  margin: 0;
+  overflow: hidden;
+  font-size: var(--fs-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html.fxb-full .fxb-what::before {
+  content: '·';
+  margin-right: var(--space-xs);
+  color: var(--muted);
+}
+
+/* The floors, when asked for: over the controls' right end. */
+html.fxb-full .fxb-floors {
+  top: auto;
+  right: calc(var(--space-md) + var(--fxb-panel-space, 0px));
+  bottom: calc(var(--space-md) + 64px + var(--fxb-bar-rows, 0px) + var(--fxb-call-space, 0px));
+  transform: none;
+}
+
+/* The controls sit above the call and its captions, and fade away while the pointer rests. */
+html.fxb-full .fxb-bar {
+  bottom: calc(var(--space-sm) + var(--fxb-call-space, 0px));
+  transition:
+    opacity 260ms var(--ease-out),
+    translate 260ms var(--ease-out);
+}
+
+html.fxb-full .fxb.is-idle .fxb-bar:not(:hover, :focus-within) {
+  opacity: 0;
+  translate: 0 10px;
+  pointer-events: none;
+}
+
+html.fxb-full .fxb-hint,
+html.fxb-full .fxb-machine {
+  display: none !important;
+}
+
+/* The lenses' key sits over the controls only while a lens other than the work is on. */
+html.fxb-full .fxb-legend {
+  bottom: calc(var(--space-md) + 64px + var(--fxb-bar-rows, 0px) + var(--fxb-call-space, 0px));
+}
+
+/*
+ * With the floors open over the controls' right end too, the key keeps to the room left of them: the floors take
+ * 13.5rem and 14px of padding and border, a margin each side; the key's own padding is 24px.
+ */
+html.fxb-full .fxb:has(> .fxb-floors:not([hidden])) .fxb-legend {
+  left: calc((var(--fxb-room-width) - 13.5rem - 26px) / 2);
+  max-width: min(calc(var(--fxb-room-width) - 13.5rem - 74px), 52rem);
+}
+
+html.fxb-full .fxb.is-idle .fxb-legend {
+  opacity: 0.7;
+}
+
+/*
+ * A story a payment gate holds (gantt/pay-gates.ts): a tag on its front in PayPal navy, what it waits for and what
+ * is due, which opens the payment over the scene.
+ */
+.fxb-hold-tags {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fxb-hold-tag {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  max-width: 22rem;
+  padding: 6px 12px;
+  border: 1px solid color-mix(in oklch, var(--paypal-navy) 30%, var(--line-soft));
+  border-left: 3px solid var(--paypal-navy);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklab, var(--surface) 95%, transparent);
+  box-shadow: var(--shadow-sm);
+  color: var(--paypal-navy);
+  font: inherit;
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+  pointer-events: auto;
+  translate: -50% -50%;
+}
+
+.fxb-hold-tag[hidden] {
+  display: none;
+}
+
+.fxb-hold-tag:hover {
+  background: var(--surface);
+  border-color: var(--paypal-blue);
+}
+
+.fxb-hold-tag b {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.fxb-hold-tag.is-paying {
+  animation: fxb-hold-paying 1.8s var(--ease-in-out) infinite;
+}
+
+@keyframes fxb-hold-paying {
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in oklch, var(--paypal-blue) 30%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fxb-hold-tag.is-paying {
+    animation: none;
+  }
+}
+
+html.fxb-full .fxb-hold-tag {
+  translate: -50% -50%;
+}
+
+/* The film's dusk shot: the building alone on screen, the view's own controls out of the way until it is over. */
+.fxb.is-dusk > * {
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}

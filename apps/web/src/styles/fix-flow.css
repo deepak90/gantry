@@ -1,0 +1,436 @@
+/*
+ * A rental's payment (editor/PayRental.tsx): the summary card and the steps of the payment.
+ * Both are ui.css cards. A step is green once done, cobalt while it is current or under way, red
+ * only when it failed; the paid step is PayPal's blue. Amounts use tabular figures so they line
+ * up like a statement. Panel stylesheets load before ui.css, so where this sheet adjusts a ui.css
+ * component it names both classes (e.g. .chain.card).
+ */
+
+/* Summary ------------------------------------------------------------------------------------ */
+
+.fix-summary {
+  --tone: var(--ink-faint);
+}
+
+.fix-summary.card {
+  gap: var(--space-sm);
+}
+
+.fix-summary.tone-alert,
+.fix-summary.tone-error {
+  --tone: var(--danger);
+}
+
+.fix-summary.tone-yours,
+.fix-summary.tone-busy {
+  --tone: var(--accent);
+}
+
+.fix-summary.tone-ok {
+  --tone: var(--success);
+}
+
+/* What is wrong (or fixed), with its state as the leading icon. */
+.fix-summary-problem {
+  display: flex;
+  gap: var(--space-sm);
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+
+.fix-summary-problem > i {
+  margin-top: 0.2em;
+  color: var(--tone);
+}
+
+.fix-summary-headline {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--fs-lg);
+  font-stretch: var(--stretch-display);
+  font-weight: var(--fw-heavy);
+  line-height: 1.3;
+}
+
+.fix-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+  gap: 1px;
+  margin: var(--space-3xs) 0 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--line);
+}
+
+.fix-figures > div {
+  display: grid;
+  gap: var(--space-3xs);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--surface-sunken);
+}
+
+.fix-figures dt {
+  overflow: hidden;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fix-figures dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-heavy);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.fix-figures .is-ok dd {
+  color: var(--success);
+}
+
+.fix-figures .is-alert dd {
+  color: var(--danger-strong);
+}
+
+/* The approval chain ------------------------------------------------------------------------- */
+
+.chain.card {
+  display: block;
+  padding-bottom: var(--space-2xs);
+}
+
+.chain-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+}
+
+.chain-head-note {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.chain-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chain-step {
+  --marker: var(--line-strong);
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.65rem 1fr;
+  gap: var(--space-sm);
+  padding: var(--space-3xs) 0 var(--space-md);
+}
+
+/* The line joining one step to the next. */
+.chain-step:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  top: 1.85rem;
+  bottom: var(--space-3xs);
+  left: calc(0.825rem - 1px);
+  width: 2px;
+  border-radius: 1px;
+  background: var(--line);
+}
+
+.chain-step.is-done:not(:last-child)::before {
+  background: var(--success-line);
+}
+
+.chain-marker {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border: 2px solid var(--marker);
+  border-radius: 50%;
+  color: var(--ink-faint);
+  background: var(--surface);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-heavy);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Done: green. */
+.chain-step.is-done {
+  --marker: var(--success-fill);
+}
+
+.chain-step.is-done .chain-marker {
+  color: var(--ink-inverse);
+  background: var(--success-fill);
+}
+
+/* Paid with PayPal: PayPal's blue, beside PayPal's mark. */
+.chain-step.is-done.is-paypal {
+  --marker: var(--paypal-blue);
+}
+
+.chain-step.is-done.is-paypal .chain-marker {
+  background: var(--paypal-blue);
+}
+
+/* Current, or under way (a spinner): cobalt. */
+.chain-step.is-current,
+.chain-step.is-busy {
+  --marker: var(--accent);
+}
+
+.chain-step.is-current .chain-marker,
+.chain-step.is-busy .chain-marker {
+  color: var(--accent-strong);
+}
+
+/* Yours to do now: a filled marker. */
+.chain-step.is-yours .chain-marker {
+  color: var(--accent-ink);
+  background: var(--accent);
+}
+
+/* Failed: red. */
+.chain-step.is-failed {
+  --marker: var(--danger);
+}
+
+.chain-step.is-failed .chain-marker {
+  color: var(--ink-inverse);
+  background: var(--danger);
+}
+
+/* Waiting or dropped: quieter text (not faded, so it stays legible). */
+.chain-step.is-waiting .chain-title,
+.chain-step.is-dropped .chain-title {
+  color: var(--ink-soft);
+  font-weight: var(--fw-medium);
+}
+
+.chain-step.is-waiting .chain-detail,
+.chain-step.is-dropped .chain-detail {
+  color: var(--ink-faint);
+}
+
+.chain-step.is-dropped .chain-marker {
+  border-style: dashed;
+}
+
+.chain-body {
+  min-width: 0;
+  padding-top: var(--space-3xs);
+}
+
+.chain-step.is-yours .chain-body {
+  margin: calc(-1 * var(--space-xs)) 0 0 calc(-1 * var(--space-xs));
+  padding: var(--space-sm) var(--space-sm) var(--space-sm);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+}
+
+.chain-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.chain-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--ink);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-strong);
+}
+
+.chain-title > i {
+  width: 1rem;
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+  text-align: center;
+}
+
+.chain-title > .paypal-mark {
+  width: 1rem;
+  height: 0.85rem;
+  object-fit: contain;
+}
+
+.chain-step.is-done .chain-title > i {
+  color: var(--success);
+}
+
+.chain-title-row time {
+  flex: none;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.chain-who {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-2xs);
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+}
+
+.chain-role {
+  color: var(--ink-faint);
+  font-weight: var(--fw-regular);
+}
+
+.chain-you {
+  margin-left: var(--space-xs);
+}
+
+/* A person's own color (from their profile) on their avatar. */
+.chain-avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 50%;
+  color: var(--who-ink, var(--ink-inverse));
+  background: var(--who, var(--cat-none));
+  font-size: var(--fs-2xs);
+  font-stretch: var(--stretch-dense);
+  font-weight: var(--fw-heavy);
+}
+
+.chain-avatar.is-system {
+  color: var(--ink-faint);
+  background: var(--gray-100);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.chain-detail {
+  margin: var(--space-2xs) 0 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+}
+
+.chain-step.is-failed .chain-detail {
+  color: var(--danger-strong);
+}
+
+.chain-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.chain-fine {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.chain-ref {
+  margin: var(--space-2xs) 0 0;
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.chain-ref code {
+  font-size: var(--fs-2xs);
+}
+
+/* Paying ------------------------------------------------------------------------------------- */
+
+/* The amount beside the pay button (never on it). */
+.chain-pay-amount {
+  color: var(--ink);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-heavy);
+  font-variant-numeric: tabular-nums;
+}
+
+.pay-confirm.card {
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.pay-confirm-check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+  cursor: pointer;
+}
+
+.pay-confirm-check input {
+  margin-top: 0.15rem;
+  accent-color: var(--accent);
+}
+
+.pay-confirm-check small {
+  color: var(--ink-faint);
+  font-weight: var(--fw-medium);
+}
+
+.pay-confirm-facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-2xs) var(--space-md);
+  margin: 0;
+}
+
+.pay-confirm-facts > div {
+  display: contents;
+}
+
+.pay-confirm-facts dt {
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.pay-confirm-facts dd {
+  display: grid;
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.pay-confirm-facts dd small {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+  word-break: break-all;
+}
+
+.pay-confirm .chain-actions {
+  margin-top: 0;
+}
+
+/* Paying a rental (editor/PayRental.tsx). */
+.rental-pay {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}

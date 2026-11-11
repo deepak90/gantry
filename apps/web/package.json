@@ -1,0 +1,41 @@
+{
+  "name": "@collab/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@bryntum/gantt": "npm:@bryntum/gantt-trial@7.3.8",
+    "@bryntum/gantt-react": "7.3.8",
+    "@collab/shared": "workspace:*",
+    "@dimforge/rapier3d-compat": "0.21.0",
+    "@fontsource-variable/archivo": "5.3.0",
+    "@supabase/supabase-js": "2.118.0",
+    "@vercel/analytics": "2.0.1",
+    "@vercel/speed-insights": "2.0.0",
+    "livekit-client": "2.23.0",
+    "motion": "12.38.0",
+    "qrcode.react": "4.2.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "three": "0.187.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@types/three": "0.187.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "jsdom": "30.1.3",
+    "livekit-server-sdk": "2.19.1",
+    "typescript": "5.9.3",
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
+  }
+}

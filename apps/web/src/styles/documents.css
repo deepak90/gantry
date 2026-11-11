@@ -1,0 +1,236 @@
+/*
+ * Files on the project (inspector/DocumentList.tsx, DocumentsPanel.tsx, task/FilesTab.tsx): rows with
+ * a kind icon, name and one line of facts; an upload area; the Documents panel's filter and groups.
+ * Each kind of file has a muted category color; notes, buttons and the filter come from ui.css.
+ */
+
+.doc-rows {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.doc-row {
+  --doc: var(--cat-none);
+  display: grid;
+  grid-template-columns: 2rem 1fr auto;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.doc-row.is-quote { --doc: var(--cat-5); }
+.doc-row.is-invoice { --doc: var(--cat-3); }
+.doc-row.is-receipt { --doc: var(--cat-0); }
+.doc-row.is-photo { --doc: var(--cat-1); }
+.doc-row.is-drawing { --doc: var(--cat-4); }
+.doc-row.is-report { --doc: var(--cat-2); }
+
+.doc-icon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+  color: var(--doc);
+  background: color-mix(in oklch, var(--doc) 12%, var(--surface));
+}
+
+.doc-main {
+  display: grid;
+  gap: var(--space-3xs);
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.doc-name {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doc-main:hover .doc-name,
+.doc-main:focus-visible .doc-name {
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-decoration-color: var(--accent-line);
+  text-underline-offset: 0.18em;
+}
+
+.doc-meta,
+.doc-summary {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.doc-summary {
+  color: var(--ink-soft);
+}
+
+/* Upload area */
+
+.doc-drop {
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-sunken);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+
+.doc-drop.is-over {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.doc-drop.has-file {
+  border-style: solid;
+  border-color: var(--line);
+  background: var(--surface);
+}
+
+.doc-drop-prompt {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3xs);
+  width: 100%;
+  padding: var(--space-md);
+  border: 0;
+  border-radius: var(--radius-lg);
+  color: var(--ink-soft);
+  background: none;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.doc-drop-prompt > i {
+  color: var(--ink-faint);
+  font-size: var(--fs-xl);
+}
+
+.doc-drop-prompt u {
+  color: var(--accent-strong);
+  text-decoration-color: var(--accent-line);
+  text-underline-offset: 0.18em;
+}
+
+.doc-drop-prompt:hover u {
+  text-decoration-color: currentColor;
+}
+
+.doc-drop-prompt small {
+  color: var(--ink-faint);
+  font-size: var(--fs-2xs);
+}
+
+.doc-drop-picked {
+  display: grid;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+}
+
+.doc-drop-picked label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+}
+
+.doc-drop-picked .input {
+  width: auto;
+  min-height: var(--control-sm);
+}
+
+.doc-drop-note {
+  margin: 0;
+}
+
+.doc-drop-actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.doc-error {
+  margin: 0 var(--space-md) var(--space-md);
+}
+
+/* The Documents panel */
+
+.docs-panel-body {
+  display: grid;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg) var(--space-xl);
+}
+
+.docs-note {
+  margin: 0;
+}
+
+/*
+ * The kind filter: a ui.css segmented control whose buttons are radios, wrapping when it must.
+ * Panel stylesheets load before ui.css, so these name both classes.
+ */
+.docs-filter.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  justify-self: start;
+}
+
+.docs-filter.segmented > button {
+  min-height: var(--control-sm);
+  padding: 0 var(--space-sm);
+  font-size: var(--fs-xs);
+}
+
+.docs-filter.segmented > button[aria-checked='true'] {
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  font-weight: var(--fw-strong);
+}
+
+.docs-filter > button span {
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.docs-group h3 {
+  display: flex;
+  margin: 0 0 var(--space-xs);
+  color: var(--ink-soft);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+}
+
+.docs-group .docs-task {
+  font-size: inherit;
+}
+
+.docs-task i {
+  font-size: 0.6rem;
+}
+
+.docs-empty.empty-state {
+  padding-inline: 0;
+}
+
+.task-inspector [data-testid='task-files'] {
+  display: grid;
+  gap: var(--space-sm);
+}

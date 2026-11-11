@@ -1,0 +1,265 @@
+/*
+ * The toolbar above the Gantt (search, the Show filter, the View menu, zoom) and the View menu. Built
+ * from ui.css: .input, .segmented, .pill, .button, .popover and .menu-item; this file lays them out.
+ */
+
+.gt-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm) var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-soft);
+  background: var(--surface);
+  font-size: var(--fs-sm);
+}
+
+/* Search ------------------------------------------------------------------------------------- */
+
+.gt-search {
+  position: relative;
+  display: inline-flex;
+  flex: 0 1 15rem;
+  align-items: center;
+  min-width: 11rem;
+}
+
+.gt-search > .fa {
+  position: absolute;
+  inset-inline-start: var(--space-sm);
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+  pointer-events: none;
+}
+
+.gt-search .input {
+  padding-inline: 1.85rem 2rem;
+  background: var(--surface-sunken);
+}
+
+.gt-search .input:focus-visible {
+  background: var(--surface);
+}
+
+.gt-search .input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.gt-clear.button {
+  position: absolute;
+  inset-inline-end: var(--space-3xs);
+}
+
+/* Remy's filter: what it keeps, and the way to clear it ------------------------------------------ */
+
+/*
+ * It takes the bar's free room, never a second row: the search box gives up some of its width while it is there, and
+ * past that its words end in an ellipsis (the title has them all).
+ */
+.gt-plan-filter {
+  display: inline-flex;
+  flex: 10 1 6rem;
+  align-items: center;
+  gap: var(--space-2xs);
+  min-width: 6rem;
+  max-width: 15rem;
+  padding-inline-end: var(--space-3xs);
+}
+
+.gt-bar:has(.gt-plan-filter) .gt-search {
+  flex-basis: 10rem;
+  min-width: 8rem;
+}
+
+.gt-plan-filter > span:nth-child(2) {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gt-plan-filter-clear.button {
+  min-height: 0;
+  height: 1.25rem;
+  width: 1.25rem;
+  padding: 0;
+  color: inherit;
+}
+
+/* The Show filter (.segmented) ----------------------------------------------------------------- */
+
+/*
+ * A radiogroup marks its choice with aria-checked; ui.css's .segmented knows aria-pressed and
+ * aria-selected, so the same look is given here (the column editor's Align uses it too).
+ */
+.segmented > button[aria-checked='true'] {
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  font-weight: var(--fw-strong);
+}
+
+.segmented > button > .fa {
+  font-size: var(--fs-xs);
+}
+
+.gt-spacer {
+  flex: 1 1 auto;
+}
+
+.gt-zoom,
+.gt-history {
+  display: inline-flex;
+  gap: var(--space-3xs);
+}
+
+/* Undo and redo lead the bar, apart from search by a hairline. */
+.gt-history {
+  padding-right: var(--space-sm);
+  border-right: 1px solid var(--line);
+}
+
+/* The View menu ------------------------------------------------------------------------------ */
+
+.gt-view {
+  position: relative;
+}
+
+.gt-toggle .gt-caret {
+  font-size: var(--fs-2xs);
+  opacity: 0.7;
+}
+
+/* The view differs from the default. */
+.gt-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.popover.gt-menu {
+  position: absolute;
+  inset: calc(100% + var(--space-xs)) 0 auto auto;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  width: 20rem;
+  animation: gt-menu-in var(--dur-fast) var(--ease-out);
+}
+
+.popover.gt-menu.is-from-left {
+  inset: calc(100% + var(--space-xs)) auto auto 0;
+}
+
+@keyframes gt-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.gt-menu-section {
+  padding: var(--space-sm);
+}
+
+.gt-menu-section + .gt-menu-section {
+  border-top: 1px solid var(--line-soft);
+}
+
+/* A .section-label (doubled class: panel stylesheets load before ui.css). */
+.section-label.gt-menu-title {
+  margin-bottom: var(--space-xs);
+}
+
+/* Mutually exclusive choices: a full-width .segmented. */
+.segmented.gt-menu-choices {
+  display: flex;
+}
+
+.segmented.gt-menu-choices > button {
+  flex: 1 1 0;
+  justify-content: center;
+  padding: 0 var(--space-xs);
+}
+
+.gt-menu-row {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.gt-menu-row .button {
+  flex: 1 1 0;
+}
+
+/* A .menu-item with a label, a hint and a switch. */
+.menu-item.gt-menu-switch {
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.gt-menu-switch-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  font-weight: var(--fw-strong);
+}
+
+.gt-menu-switch-text small {
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-regular);
+}
+
+.gt-switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 1.15rem;
+  border-radius: var(--radius-pill);
+  background: var(--line-strong);
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.gt-switch::after {
+  content: '';
+  position: absolute;
+  inset: 0.15rem auto auto 0.15rem;
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.gt-menu-switch.is-on .gt-switch {
+  background: var(--accent);
+}
+
+.gt-menu-switch.is-on .gt-switch::after {
+  transform: translateX(0.85rem);
+}
+
+/* Narrow workspace (side panel open on a laptop): controls keep their icons and tooltips. */
+@container (max-width: 760px) {
+  .gt-toggle > span:not(.gt-dot) {
+    display: none;
+  }
+
+  .gt-search {
+    flex-basis: 12rem;
+  }
+}
+
+@container (max-width: 700px) {
+  .gt-segmented > button span {
+    display: none;
+  }
+
+  .gt-segmented > button[aria-checked='true'] span {
+    display: inline;
+  }
+}

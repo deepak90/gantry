@@ -1,0 +1,207 @@
+/*
+ * The crew pane's tabs (Crew workload | Crew schedule) and the crew schedule: a Bryntum Scheduler
+ * Pro on the Gantt's own project (gantt/CrewSchedule.ts), re-themed through Bryntum's CSS variables
+ * with the roles from tokens.css, as gantt.css does for the Gantt.
+ */
+
+/* Pane header: two tabs, a hint for the open one and a close button (it opens from View) ------- */
+
+.collab-histogram-pane .collab-pane-header {
+  gap: var(--space-xs);
+}
+
+.crew-pane-close {
+  margin-inline-start: auto;
+}
+
+/* The two views, drawn like .segmented in ui.css (the tabs are rendered by GanttWorkspace.tsx). */
+.crew-pane-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3xs);
+  padding: var(--space-3xs);
+  border-radius: var(--radius-md);
+  background: var(--gray-100);
+}
+
+.crew-pane-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: var(--control-sm);
+  padding: 0 var(--space-md);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.crew-pane-tab > .fa {
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+}
+
+.crew-pane-tab:hover {
+  color: var(--ink);
+}
+
+.crew-pane-tab.is-active {
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink);
+  font-weight: var(--fw-strong);
+}
+
+.crew-pane-tab.is-active > .fa {
+  color: var(--accent);
+}
+
+/* After .is-active, so the active tab's shadow does not hide the focus ring. */
+.crew-pane-tab:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.collab-histogram-pane > .collab-pane-header > .collab-pane-hint {
+  margin-inline-start: var(--space-xs);
+  overflow: hidden;
+  font-size: var(--fs-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The schedule shows a bar per task, so it gets a little more room than the workload chart. */
+.collab-histogram-pane.is-open.is-schedule {
+  flex-basis: 300px;
+}
+
+/* The crew schedule ------------------------------------------------------------------------------ */
+
+.collab-gantt-workspace .crew-schedule.b-scheduler-pro {
+  --b-primary: var(--accent);
+  --b-widget-font-family: inherit;
+  --b-grid-cell-border-color: transparent;
+  --b-grid-row-border-color: var(--line-soft);
+  --b-grid-cell-font-size: var(--fs-md);
+  --b-grid-cell-color: var(--ink);
+  --b-grid-cell-hover-background: var(--surface-hover);
+  --b-grid-cell-selected-background: var(--accent-soft);
+  --b-grid-cell-hover-selected-background: color-mix(in oklch, var(--accent-soft), var(--accent) 8%);
+  --b-grid-cell-padding-inline: var(--space-md);
+  --b-non-working-time-background: color-mix(in oklch, var(--line) 45%, transparent);
+  font-family: inherit;
+}
+
+.crew-schedule-crew {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+  width: 100%;
+}
+
+.crew-schedule-crew .look-avatar {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: var(--fs-2xs);
+  box-shadow: none;
+}
+
+.crew-schedule-crew-name {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: var(--fw-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crew-schedule-crew-count {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+  color: var(--ink-faint);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A bar: the crew's color (Bryntum sets --b-primary from it), the task, how far along it is. */
+.crew-schedule .b-sch-event {
+  --b-sch-event-border-radius: var(--radius-md);
+  --b-sch-event-font-size: var(--fs-sm);
+  --b-sch-event-font-weight: var(--fw-strong);
+  container-type: inline-size;
+}
+
+/* Narrow bars keep the name; the percent bar still shows how far along the task is. */
+@container (max-width: 96px) {
+  .crew-event-progress,
+  .crew-event-done {
+    display: none;
+  }
+}
+
+.crew-schedule .b-sch-event-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+  width: 100%;
+  font-weight: var(--fw-strong);
+}
+
+.crew-event-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crew-event-progress {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+  font-size: var(--fs-2xs);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-strong);
+  opacity: 0.85;
+}
+
+.crew-event-done {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+  font-size: var(--fs-xs);
+}
+
+/* The done part of a task: a darker band over the crew color. */
+.crew-schedule .b-task-percent-bar {
+  --b-percent-bar-background: oklch(0.21 0.02 255 / 0.26);
+}
+
+/* Drag tooltip: where the task lands and who takes it over. */
+.crew-tip {
+  display: grid;
+  gap: var(--space-2xs);
+  font-size: var(--fs-sm);
+  line-height: 1.35;
+}
+
+.crew-tip-when {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--ink-soft);
+}
+
+.crew-tip-message {
+  color: var(--success);
+  font-weight: var(--fw-strong);
+}
+
+/* A drop Bryntum would refuse (the crew is already on the task). */
+.crew-tip.is-invalid .crew-tip-message {
+  color: var(--danger-strong);
+}

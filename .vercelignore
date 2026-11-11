@@ -1,0 +1,16 @@
+# Deploys go up prebuilt (only .vercel/output leaves the machine). This list is the guard if a source upload ever
+# happens: none of these may reach Vercel.
+private
+.dev-data
+.claude
+.impeccable.md
+/*.md
+docs
+test-results
+playwright-report
+coverage
+**/node_modules
+**/dist
+.env
+.env.*
+!.env.example

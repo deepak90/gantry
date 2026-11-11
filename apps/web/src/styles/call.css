@@ -1,0 +1,411 @@
+/*
+ * A call with Remy (the dev server, `?call`). Before the call, the header has the spark button that starts or
+ * joins it (talk.css, wearing Remy's mark). On the call, all of it is on the call bar (rails.css): Remy's seat
+ * until she comes, everyone's tiles, the captions, and the call's own controls, quiet like voice mode's Live
+ * switch. Only the bar moves with voices: a speaker's pointer gets a still ring, and the header's avatars nothing.
+ */
+
+/* Before the call, in the header ---------------------------------------------------------------- */
+
+.call-entry {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* On the call, the header has none of it. */
+.call-entry:empty {
+  display: none;
+}
+
+.call-note {
+  color: var(--header-ink-soft);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+
+/* Remy's seat on the call bar ------------------------------------------------------------------- */
+
+/* While she isn't on the call: the spark button, where her face will be. Room around it for its bloom. */
+.call-seat {
+  display: grid;
+  align-self: center;
+  place-items: center;
+  padding: 0 var(--space-xs);
+  overflow: clip;
+  overflow-clip-margin: 1rem;
+  pointer-events: auto;
+}
+
+/* "Call Remy" and "Remy is joining…" keep one width, so the swap never shifts the bar (as Talk and Send do). */
+.call-seat .talk-spark-face {
+  justify-content: center;
+  min-width: 10.75rem;
+}
+
+/* The call's controls on the call bar ----------------------------------------------------------- */
+
+.call-controls {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+/* Your microphone, captions and Leave: quiet pills on the bar, like voice mode's Live switch. */
+.call-control {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  height: var(--control-md);
+  padding: 0 var(--space-md) 0 var(--space-sm);
+  box-sizing: border-box;
+  border: 1px solid color-mix(in oklch, var(--header-ink) 16%, transparent);
+  border-radius: var(--radius-pill);
+  color: color-mix(in oklch, var(--header-ink) 86%, transparent);
+  background: color-mix(in oklch, var(--header-ink) 5%, transparent);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-strong);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out),
+    color var(--dur) var(--ease-out),
+    scale var(--dur-fast) var(--ease-out);
+}
+
+.call-control:hover:not(:disabled) {
+  color: var(--header-ink);
+  background: color-mix(in oklch, var(--header-ink) 11%, transparent);
+}
+
+.call-control:active:not(:disabled) {
+  scale: 0.95;
+}
+
+.call-control:focus-visible {
+  outline: 2px solid color-mix(in oklch, var(--accent) 45%, white);
+  outline-offset: 3px;
+}
+
+.call-control:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.call-control.is-icon {
+  width: var(--control-md);
+  padding: 0;
+}
+
+.call-control .fa {
+  font-size: var(--fs-sm);
+}
+
+/* Muted: the button turns light with the microphone crossed out (not red: muting yourself isn't trouble). */
+.call-mic[aria-pressed='true'] {
+  border-color: transparent;
+  color: var(--header);
+  background: color-mix(in oklch, var(--header-ink) 88%, transparent);
+}
+
+.call-mic[aria-pressed='true']:hover:not(:disabled) {
+  color: var(--header);
+  background: var(--header-ink);
+}
+
+/* The microphone didn't start (blocked, missing): amber, with the reason above the bar. */
+.call-mic.is-trouble,
+.call-mic.is-trouble:hover:not(:disabled) {
+  border-color: color-mix(in oklch, var(--warning-fill) 60%, transparent);
+  color: var(--warning-fill);
+  background: transparent;
+}
+
+/* Captions off: CC fades back. */
+.call-cc[aria-pressed='false'] .fa {
+  opacity: 0.45;
+}
+
+/* Leave: its phone tips down when you reach for it, as voice mode's End does. */
+.call-leave .fa {
+  rotate: 135deg;
+  transition: rotate 0.38s var(--ease-out);
+}
+
+.call-leave:hover .fa {
+  rotate: 165deg;
+}
+
+.call-status {
+  color: var(--header-ink-soft);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+
+/* The time left on a call with a limit: quiet figures, amber in the last 30 seconds (not red: it isn't trouble). */
+.call-time {
+  flex: none;
+  padding: 0 var(--space-xs);
+  color: var(--header-ink-soft);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transition: color var(--dur) var(--ease-out);
+}
+
+.call-time.is-ending {
+  color: var(--warning-fill);
+  font-weight: var(--fw-strong);
+}
+
+/* What to say, over the call bar ---------------------------------------------------------------- */
+
+/* In the bar's controls, placed against the bar itself (its nearest positioned box), centered over it, so it moves
+   with the bar. In a prompter's manner: a small label, the line rolling in, the hint beneath. Only its close
+   button takes presses. */
+.call-tip {
+  position: absolute;
+  bottom: calc(100% + var(--space-sm));
+  left: 50%;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(34rem, calc(100vw - 32px));
+  padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-lg);
+  overflow: hidden;
+  border: 1px solid color-mix(in oklch, var(--header-ink) 10%, transparent);
+  border-radius: 14px;
+  color: var(--ink-inverse);
+  background: color-mix(in oklch, var(--gray-900) 94%, transparent);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+  translate: -50% 0;
+}
+
+.call-tip-body {
+  display: grid;
+  gap: var(--space-2xs);
+  min-width: 0;
+}
+
+.call-tip-label {
+  color: color-mix(in oklch, var(--accent) 40%, white);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-heavy);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* One line at a time: it rolls up out of the way as the next rolls in. */
+.call-tip-lines {
+  display: grid;
+  min-height: 1.35em;
+  font-size: var(--fs-lg);
+}
+
+.call-tip-line {
+  grid-area: 1 / 1;
+  margin: 0;
+  font-weight: var(--fw-strong);
+  line-height: 1.35;
+  text-wrap: balance;
+}
+
+.call-tip-hint {
+  margin: 0;
+  color: var(--header-ink-soft);
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+}
+
+.call-tip-close {
+  display: grid;
+  flex: none;
+  width: 1.625rem;
+  height: 1.625rem;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--header-ink-soft);
+  background: transparent;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    background-color var(--dur) var(--ease-out),
+    color var(--dur) var(--ease-out);
+}
+
+.call-tip-close:hover {
+  color: var(--header-ink);
+  background: color-mix(in oklch, var(--header-ink) 11%, transparent);
+}
+
+.call-tip-close:focus-visible {
+  outline: 2px solid color-mix(in oklch, var(--accent) 45%, white);
+  outline-offset: 2px;
+}
+
+/* How long it stays: a hairline along its foot that runs out as it is about to close. */
+.call-tip-time {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: color-mix(in oklch, var(--accent) 55%, white);
+  opacity: 0.55;
+  transform-origin: left center;
+  animation: call-tip-time linear forwards;
+}
+
+@keyframes call-tip-time {
+  from {
+    scale: 1 1;
+  }
+
+  to {
+    scale: 0 1;
+  }
+}
+
+/* Why your microphone is off: above the bar, over the controls. */
+.call-popover {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + var(--space-md));
+  width: max-content;
+  max-width: 20rem;
+  margin: 0;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-md);
+  color: var(--header-ink);
+  background: var(--header);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+}
+
+/* On a phone the call bar can't hold its faces, captions and controls in one row (Leave and the time left fell off the
+   screen): each gets a row of its own, the faces, the captions across the bar, then the controls, the time left first.
+   `:root` lets these win over the bar's own rules (rails.css) whichever stylesheet loads last. */
+@media (max-width: 600px) {
+  :root .rail-call.is-captions {
+    flex-wrap: wrap;
+    gap: var(--space-xs) var(--space-sm);
+    box-sizing: border-box;
+    width: calc(100vw - 32px);
+  }
+
+  :root .rail-call.is-captions .rail-call-people {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  :root .rail-call.is-captions .rail-call-text {
+    order: 1;
+    flex: 1 1 100%;
+    width: auto;
+    padding: var(--space-xs) var(--space-xs) 0;
+    border-top: 1px solid color-mix(in oklch, var(--header-ink) 14%, transparent);
+    border-left: 0;
+  }
+
+  :root .rail-call.is-captions .rail-call-controls {
+    order: 2;
+    flex: 1 1 100%;
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  :root .rail-call.is-captions .call-controls {
+    flex: 1;
+    justify-content: flex-end;
+  }
+
+  :root .rail-call.is-captions .call-time {
+    margin-right: auto;
+  }
+}
+
+/* The people on the call bar --------------------------------------------------------------------- */
+
+/* Each person's ring is their cursor color, there while they speak and growing with their voice. */
+.call-ring {
+  position: absolute;
+  inset: -4px;
+  border: 2px solid var(--ring);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 160ms var(--ease-out);
+}
+
+.call-face.is-speaking .call-ring {
+  opacity: calc(0.65 + var(--level) * 0.35);
+  scale: calc(1 + var(--level) * 0.16);
+}
+
+/* Muted: a small crossed-out microphone at the bottom right of the initials. */
+.call-muted {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  display: grid;
+  width: 1.05rem;
+  height: 1.05rem;
+  place-items: center;
+  border: 2px solid color-mix(in oklch, var(--gray-900) 90%, transparent);
+  border-radius: 50%;
+  color: var(--header-ink);
+  background: var(--gray-700);
+  font-size: 0.5rem;
+}
+
+/* "AI voice": a simulated person, quieter than Remy's own "AI". */
+.call-tag {
+  background: color-mix(in oklch, var(--header-ink) 18%, transparent);
+}
+
+/* Speaking, on the plan: the label on the speaker's pointer gets a still ring in their color. It doesn't follow
+   the voice or pulse; it comes quickly and goes slowly, so a breath between words doesn't flicker it. */
+.presence-cursor .presence-label {
+  transition: box-shadow 520ms var(--ease-out);
+}
+
+.presence-cursor[data-call-speaking='true'] .presence-label {
+  box-shadow:
+    var(--shadow-sm),
+    0 0 0 2px color-mix(in oklch, var(--peer, var(--accent)) 35%, transparent);
+  transition-duration: 160ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .call-ring,
+  .call-control,
+  .call-leave .fa,
+  .call-time,
+  .call-tip-close,
+  .presence-cursor .presence-label {
+    transition: none;
+  }
+
+  .call-face.is-speaking .call-ring {
+    scale: 1;
+  }
+
+  .call-tip-time {
+    display: none;
+  }
+}

@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en-US" data-route="{{ROUTE}}">
+  <head>
+    <!-- @include head -->
+    <title>Gantry: pay the crew, pour the slab</title>
+    <meta name="description" content="Plan a construction job together, talk it through with Remy, an AI assistant, on a call, and pay trade partners from the schedule with PayPal’s sandbox. Start a private session, no sign-up." />
+    <!-- @include social -->
+    <!-- @structured-data -->
+    <link rel="stylesheet" href="/src/site/landing.css" />
+    <script type="module" src="/src/site/landing.ts"></script>
+  </head>
+  <body class="landing">
+    <!-- @include header -->
+    <main id="main" tabindex="-1">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <h1 id="hero-title"><span>Pay the crew.</span> <span>Pour the slab.</span></h1>
+          <p class="hero-sub">Gantry is a construction schedule your team talks through with Remy, an AI coordinator, and pays from with PayPal.</p>
+          <div class="hero-actions">
+            <a class="button is-primary is-xl" href="/app" data-track="Start a session" data-track-place="hero">{{START_SESSION}}</a>
+            <a class="hero-film" href="#film" data-track="Watch the film" data-track-place="hero"><span class="hero-film-play" aria-hidden="true"></span>Watch the film · 2:59</a>
+          </div>
+          <p class="hero-note">Your own copy of the project in the film · free · no sign-up · best on a computer</p>
+          <details class="join is-quiet">
+            <summary>{{JOIN_WITH_CODE}}</summary>
+            <form class="join-form" action="/app" method="get" data-join-code novalidate>
+              <label class="join-label" for="join-hero">Session code</label>
+              <div class="join-row">
+                <input class="join-input" id="join-hero" name="code" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="6 digits" maxlength="11" aria-describedby="join-hero-hint" />
+                <button class="button is-primary is-lg" type="submit" data-track="Join with a code" data-track-place="hero">Join</button>
+              </div>
+              <p class="join-hint" id="join-hero-hint">The 6 digits from the teammate who invited you.</p>
+              <p class="join-error" data-join-error role="alert" hidden></p>
+            </form>
+          </details>
+        </div>
+
+        <figure class="hero-model">
+          <div class="model" data-model></div>
+          <figcaption class="title-block">
+            <span class="visually-hidden">The app’s own 3D model of Harbor Street Offices. The footings payment holds the slab; once the trade partners are paid with PayPal, the slab pours and the building goes up, story by story.</span>
+            <span class="tb-cell is-project" aria-hidden="true"><small>Project</small>Harbor Street Offices</span>
+            <span class="tb-cell" aria-hidden="true"><small>Sheet</small>A-001</span>
+            <span class="tb-cell" aria-hidden="true"><small>Plan date</small>Nov 10, 2026</span>
+            <span class="tb-cell is-drawn" aria-hidden="true"><small>Drawn by</small>Gantry, from the plan</span>
+          </figcaption>
+        </figure>
+      </section>
+
+      <section class="film-band" id="film" aria-labelledby="film-title">
+        <div class="film-inner">
+          <div class="film-head">
+            <p class="sheet-label" aria-hidden="true"><b>A-101</b>The film</p>
+            <h2 id="film-title">Watch the whole call</h2>
+          </div>
+          <figure class="film-figure">
+            <a class="film" href="{{FILM_WATCH_URL}}" data-film-embed="{{FILM_EMBED_URL}}" aria-label="Play the film, 2 minutes 59 seconds" data-track="Play the film" data-track-place="film">
+              <img
+                class="film-poster"
+                src="/src/site/images/film-960.webp"
+                srcset="/src/site/images/film-960.webp 960w, /src/site/images/film-1920.webp 1920w"
+                sizes="(min-width: 76rem) 72rem, 100vw"
+                width="1920"
+                height="1080"
+                loading="lazy"
+                decoding="async"
+                alt=""
+              />
+              <span class="film-play" aria-hidden="true">
+                <svg viewBox="0 0 16 16" focusable="false"><path d="M4 2.5v11l9.5-5.5z" /></svg>
+                Watch the film
+                <span class="film-length">2:59</span>
+              </span>
+            </a>
+            <figcaption class="film-note">
+              Remy’s replies are live. Deepak and Chris are scripted, all three voices are AI, and pauses are shortened
+              and parts sped up.
+            </figcaption>
+          </figure>
+          <ol class="chapters" aria-label="Chapters of the film">
+            <li><a href="{{FILM_AT_0}}" data-track="Film moment" data-track-place="chapters"><time>0:00</time><span>Three things to sort out</span></a></li>
+            <li><a href="{{FILM_AT_18}}" data-track="Film moment" data-track-place="chapters"><time>0:18</time><span>The crane rental</span></a></li>
+            <li><a href="{{FILM_AT_46}}" data-track="Film moment" data-track-place="chapters"><time>0:46</time><span>Light fixtures on three floors</span></a></li>
+            <li><a href="{{FILM_AT_82}}" data-track="Film moment" data-track-place="chapters"><time>1:22</time><span>The PayPal invoice</span></a></li>
+            <li><a href="{{FILM_AT_97}}" data-track="Film moment" data-track-place="chapters"><time>1:37</time><span>What’s holding the ground floor</span></a></li>
+            <li><a href="{{FILM_AT_111}}" data-track="Film moment" data-track-place="chapters"><time>1:51</time><span>What waiting till Friday does</span></a></li>
+            <li><a href="{{FILM_AT_138}}" data-track="Film moment" data-track-place="chapters"><time>2:18</time><span>Paying both crews through PayPal</span></a></li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="call-sheet" id="call" aria-labelledby="call-title">
+        <div class="sheet-head">
+          <p class="sheet-label" aria-hidden="true"><b>A-201</b>On the call</p>
+          <h2 id="call-title">Ask the schedule out loud.</h2>
+          <p class="sheet-lead">Remy is on the team’s call. She can’t approve or pay; people do.</p>
+        </div>
+        <figure class="scene-figure" data-scene>
+          <div
+            class="app is-held"
+            data-scene-app
+            role="img"
+            aria-label="An animated drawing of Gantry on a call. The Harbor Street Offices schedule shows the footings payment, $37,800, holding the slab on grade. Remy says that waiting till Friday would miss the city inspector and move the handover 12 days, to June 8. The team pays now with PayPal, the hold turns to Paid, and the slab can start tomorrow."
+          >
+            <div class="app-bar">
+              <span class="app-brand"><span class="app-mark" aria-hidden="true"></span>Gantry</span>
+              <span class="app-project">Harbor Street Offices</span>
+              <span class="app-handover">
+                Handover
+                <span class="app-dates">
+                  <span class="app-date is-plan">Thu, May 27</span>
+                  <span class="app-date is-late">Tue, Jun 8 <b>+12 days</b></span>
+                </span>
+              </span>
+              <span class="app-people"><span class="face is-chris">CH</span><span class="face is-deepak">DJ</span></span>
+            </div>
+
+            <div class="chart">
+              <div class="chart-names">
+                <div class="chart-corner">Task</div>
+                <div class="name is-group">Footings</div>
+                <div class="name is-hold">Footings paid</div>
+                <div class="name"><span class="is-long">Gravel base and vapor barrier</span><span class="is-short">Gravel base</span></div>
+                <div class="name"><span class="is-long">Rebar, slab on grade</span><span class="is-short">Rebar</span></div>
+                <div class="name"><span class="is-long">City inspection, slab</span><span class="is-short">Inspection</span></div>
+                <div class="name"><span class="is-long">Pour slab on grade</span><span class="is-short">Pour slab</span></div>
+                <div class="name"><span class="is-long">Cure slab on grade</span><span class="is-short">Cure slab</span></div>
+              </div>
+              <div class="chart-time">
+                <div class="chart-head">
+                  <span class="chart-month">November 2026</span>
+                  <span class="chart-week" style="--at: 0">Nov 2</span>
+                  <span class="chart-week" style="--at: 7">Nov 9</span>
+                  <span class="chart-week" style="--at: 14">Nov 16</span>
+                  <span class="chart-week" style="--at: 21">Nov 23</span>
+                  <span class="chart-week" style="--at: 28">Nov 30</span>
+                </div>
+                <div class="chart-grid">
+                  <div class="chart-away" style="--from: 21; --days: 5"><span>City inspector away</span></div>
+                  <div class="chart-today" style="--at: 8.35"></div>
+                  <div class="track">
+                    <span class="bar is-done" style="--from: -3; --days: 11; --i: 0"><span class="bar-check"></span></span>
+                  </div>
+                  <div class="track">
+                    <span class="gate" style="--at: 9">
+                      <span class="gate-mark"></span>
+                      <span class="gate-chip">
+                        <span class="gate-state is-due"><span class="gate-lock"></span><span class="gate-word">Footings payment</span> <b>$37,800 due</b></span>
+                        <span class="gate-state is-approved">Approved at PayPal</span>
+                        <span class="gate-state is-processing">Processing</span>
+                        <span class="gate-state is-paid"><img class="gate-paypal" src="/paypal/paypal-mark.svg" alt="" width="10" height="12" /><span class="gate-word">Paid with PayPal</span> <b>$37,800</b></span>
+                      </span>
+                    </span>
+                  </div>
+                  <div class="track">
+                    <span class="bar is-slab is-gravel" style="--from: 9; --days: 3; --i: 1"></span>
+                    <span class="ghost" style="--from: 14; --days: 3; --was: 9; --i: 0"></span>
+                  </div>
+                  <div class="track">
+                    <span class="bar is-slab" style="--from: 14; --days: 3; --i: 2"></span>
+                    <span class="ghost" style="--from: 17; --days: 5; --was: 14; --i: 1"></span>
+                  </div>
+                  <div class="track">
+                    <span class="bar is-slab is-inspection" style="--from: 17; --days: 1; --i: 3"></span>
+                    <span class="ghost is-inspection" style="--from: 28; --days: 1; --was: 17; --i: 2"></span>
+                  </div>
+                  <div class="track">
+                    <span class="bar is-slab" style="--from: 18; --days: 1; --i: 4"></span>
+                    <span class="ghost" style="--from: 29; --days: 1; --was: 18; --i: 3"></span>
+                  </div>
+                  <div class="track">
+                    <span class="bar is-slab" style="--from: 21; --days: 9; --i: 5"></span>
+                    <span class="ghost" style="--from: 30; --days: 9; --was: 21; --i: 4"></span>
+                  </div>
+                  <span class="held-line" style="--from: 9.1"></span>
+                  <span class="release-tag" style="--at: 12.35"><span class="gate-word">Released ·</span> can start Wed, Nov 11</span>
+                  <span class="forecast-tag" style="--at: 28">If paid Friday</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="call" data-speaking="remy">
+              <div class="call-people">
+                <span class="call-face is-remy" data-who="remy"><span class="remy-mark"></span><small>Remy <i>AI</i></small></span>
+                <span class="call-face is-deepak" data-who="deepak"><span class="face is-deepak">DJ</span><small>Deepak</small></span>
+                <span class="call-face is-chris" data-who="chris"><span class="face is-chris">CH</span><small>Chris</small></span>
+              </div>
+              <p class="call-line"><span class="call-who" data-call-who>Remy</span><span class="call-said" data-call-said>The footings payment, $37,800.</span></p>
+            </div>
+          </div>
+          <div class="scene-foot">
+            <figcaption>A scene from the film, drawn for this page. <a href="{{FILM_AT_97}}" data-track="Film moment" data-track-place="scene">Watch it at 1:37</a></figcaption>
+            <button class="scene-control" type="button" data-scene-control hidden>Pause</button>
+          </div>
+        </figure>
+      </section>
+
+      <section class="odds-sheet" id="odds" aria-labelledby="odds-title">
+        <div class="sheet-head">
+          <p class="sheet-label" aria-hidden="true"><b>A-301</b>The odds</p>
+          <h2 id="odds-title">Pay today, or wait till Friday?</h2>
+          <p class="sheet-lead">Each marble is one run of the schedule, landing on its handover day. The line is the lease date, June 11.</p>
+        </div>
+        <div class="odds-frame" data-odds></div>
+      </section>
+
+      <section class="pay-sheet" id="paypal" aria-labelledby="paypal-title">
+        <div class="sheet-head">
+          <p class="sheet-label" aria-hidden="true"><b>P-401</b>PayPal</p>
+          <h2 id="paypal-title">Bill the tenant. Pay the trades. Release the work.</h2>
+          <p class="sheet-lead">A person reviews and sends; PayPal moves the money, on its sandbox. Ask Remy whether the tenant has paid and she checks PayPal herself, read only.</p>
+        </div>
+        <ol class="ledger is-released" data-ledger aria-label="The money on Harbor Street Offices in the film">
+          <li class="ledger-row" style="--i: 0">
+            <span class="ledger-kind">Invoice to the tenant</span>
+            <span class="ledger-who">Larkspur Analytics <small>Change order: new light fixtures, levels 1 to 3</small></span>
+            <span class="ledger-amount">$125,400</span>
+            <span class="ledger-via">PayPal Invoicing</span>
+            <span class="ledger-status"><span class="pill is-info" data-step="0">Ready</span><span class="pill is-success is-current" data-step="1">Sent</span></span>
+          </li>
+          <li class="ledger-row" style="--i: 1">
+            <span class="ledger-kind">Progress payment</span>
+            <span class="ledger-who">Granite Ridge Concrete <small>Footings: form, rebar, pour · 100%, less 10% retainage</small></span>
+            <span class="ledger-amount">$31,320</span>
+            <span class="ledger-via">PayPal</span>
+            <span class="ledger-status"><span class="pill is-warning" data-step="0">Awaiting approval</span><span class="pill is-info" data-step="2">Approved</span><span class="pill is-paid is-current" data-step="3"><img src="/paypal/paypal-mark.svg" alt="" width="9" height="11" />Paid</span></span>
+          </li>
+          <li class="ledger-row" style="--i: 2">
+            <span class="ledger-kind">Progress payment</span>
+            <span class="ledger-who">Pinecrest Sitework <small>Footings: strip forms, backfill · 100%, less 10% retainage</small></span>
+            <span class="ledger-amount">$6,480</span>
+            <span class="ledger-via">PayPal</span>
+            <span class="ledger-status"><span class="pill is-warning" data-step="0">Awaiting approval</span><span class="pill is-info" data-step="2">Approved</span><span class="pill is-paid is-current" data-step="3"><img src="/paypal/paypal-mark.svg" alt="" width="9" height="11" />Paid</span></span>
+          </li>
+          <li class="ledger-row is-chart" style="--i: 3">
+            <span class="ledger-kind">On the chart</span>
+            <span class="ledger-who">Footings paid <small>Slab on grade can start Wed, Nov 11</small></span>
+            <span class="ledger-diamond" aria-hidden="true"></span>
+            <span class="ledger-status"><span class="pill is-warning" data-step="0">Held until paid</span><span class="pill is-success is-current" data-step="3">Released</span></span>
+          </li>
+        </ol>
+        <p class="ledger-from">The money in the film, from the call at <a href="{{FILM_AT_167}}" data-track="Film moment" data-track-place="paypal">2:47</a>.</p>
+      </section>
+
+      <section class="closing" aria-labelledby="closing-title">
+        <p class="sheet-label" aria-hidden="true"><b>A-501</b>Your copy</p>
+        <h2 id="closing-title">Open your own copy of the plan.</h2>
+        <div class="closing-actions">
+          <a class="button is-primary is-xl" href="/app" data-track="Start a session" data-track-place="closing">{{START_SESSION}}</a>
+          <details class="join is-quiet">
+            <summary>{{JOIN_WITH_CODE}}</summary>
+            <form class="join-form" action="/app" method="get" data-join-code novalidate>
+              <label class="join-label" for="join-closing">Session code</label>
+              <div class="join-row">
+                <input class="join-input" id="join-closing" name="code" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="6 digits" maxlength="11" aria-describedby="join-closing-hint" />
+                <button class="button is-primary is-lg" type="submit" data-track="Join with a code" data-track-place="closing">Join</button>
+              </div>
+              <p class="join-hint" id="join-closing-hint">The 6 digits from the teammate who invited you.</p>
+              <p class="join-error" data-join-error role="alert" hidden></p>
+            </form>
+          </details>
+        </div>
+        <p class="closing-facts">Sandbox money only · deleted when you leave · best on a computer · the plan runs on the film’s day, Tue, Nov 10, 2026</p>
+        <ul class="closing-links">
+          <li><a href="{{DEVPOST_URL}}" data-track="Devpost" data-track-place="closing">Gantry on Devpost</a></li>
+        </ul>
+      </section>
+    </main>
+    <!-- @include footer -->
+  </body>
+</html>

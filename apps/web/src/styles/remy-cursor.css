@@ -1,0 +1,131 @@
+/*
+ * Remy's cursor (assistant/remy-cursor.ts): her mark at the spot it points to, her name beside it, and the ring a
+ * press leaves. Nothing here takes the pointer: the person's own clicks go straight through.
+ */
+
+.remy-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur, 180ms) var(--ease-out, ease-out);
+  will-change: transform, opacity;
+}
+
+.remy-cursor.is-shown {
+  opacity: 1;
+}
+
+.remy-cursor * {
+  pointer-events: none;
+}
+
+/* The mark sits on the spot: the ring around it, the spark in the middle. */
+.remy-cursor-mark {
+  position: absolute;
+  top: -13px;
+  left: -13px;
+  display: block;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: color-mix(in oklch, var(--paper, #fff) 78%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--accent, #3554d1) 30%, transparent),
+    0 2px 6px rgb(0 0 0 / 0.22);
+  transition: transform var(--dur-fast, 120ms) var(--ease-out, ease-out);
+}
+
+.remy-cursor.is-pressing .remy-cursor-mark {
+  transform: scale(0.8);
+}
+
+.remy-cursor-tag {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  padding: 1px var(--space-sm, 0.5rem);
+  border-radius: var(--radius-pill, 999px);
+  color: var(--ink-inverse, #fff);
+  background: var(--accent, #3554d1);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgb(0 0 0 / 0.2));
+  font-size: var(--fs-xs, 0.75rem);
+  font-weight: var(--fw-strong, 640);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.remy-cursor-ripple {
+  position: fixed;
+  z-index: 2147482999;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border: 2px solid var(--accent, #3554d1);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: remy-cursor-ripple 600ms var(--ease-out, ease-out) forwards;
+}
+
+@keyframes remy-cursor-ripple {
+  from {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(4.2);
+    opacity: 0;
+  }
+}
+
+/* What it carries: a library card being dragged, beside the cursor. */
+.remy-cursor-carry {
+  position: absolute;
+  top: -34px;
+  left: 16px;
+  max-width: 14rem;
+  overflow: hidden;
+  padding: var(--space-2xs, 0.25rem) var(--space-sm, 0.5rem);
+  border: 1px solid color-mix(in oklch, var(--accent, #3554d1) 40%, transparent);
+  border-radius: var(--radius-sm, 6px);
+  color: var(--ink, #1f2428);
+  background: var(--surface, #fff);
+  box-shadow: var(--shadow-md, 0 4px 12px rgb(0 0 0 / 0.18));
+  font-size: var(--fs-sm, 0.8125rem);
+  font-weight: var(--fw-medium, 540);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* On a call, over the 3D view, her face takes the cursor's place (gantt/fx3d/companion.ts): one of her on screen. */
+html.remy-embodied .remy-cursor {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .remy-cursor,
+  .remy-cursor-mark {
+    transition: none;
+  }
+
+  .remy-cursor.is-pressing .remy-cursor-mark {
+    transform: none;
+  }
+
+  /* A press still shows, as a ring that fades where it is. */
+  .remy-cursor-ripple {
+    animation: remy-cursor-press 600ms linear forwards;
+    transform: scale(2.4);
+  }
+}
+
+@keyframes remy-cursor-press {
+  from {
+    opacity: 0.9;
+  }
+  to {
+    opacity: 0;
+  }
+}
