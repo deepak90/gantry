@@ -58,7 +58,7 @@ describe('the call on the hosted site', () => {
     await vi.waitFor(() => expect(document.querySelector('[data-testid="rail-call-notice"] .rail-call-notice-title')?.textContent).toBe(UNAVAILABLE_NOW));
     expect(document.querySelector('[data-testid="rail-call-notice"] .rail-call-notice-detail')?.textContent).toMatch(/as many calls as she can take/);
     // And the button holds, saying the same, instead of inviting another try.
-    expect(document.querySelector('[data-testid="call-held"]')?.textContent).toContain('Remy is unavailable');
+    expect(document.querySelector('[data-testid="call-held"]')?.textContent).toContain('Remy is on other calls');
 
     const ask = requests.find((request) => request.url === '/api/call/token')!;
     expect(ask.init?.headers).toEqual({ 'Content-Type': 'application/json', Authorization: 'Bearer jwt-abc' });

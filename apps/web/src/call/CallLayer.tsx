@@ -36,7 +36,7 @@ import { awayNote, watchAway, type AwayReason } from './away';
 import { callEndpoints, CallRefusedError, requestCallToken, requestRoom } from './endpoints';
 import { followRemy } from './face';
 import { glowSpeakers } from './glow';
-import { holdOf, holdReason, minutesHold, refusalCode, type CallHold, type Refusal } from './hold';
+import { blockHold, holdOf, holdReason, minutesHold, refusalCode, type CallHold, type Refusal } from './hold';
 import { minutesSpent, type HeardMinutes } from './minutes';
 import type { CallNotice } from '../rails/RailCall';
 import { liveCall } from './live';
@@ -137,7 +137,7 @@ export default function CallLayer({ projectId, sessionId, name, color, role, sim
           try {
             return await requestCallToken(endpoints, { projectId, sessionId, name, color, role, sim, remy: options?.remy ?? true });
           } catch (error) {
-            if (error instanceof CallRefusedError) setRefusal((last) => ({ message: error.message, status: error.status, code: error.code, at: Date.now(), n: (last?.n ?? 0) + 1 }));
+            if (error instanceof CallRefusedError) setRefusal((last) => ({ message: error.message, status: error.status, code: error.code, until: error.until, at: Date.now(), n: (last?.n ?? 0) + 1 }));
             throw error;
           }
         },
@@ -309,8 +309,10 @@ export default function CallLayer({ projectId, sessionId, name, color, role, sim
 
   // A Remy who is leaving, or stuck without a state (her worker hung), is no Remy: "Call Remy" sends her again.
   const remyHere = snapshot.remy !== null && !snapshot.remyStuck;
-  // Used-up minutes hold the button for the rest of the visit, as the site's refusal would.
-  const held = minutesSpent(minutes) ? minutesHold(minutes!.totalMs) : hold;
+  // Used-up minutes hold the button for the rest of the visit, as the site's refusal would; and while the site says a call
+  // can't be had now (its day used up, Remy busy, the session's calls used up), the button is held and greyed before
+  // anyone presses it.
+  const held = minutesSpent(minutes) ? minutesHold(minutes!.totalMs) : room?.blocked ? blockHold(room.blocked, Date.now()) : hold;
   const view = stripOf({ status: snapshot.status, error: snapshot.error, room, remyHere, remyLate: remyLate || snapshot.remyStuck, hosted: HOSTED, hold: held });
   // Until the site has said anything about the room, nothing to press.
   const entryView = heard || view.inCall || view.joining ? view : { ...view, start: null };

@@ -6,7 +6,7 @@
  */
 import { initialsOf, readableInkOn } from '../presence/peers';
 import { ASSISTANT_NAME } from '../assistant/identity';
-import type { CallHold } from './hold';
+import type { CallHold, RoomBlock } from './hold';
 import type { RoomMinutes } from './minutes';
 import { REMY } from './protocol';
 
@@ -136,6 +136,8 @@ export interface RoomNews {
   remy: boolean;
   /** The session's minutes with Remy, where the site keeps them (hosted). */
   minutes?: RoomMinutes | null;
+  /** Why a call can't be had now, before anyone presses (hosted). */
+  blocked?: RoomBlock | null;
 }
 
 export interface StripView {

@@ -27,9 +27,11 @@
  * - A room a hosted join creates holds 4 at most (three people and Remy) and closes if nobody joins it within a minute.
  *
  * `POST /api/call/token` `{ projectId, sessionId, remy? }` → `{ url, token, remy }`
- * `GET /api/call/room?projectId=` → `{ up, people, remy, minutes? }`, `minutes` being `{ totalMs, leftMs, going }`
- * A refusal is `{ error }` in plain words: 400, 401, 403 (not a member, not their tab, calls off, the allowance or the
- * minutes spent), 409 (Remy is on as many calls as she takes), 503 (not set up, or a service didn't answer).
+ * `GET /api/call/room?projectId=` → `{ up, people, remy, minutes?, blocked? }`, `minutes` being `{ totalMs, leftMs, going }`
+ *   and `blocked` why a call can't start now, before anyone presses the button (`{ why, what, until }`: callBlockOf)
+ * A refusal is `{ error }` in plain words: 400, 401, 403 (not a member, not their tab, calls off or paused for the day,
+ * the allowance or the minutes spent), 409 (Remy is on as many calls as she takes), 503 (not set up, or a service didn't
+ * answer). One the page can show as such carries a `code`, and a pause the moment it lifts (`until`, ms).
  */
 import type { SupabaseClient, createClient } from '@supabase/supabase-js';
 import { CallServer, isRemy, joinedAtMsOf, newsOf, UUID, type LiveKitSdk, type Person, type RemyNeed, type RoomInfo, type RoomLimits, type RoomNews } from './call-server.ts';
@@ -48,6 +50,97 @@ export const SITE_SWEEP_MS = 60_000;
 export const MIN_CALL_MS = 15_000;
 /** Remy isn't sent with fewer of her turns left than this (quota_left('ai_turn')): she'd only say she reached her limit. */
 export const MIN_TURNS_FOR_CALL = 6;
+
+/** When the day's quotas start again: the next midnight UTC (use_quota counts by the UTC day). */
+export function nextUtcMidnight(now: number): number {
+  const at = new Date(now);
+  return Date.UTC(at.getUTCFullYear(), at.getUTCMonth(), at.getUTCDate() + 1);
+}
+
+/** When the spend breaker turns calls back on: 00:05 UTC, today's if it hasn't come yet (reset_spend_breaker). */
+export function breakerResetAt(now: number): number {
+  const at = new Date(now);
+  const today = Date.UTC(at.getUTCFullYear(), at.getUTCMonth(), at.getUTCDate(), 0, 5);
+  return now < today ? today : today + 24 * 60 * 60_000;
+}
+
+/** What is left of a quota: the copy's and the day's, null where that limit isn't set. */
+export interface QuotaParts {
+  copyLeft: number | null;
+  dayLeft: number | null;
+}
+
+/** What a call needs, as it stands (the database's call_readiness). */
+export interface Readiness {
+  callsOn: boolean;
+  /** The spend breaker turned calls off, until 00:05 UTC. */
+  breaker: boolean;
+  starts: QuotaParts;
+  joins: QuotaParts;
+  turns: QuotaParts;
+  /** When the copy last spent a call start (ms); null when it hasn't. */
+  lastStartMs: number | null;
+  /** A call's booking would reach a vendor's or the day's spend budget. */
+  spendShort: boolean;
+}
+
+/**
+ * Why a call can't start, or be joined, now: `paused` by the site's day (its calls, joins, Remy's turns or its spend,
+ * until they reset), `session` by the visit's own allowance, `busy` with Remy on as many calls as she takes, or `off`,
+ * switched off by a person. `what` says which limit; `until` when a pause lifts (ms), null when nobody can say.
+ */
+export interface CallBlock {
+  why: 'paused' | 'session' | 'busy' | 'off';
+  what: 'calls' | 'joins' | 'turns' | 'starts' | 'spend' | 'remy';
+  until: number | null;
+}
+
+/**
+ * Whether a call can be had now, from what it needs: `start`, a call that would bring Remy (one she is on only takes a
+ * join). In the order the token route spends them: calls on, joins, Remy's turns, a call start (none within ten minutes
+ * of the copy's last), the day's spend. Null: nothing stands in the way, apart from the call server's own count of calls
+ * with her (the routes ask it) and the visit's minutes (shown on their own).
+ */
+export function callBlockOf(readiness: Readiness, { start, now }: { start: boolean; now: number }): CallBlock | null {
+  const midnight = nextUtcMidnight(now);
+  if (!readiness.callsOn) return readiness.breaker ? { why: 'paused', what: 'spend', until: breakerResetAt(now) } : { why: 'off', what: 'calls', until: null };
+  if (readiness.joins.dayLeft === 0) return { why: 'paused', what: 'joins', until: midnight };
+  if (readiness.joins.copyLeft === 0) return { why: 'session', what: 'joins', until: null };
+  if (!start) return null;
+  const { turns, starts } = readiness;
+  if (turns.dayLeft !== null && turns.dayLeft < MIN_TURNS_FOR_CALL) return { why: 'paused', what: 'turns', until: midnight };
+  if (turns.copyLeft !== null && turns.copyLeft < MIN_TURNS_FOR_CALL) return { why: 'session', what: 'turns', until: null };
+  const again = readiness.lastStartMs !== null && now - readiness.lastStartMs < FREE_AGAIN_MS;
+  if (!again && starts.dayLeft === 0) return { why: 'paused', what: 'starts', until: midnight };
+  if (!again && starts.copyLeft === 0) return { why: 'session', what: 'starts', until: null };
+  if (readiness.spendShort) return { why: 'paused', what: 'spend', until: midnight };
+  return null;
+}
+
+/** The database's call_readiness answer; null when it isn't one. */
+export function readinessFrom(data: unknown): Readiness | null {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+  const value = data as Record<string, unknown>;
+  const count = (x: unknown): number | null => (typeof x === 'number' && Number.isFinite(x) && x >= 0 ? x : null);
+  const parts = (x: unknown): QuotaParts | null => {
+    if (!x || typeof x !== 'object' || Array.isArray(x)) return null;
+    const part = x as Record<string, unknown>;
+    return { copyLeft: count(part.copy_left), dayLeft: count(part.day_left) };
+  };
+  const starts = parts(value.starts);
+  const joins = parts(value.joins);
+  const turns = parts(value.turns);
+  if (typeof value.calls_on !== 'boolean' || !starts || !joins || !turns) return null;
+  return {
+    callsOn: value.calls_on,
+    breaker: value.breaker === true,
+    starts,
+    joins,
+    turns,
+    lastStartMs: count(value.last_start_ms),
+    spendShort: value.spend_short === true,
+  };
+}
 /** What each time Remy is sent is charged to the site's daily spend (record_spend), in millionths of a dollar. */
 export const DISPATCH_SPEND: Readonly<Record<string, number>> = { openai: 250_000, elevenlabs: 100_000, livekit: 100_000 };
 /** LiveKit Cloud is across the internet, not on this machine. */
@@ -62,6 +155,7 @@ export const MESSAGES = {
   callsOff: 'Calls are switched off right now. The rest of the app still works.',
   allowanceSpent: 'Calls with Remy have reached their limit for now. The rest of the app still works.',
   minutesSpent: "This session's minutes with Remy are used up. The rest of the app still works.",
+  callsPaused: 'Calls with Remy are paused on the site until its daily limit resets. The rest of the app still works.',
   joinsSpent: 'Calls have reached their limit for now. The rest of the app still works.',
   remyBusy: 'Remy is on as many calls as she can take right now. Try again in a few minutes.',
   notSetUp: 'Calls are not set up on this site.',
@@ -143,8 +237,8 @@ export interface CallDirectory {
    * says when they run out; `spent` when too little is left, `unlimited` where the database keeps no minutes.
    */
   startMinutes(projectId: string, lease: number | null, room: string): Promise<{ endsAt: number } | 'spent' | 'unlimited'>;
-  /** How many of Remy's turns are left for the copy, the day's limit included (quota_left('ai_turn')); null: no limit. */
-  turnsLeft(projectId: string): Promise<number | null>;
+  /** What a call needs, as it stands (call_readiness); null where the database can't say. */
+  readiness(projectId: string): Promise<Readiness | null>;
 }
 
 /** What the functions ask the call server (a CallServer; a fake in tests). Each throws when it doesn't answer. */
@@ -180,6 +274,20 @@ export interface Answer {
 
 /** A refusal, in plain words; the ones about bringing Remy in also say why (`code`), so the page can hold its button. */
 const refuse = (status: number, error: string, code?: 'remy_busy' | 'allowance_spent' | 'minutes_spent' | 'calls_off'): Answer => ({ status, body: code ? { error, code } : { error } });
+
+/** A call that can't be had now, refused in the words the page already shows for it (the room route's `blocked`). */
+export function refuseFor(block: CallBlock): Answer {
+  switch (block.why) {
+    case 'busy':
+      return refuse(409, MESSAGES.remyBusy, 'remy_busy');
+    case 'off':
+      return refuse(403, MESSAGES.callsOff, 'calls_off');
+    case 'session':
+      return refuse(403, block.what === 'joins' ? MESSAGES.joinsSpent : MESSAGES.allowanceSpent, 'allowance_spent');
+    case 'paused':
+      return { status: 403, body: { error: MESSAGES.callsPaused, code: 'calls_paused', ...(block.until !== null ? { until: block.until } : {}) } };
+  }
+}
 const NO_CALL: RoomNews = { up: false, people: [], remy: false };
 
 /** The access token in an `Authorization: Bearer …` header. */
@@ -281,13 +389,16 @@ export async function tokenAnswer(call: HostedCall, input: { authorization: stri
 
   let request: TokenRequest;
   let lease: number | null;
+  let readiness: Readiness | null;
   try {
     const userId = await directory.userOf(accessToken);
     if (!userId) return refuse(401, MESSAGES.signIn);
     const member = await directory.memberOf(projectId, userId);
     if (!member) return refuse(403, MESSAGES.notMember);
     if (!(await directory.ownsSession(sessionId, userId, projectId))) return refuse(403, MESSAGES.notYourTab);
-    if (!(await directory.callsOn())) return refuse(403, MESSAGES.callsOff, 'calls_off');
+    readiness = await directory.readiness(projectId);
+    if (readiness && !readiness.callsOn) return refuseFor(callBlockOf(readiness, { start: true, now })!);
+    if (!readiness && !(await directory.callsOn())) return refuse(403, MESSAGES.callsOff, 'calls_off');
     lease = await directory.leaseOf(projectId);
     request = { projectId, sessionId, name: member.name, color: member.color, role: member.role, sim: false, remy };
   } catch {
@@ -303,25 +414,26 @@ export async function tokenAnswer(call: HostedCall, input: { authorization: stri
     return refuse(503, MESSAGES.noAnswer);
   }
   const sweeping = sweepRooms(call, tidied.all, room, now);
-  const answer = await place(call, { directory, rooms }, request, { room, lease }, tidied.people, now);
+  const answer = await place(call, { directory, rooms }, request, { room, lease, readiness }, tidied.people, now);
   await sweeping;
   return answer;
 }
 
 /**
  * A place on the call, once the person may have one. First the visit's minutes with Remy: with too few left, and no call
- * going with her, there is no place. Remy: nothing to do when she is on the call or on her way. Otherwise she is brought
- * in, by this join's own dispatch when it creates the room or by one sent now: within the number of calls she takes at
- * once, her turns left, the copy's allowance (unless she was started for the copy in the last ten minutes) and the
- * site's spend; then the rest of the minutes is set aside for the call, and her dispatch says when they run out. Only a
- * token that brought her carries her dispatch, so one minted while she was on the call can't bring her back later for
- * nothing. Every token minted counts against the copy's joins.
+ * going with her, there is no place. Then what the call needs, as it stands (callBlockOf), refused before anything is
+ * counted, in the words the page already shows. Remy: nothing to do when she is on the call or on her way. Otherwise she
+ * is brought in, by this join's own dispatch when it creates the room or by one sent now: within the number of calls she
+ * takes at once, her turns left, the copy's allowance (unless she was started for the copy in the last ten minutes) and
+ * the site's spend; then the rest of the minutes is set aside for the call, and her dispatch says when they run out.
+ * Only a token that brought her carries her dispatch, so one minted while she was on the call can't bring her back later
+ * for nothing. Every token minted counts against the copy's joins.
  */
 async function place(
   call: HostedCall,
   { directory, rooms }: { directory: CallDirectory; rooms: CallRooms },
   request: TokenRequest,
-  { room, lease }: { room: string; lease: number | null },
+  { room, lease, readiness }: { room: string; lease: number | null; readiness: Readiness | null },
   people: Person[] | null,
   now: number,
 ): Promise<Answer> {
@@ -340,14 +452,14 @@ async function place(
     const minutes = await directory.minutesOf(projectId, lease, bringing(need));
     const going = need === 'present' || need === 'starting' || (need === null && minutes?.endsAt != null);
     if (minutes && !going && minutes.leftMs < MIN_CALL_MS) return refuse(403, MESSAGES.minutesSpent, 'minutes_spent');
+    const block = readiness ? callBlockOf(readiness, { start: bringing(need), now }) : null;
+    if (block) return refuseFor(block);
     if (!(await directory.useCallJoin(projectId))) return refuse(403, MESSAGES.joinsSpent, 'allowance_spent');
     if (bringing(need)) {
-      const turns = await directory.turnsLeft(projectId);
-      if (turns !== null && turns < MIN_TURNS_FOR_CALL) return refuse(403, MESSAGES.allowanceSpent, 'allowance_spent');
       const last = await directory.lastCallStart(projectId);
       const again = last !== null && now - last < FREE_AGAIN_MS;
       if (!again && !(await directory.useCallStart(projectId))) return refuse(403, MESSAGES.allowanceSpent, 'allowance_spent');
-      if (!(await directory.chargeDispatch())) return refuse(403, MESSAGES.callsOff, 'calls_off');
+      if (!(await directory.chargeDispatch())) return refuseFor({ why: 'paused', what: 'spend', until: breakerResetAt(now) });
       const started = await directory.startMinutes(projectId, lease, room);
       if (started === 'spent') return refuse(403, MESSAGES.minutesSpent, 'minutes_spent');
       if (started !== 'unlimited') endsAt = started.endsAt;
@@ -372,11 +484,26 @@ async function place(
  * The visit's minutes for the room route, a call that is over counted first: Remy counts as gone when bringing her would
  * take a dispatch (she isn't on the call and wasn't just sent). Null when there are none to show, or they can't be read.
  */
-async function minutesNow(directory: CallDirectory, rooms: CallRooms, projectId: string, { room, lease }: { room: string; lease: number | null }, people: Person[] | null, now: number): Promise<ShownMinutes | null> {
+async function minutesNow(directory: CallDirectory, projectId: string, lease: number | null, need: RemyNeed | null): Promise<ShownMinutes | null> {
   try {
-    const gone = bringing(await rooms.remyNeedIn(room, people, now));
-    const minutes = await directory.minutesOf(projectId, lease, gone);
+    const minutes = await directory.minutesOf(projectId, lease, need !== null && bringing(need));
     return minutes ? shownMinutes(minutes) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Why a call can't be had now, for the room route, so the page greys its button before anyone presses it: what the call
+ * needs as it stands, then, for one that would bring Remy, whether she is on as many calls as she takes. Null when
+ * nothing stands in the way, or nobody can say.
+ */
+async function blockNow(call: HostedCall, rooms: CallRooms, readiness: Readiness | null, need: RemyNeed | null, now: number): Promise<CallBlock | null> {
+  const start = need === null || bringing(need);
+  const block = readiness ? callBlockOf(readiness, { start, now }) : null;
+  if (block || !start) return block;
+  try {
+    return (await rooms.callsWithRemy()) >= call.maxCalls ? { why: 'busy', what: 'remy', until: null } : null;
   } catch {
     return null;
   }
@@ -392,11 +519,15 @@ export async function roomAnswer(call: HostedCall, input: { authorization: strin
   const projectId = (input.projectId ?? '').toLowerCase();
   if (!UUID.test(projectId)) return refuse(400, 'Unknown project');
   let lease: number | null;
+  let readiness: Readiness | null;
   try {
     const userId = await directory.userOf(accessToken);
     if (!userId) return refuse(401, MESSAGES.signIn);
     if (!(await directory.memberOf(projectId, userId))) return refuse(403, MESSAGES.notMember);
-    if (!rooms || !(await directory.callsOn())) return { status: 200, body: { ...NO_CALL } };
+    if (!rooms) return { status: 200, body: { ...NO_CALL } };
+    readiness = await directory.readiness(projectId);
+    if (readiness && !readiness.callsOn) return { status: 200, body: { ...NO_CALL, blocked: callBlockOf(readiness, { start: true, now }) } };
+    if (!readiness && !(await directory.callsOn())) return { status: 200, body: { ...NO_CALL } };
     lease = await directory.leaseOf(projectId);
   } catch {
     return refuse(503, MESSAGES.cantCheck);
@@ -405,8 +536,10 @@ export async function roomAnswer(call: HostedCall, input: { authorization: strin
   try {
     const { people, all } = await tidyCall(directory, rooms, projectId, room, now);
     await sweepRooms(call, all, room, now);
-    const minutes = await minutesNow(directory, rooms, projectId, { room, lease }, people, now);
-    return { status: 200, body: { ...newsOf(people ?? [], now), ...(minutes ? { minutes } : {}) } };
+    const need = await rooms.remyNeedIn(room, people, now).catch(() => null);
+    const minutes = await minutesNow(directory, projectId, lease, need);
+    const blocked = await blockNow(call, rooms, readiness, need, now);
+    return { status: 200, body: { ...newsOf(people ?? [], now), ...(minutes ? { minutes } : {}), ...(blocked ? { blocked } : {}) } };
   } catch {
     return { status: 200, body: { ...NO_CALL } };
   }
@@ -562,13 +695,16 @@ export function supabaseDirectory(client: SupabaseClient): CallDirectory {
       const minutes = minutesFrom(result.data);
       return ok && minutes?.endsAt != null ? { endsAt: minutes.endsAt } : 'spent';
     },
-    async turnsLeft(projectId) {
-      const result = (await client.rpc('quota_left', { p_kind: 'ai_turn', p_project: projectId })) as Row<number | null>;
+    async readiness(projectId) {
+      const result = (await client.rpc('call_readiness', { p_project: projectId, p_booking: DISPATCH_SPEND })) as Row<unknown>;
       if (result.error) {
+        // No readiness in this database: the routes count as they go, and refuse when a count says no.
         if (missingFunction(result.error)) return null;
-        throw new Error(`quota_left: ${result.error.message}`);
+        throw new Error(`call_readiness: ${result.error.message}`);
       }
-      return typeof result.data === 'number' ? result.data : null;
+      const readiness = readinessFrom(result.data);
+      if (!readiness) throw new Error('call_readiness: not an answer');
+      return readiness;
     },
   };
 }

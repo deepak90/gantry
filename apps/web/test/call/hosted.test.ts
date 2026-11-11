@@ -19,9 +19,15 @@ import {
   MAX_CONNECTED_MS,
   maxCallsOf,
   MESSAGES,
+  breakerResetAt,
+  callBlockOf,
   MIN_CALL_MS,
   MIN_TURNS_FOR_CALL,
   minutesFrom,
+  nextUtcMidnight,
+  readinessFrom,
+  refuseFor,
+  type Readiness,
   roomAnswer,
   roomResponse,
   ROOM_LIMITS,
@@ -66,8 +72,16 @@ interface DirectoryState {
    * set aside for, if one is going. Left out: a database without them.
    */
   pool?: { totalMs?: number; usedMs?: number; call?: { from: number; until: number } | null };
-  /** quota_left('ai_turn'): null for no limit. */
+  /** Remy's turns left for the copy (call_readiness): null for no limit. */
   turns?: number | null;
+  /** What is left of the day's calls, joins and turns across the site: null for no limit. */
+  startsToday?: number | null;
+  joinsToday?: number | null;
+  turnsToday?: number | null;
+  /** The spend breaker turned calls off. */
+  breaker?: boolean;
+  /** A database without call_readiness. */
+  noReadiness?: boolean;
 }
 
 /** How long after she was sent Remy may still be on her way (remy_minutes_join_grace). */
@@ -170,9 +184,19 @@ function directory(state: DirectoryState = {}) {
       pool.call = { from: NOW, until: NOW + left };
       return { endsAt: pool.call.until };
     },
-    async turnsLeft() {
-      asked.push('turnsLeft');
-      return state.turns ?? null;
+    async readiness() {
+      asked.push('readiness');
+      fail();
+      if (state.noReadiness) return null;
+      return {
+        callsOn: state.callsOn ?? true,
+        breaker: state.breaker ?? false,
+        starts: { copyLeft: allowance, dayLeft: state.startsToday ?? null },
+        joins: { copyLeft: joins, dayLeft: state.joinsToday ?? null },
+        turns: { copyLeft: state.turns ?? null, dayLeft: state.turnsToday ?? null },
+        lastStartMs: lastStart,
+        spendShort: state.spendOpen === false,
+      };
     },
   };
   return { impl, asked, allowance: () => allowance, joins: () => joins, charged: () => charged, pool: () => pool };
@@ -484,11 +508,13 @@ describe('POST /api/call/token: bringing Remy', () => {
     expect(call.minted).toHaveLength(1);
   });
 
-  it('is refused when the site’s daily spend says no, sending nobody', async () => {
-    const { hosted, call } = service(directory({ spendOpen: false }), rooms({ need: 'dispatch' }));
-    expect(await ask(hosted, JOIN)).toEqual({ status: 403, body: { error: MESSAGES.callsOff, code: 'calls_off' } });
+  it('is refused, paused until the day resets, when the site’s spend has no room for her, sending nobody and charging nothing', async () => {
+    const { hosted, dir, call } = service(directory({ spendOpen: false }), rooms({ need: 'dispatch' }));
+    expect(await ask(hosted, JOIN)).toEqual({ status: 403, body: { error: MESSAGES.callsPaused, code: 'calls_paused', until: nextUtcMidnight(NOW) } });
     expect(call.dispatched).toEqual([]);
     expect(call.minted).toEqual([]);
+    expect(dir.charged()).toBe(0);
+    expect(dir.joins()).toBe(20);
   });
 
   it('joins without her, spending no start and charging nothing, when the request leaves her out', async () => {
@@ -590,7 +616,7 @@ describe('POST /api/call/token: Remy’s minutes, one pool a visit', () => {
 
   it('sets nothing aside when the spend or the allowance says no', async () => {
     const broke = service(directory({ pool: {}, spendOpen: false }), rooms({ rooms: WITHOUT_HER }));
-    expect((await ask(broke.hosted, JOIN)).body.code).toBe('calls_off');
+    expect((await ask(broke.hosted, JOIN)).body.code).toBe('calls_paused');
     expect(broke.dir.pool()).toMatchObject({ call: null });
     const spent = service(directory({ pool: {}, allowance: 0, lastStart: null }), rooms({ rooms: WITHOUT_HER }));
     expect((await ask(spent.hosted, JOIN)).body.code).toBe('allowance_spent');
@@ -608,6 +634,79 @@ describe('POST /api/call/token: Remy’s minutes, one pool a visit', () => {
     hosted.directory = { ...hosted.directory!, minutesOf: async () => Promise.reject(new Error('the database did not answer')) };
     expect((await ask(hosted, JOIN)).status).toBe(503);
     expect(call.minted).toEqual([]);
+  });
+});
+
+describe('whether a call can be had now', () => {
+  const ready = (over: Partial<Readiness> = {}): Readiness => ({
+    callsOn: true,
+    breaker: false,
+    starts: { copyLeft: 2, dayLeft: 30 },
+    joins: { copyLeft: 20, dayLeft: 300 },
+    turns: { copyLeft: 40, dayLeft: 500 },
+    lastStartMs: null,
+    spendShort: false,
+    ...over,
+  });
+  const midnight = nextUtcMidnight(NOW);
+
+  it('says the site’s day is used up, until it resets, or the session’s allowance, or calls off', () => {
+    expect(callBlockOf(ready(), { start: true, now: NOW })).toBeNull();
+    expect(callBlockOf(ready({ starts: { copyLeft: 1, dayLeft: 0 } }), { start: true, now: NOW })).toEqual({ why: 'paused', what: 'starts', until: midnight });
+    expect(callBlockOf(ready({ starts: { copyLeft: 0, dayLeft: 12 } }), { start: true, now: NOW })).toEqual({ why: 'session', what: 'starts', until: null });
+    expect(callBlockOf(ready({ turns: { copyLeft: 40, dayLeft: MIN_TURNS_FOR_CALL - 1 } }), { start: true, now: NOW })).toEqual({ why: 'paused', what: 'turns', until: midnight });
+    expect(callBlockOf(ready({ turns: { copyLeft: MIN_TURNS_FOR_CALL - 1, dayLeft: 400 } }), { start: true, now: NOW })).toEqual({ why: 'session', what: 'turns', until: null });
+    expect(callBlockOf(ready({ joins: { copyLeft: 20, dayLeft: 0 } }), { start: true, now: NOW })).toEqual({ why: 'paused', what: 'joins', until: midnight });
+    expect(callBlockOf(ready({ joins: { copyLeft: 0, dayLeft: 100 } }), { start: false, now: NOW })).toEqual({ why: 'session', what: 'joins', until: null });
+    expect(callBlockOf(ready({ spendShort: true }), { start: true, now: NOW })).toEqual({ why: 'paused', what: 'spend', until: midnight });
+    expect(callBlockOf(ready({ callsOn: false, breaker: true }), { start: true, now: NOW })).toEqual({ why: 'paused', what: 'spend', until: breakerResetAt(NOW) });
+    expect(callBlockOf(ready({ callsOn: false }), { start: true, now: NOW })).toEqual({ why: 'off', what: 'calls', until: null });
+  });
+
+  it('needs no start to bring her back within ten minutes of the session’s last, and only a join for a call she is on', () => {
+    const usedUp = ready({ starts: { copyLeft: 0, dayLeft: 0 } });
+    expect(callBlockOf({ ...usedUp, lastStartMs: NOW - FREE_AGAIN_MS + 1 }, { start: true, now: NOW })).toBeNull();
+    expect(callBlockOf({ ...usedUp, lastStartMs: NOW - FREE_AGAIN_MS }, { start: true, now: NOW })).toMatchObject({ why: 'paused', what: 'starts' });
+    expect(callBlockOf(usedUp, { start: false, now: NOW })).toBeNull();
+  });
+
+  it('resets at midnight UTC, and the spend breaker at 00:05 UTC, today’s when it hasn’t come yet', () => {
+    const at = Date.UTC(2026, 10, 11, 22, 59);
+    expect(nextUtcMidnight(at)).toBe(Date.UTC(2026, 10, 12));
+    expect(breakerResetAt(at)).toBe(Date.UTC(2026, 10, 12, 0, 5));
+    expect(breakerResetAt(Date.UTC(2026, 10, 12, 0, 2))).toBe(Date.UTC(2026, 10, 12, 0, 5));
+  });
+
+  it('refuses in the words the page shows, a pause with when it lifts', () => {
+    expect(refuseFor({ why: 'paused', what: 'starts', until: midnight })).toEqual({ status: 403, body: { error: MESSAGES.callsPaused, code: 'calls_paused', until: midnight } });
+    expect(refuseFor({ why: 'session', what: 'joins', until: null }).body).toEqual({ error: MESSAGES.joinsSpent, code: 'allowance_spent' });
+    expect(refuseFor({ why: 'session', what: 'turns', until: null }).body).toEqual({ error: MESSAGES.allowanceSpent, code: 'allowance_spent' });
+    expect(refuseFor({ why: 'busy', what: 'remy', until: null })).toEqual({ status: 409, body: { error: MESSAGES.remyBusy, code: 'remy_busy' } });
+    expect(refuseFor({ why: 'off', what: 'calls', until: null }).body).toEqual({ error: MESSAGES.callsOff, code: 'calls_off' });
+  });
+
+  it('tells the page before anyone presses the button, and refuses the same before counting anything', async () => {
+    // The site's day used up, as on Nov 11: 30 of 30 calls.
+    const dir = directory({ startsToday: 0 });
+    const { hosted, call } = service(dir, rooms());
+    const looked = await roomAnswer(hosted, { authorization: `Bearer ${TOKEN}`, projectId: PROJECT, now: NOW });
+    expect(looked.body.blocked).toEqual({ why: 'paused', what: 'starts', until: midnight });
+    expect(await ask(hosted, JOIN)).toEqual({ status: 403, body: { error: MESSAGES.callsPaused, code: 'calls_paused', until: midnight } });
+    expect(dir.joins()).toBe(20);
+    expect(dir.allowance()).toBe(3);
+    expect(call.minted).toEqual([]);
+
+    // A call she is on can still be joined, and the page says nothing stands in the way.
+    const going = service(directory({ startsToday: 0 }), rooms({ rooms: GOING }));
+    expect((await roomAnswer(going.hosted, { authorization: `Bearer ${TOKEN}`, projectId: PROJECT, now: NOW })).body.blocked).toBeUndefined();
+    expect((await ask(going.hosted, JOIN)).status).toBe(200);
+  });
+
+  it('says she is on as many calls as she takes, before anyone presses', async () => {
+    const { hosted } = service(directory(), rooms({ calls: 5 }));
+    expect((await roomAnswer(hosted, { authorization: `Bearer ${TOKEN}`, projectId: PROJECT, now: NOW })).body.blocked).toEqual({ why: 'busy', what: 'remy', until: null });
+    const free = service(directory(), rooms({ calls: 4 }));
+    expect((await roomAnswer(free.hosted, { authorization: `Bearer ${TOKEN}`, projectId: PROJECT, now: NOW })).body.blocked).toBeUndefined();
   });
 });
 
@@ -691,7 +790,13 @@ describe('GET /api/call/room', () => {
 
   it('reads as no call server while calls are off, without one, or when it does not answer', async () => {
     const off = service(directory({ callsOn: false }));
-    expect(await look(off.hosted)).toEqual({ status: 200, body: { up: false, people: [], remy: false } });
+    expect(await look(off.hosted)).toEqual({ status: 200, body: { up: false, people: [], remy: false, blocked: { why: 'off', what: 'calls', until: null } } });
+    // Turned off by the spend breaker: paused until it turns them back on.
+    const tripped = service(directory({ callsOn: false, breaker: true }));
+    expect((await look(tripped.hosted)).body.blocked).toEqual({ why: 'paused', what: 'spend', until: breakerResetAt(NOW) });
+    // A database that can't say why: as before.
+    const older = service(directory({ callsOn: false, noReadiness: true }));
+    expect(await look(older.hosted)).toEqual({ status: 200, body: { up: false, people: [], remy: false } });
     const none = service();
     expect(await look({ ...none.hosted, rooms: null })).toEqual({ status: 200, body: { up: false, people: [], remy: false } });
     const down = service(directory(), rooms({ failing: true }));
@@ -946,19 +1051,30 @@ describe('the directory over Supabase', () => {
       answers: {
         remy_minutes_now: { data: minutes, error: null },
         remy_minutes_start: { data: { ...minutes, ok: true, ends_at_ms: NOW + 240_000 }, error: null },
-        quota_left: { data: 12, error: null },
+        call_readiness: {
+          data: { calls_on: true, breaker: false, starts: { copy_left: 1, day_left: 0 }, joins: { copy_left: 17, day_left: 281 }, turns: { copy_left: 33, day_left: null }, last_start_ms: NOW - 60_000, spend_short: false },
+          error: null,
+        },
       },
     });
     const dir = supabaseDirectory(client);
     expect(await dir.minutesOf(PROJECT, LEASE, true)).toEqual({ totalMs: 300_000, usedMs: 60_000, leftMs: 240_000, endsAt: null });
     expect(await dir.startMinutes(PROJECT, LEASE, ROOM)).toEqual({ endsAt: NOW + 240_000 });
-    expect(await dir.turnsLeft(PROJECT)).toBe(12);
+    expect(await dir.readiness(PROJECT)).toEqual({
+      callsOn: true,
+      breaker: false,
+      starts: { copyLeft: 1, dayLeft: 0 },
+      joins: { copyLeft: 17, dayLeft: 281 },
+      turns: { copyLeft: 33, dayLeft: null },
+      lastStartMs: NOW - 60_000,
+      spendShort: false,
+    });
     // A project that isn't a copy keeps its minutes under visit 0.
     await dir.minutesOf(PROJECT, null, false);
     expect(calls).toEqual([
       { rpc: 'remy_minutes_now', args: { p_project: PROJECT, p_lease: LEASE, p_gone: true } },
       { rpc: 'remy_minutes_start', args: { p_project: PROJECT, p_lease: LEASE, p_room: ROOM, p_min_ms: MIN_CALL_MS } },
-      { rpc: 'quota_left', args: { p_kind: 'ai_turn', p_project: PROJECT } },
+      { rpc: 'call_readiness', args: { p_project: PROJECT, p_booking: DISPATCH_SPEND } },
       { rpc: 'remy_minutes_now', args: { p_project: PROJECT, p_lease: 0, p_gone: false } },
     ]);
   });
@@ -968,16 +1084,17 @@ describe('the directory over Supabase', () => {
     expect(await supabaseDirectory(spent.client).startMinutes(PROJECT, LEASE, ROOM)).toBe('spent');
 
     const missing = { data: null, error: { code: 'PGRST202', message: 'Could not find the function' } };
-    const none = supabaseDirectory(fakeSupabase({ rows, answers: { remy_minutes_now: missing, remy_minutes_start: missing, quota_left: missing } }).client);
+    const none = supabaseDirectory(fakeSupabase({ rows, answers: { remy_minutes_now: missing, remy_minutes_start: missing, call_readiness: missing } }).client);
     expect(await none.minutesOf(PROJECT, LEASE, false)).toBeNull();
     expect(await none.startMinutes(PROJECT, LEASE, ROOM)).toBe('unlimited');
-    expect(await none.turnsLeft(PROJECT)).toBeNull();
+    expect(await none.readiness(PROJECT)).toBeNull();
 
     const failing = { data: null, error: { code: '57014', message: 'canceling statement' } };
-    const broken = supabaseDirectory(fakeSupabase({ rows, answers: { remy_minutes_now: failing, remy_minutes_start: failing, quota_left: failing } }).client);
+    const broken = supabaseDirectory(fakeSupabase({ rows, answers: { remy_minutes_now: failing, remy_minutes_start: failing, call_readiness: failing } }).client);
     await expect(broken.minutesOf(PROJECT, LEASE, false)).rejects.toThrow(/remy_minutes_now/);
     await expect(broken.startMinutes(PROJECT, LEASE, ROOM)).rejects.toThrow(/remy_minutes_start/);
-    await expect(broken.turnsLeft(PROJECT)).rejects.toThrow(/quota_left/);
+    await expect(broken.readiness(PROJECT)).rejects.toThrow(/call_readiness/);
+    expect(readinessFrom({ calls_on: true })).toBeNull();
     // An answer that isn't the minutes is no answer.
     const odd = supabaseDirectory(fakeSupabase({ rows, answers: { remy_minutes_now: { data: { total_ms: 'five' }, error: null } } }).client);
     await expect(odd.minutesOf(PROJECT, LEASE, false)).rejects.toThrow(/not an answer/);

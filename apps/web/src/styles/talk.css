@@ -53,6 +53,31 @@
   cursor: progress;
 }
 
+/*
+ * Held: Remy can't be called now (call/hold.ts), and the button says why. Grey and still, without its light, so it
+ * doesn't invite a press that would only be refused.
+ */
+.talk-spark[data-state='held'] {
+  --talk-glow: 0;
+  color: var(--header-ink-soft);
+  cursor: not-allowed;
+  animation: none;
+  filter: grayscale(1);
+  opacity: 0.72;
+}
+
+.talk-spark[data-state='held'] :is(.talk-spark-ring, .talk-spark-bloom, .talk-spark-twinkle) {
+  display: none;
+}
+
+.talk-spark[data-state='held'] .talk-spark-face {
+  box-shadow: inset 0 0 0 1px var(--header-line);
+}
+
+.talk-spark[data-state='held'] .talk-spark-face::after {
+  animation: none;
+}
+
 /* A quick sweep, then a slow drift: two thirds of a turn in a second and a half, the rest in six. */
 @keyframes talk-breath {
   0% {

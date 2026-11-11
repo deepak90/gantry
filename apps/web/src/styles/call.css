@@ -35,6 +35,15 @@
   white-space: nowrap;
 }
 
+/* Greyed while a call can't be had for another reason, as the button beside it is. */
+.remy-minutes.is-paused {
+  opacity: 0.6;
+}
+
+.remy-minutes.is-paused .remy-orb {
+  filter: grayscale(1);
+}
+
 .remy-orb {
   flex: none;
   width: 1.25rem;

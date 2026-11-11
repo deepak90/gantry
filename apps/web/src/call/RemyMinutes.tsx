@@ -65,16 +65,17 @@ export function useSecondsNow(running: boolean): number {
 
 /**
  * Before a call, in the header: the orb and what's left ("4:12 left"), running down while someone else's call with
- * Remy goes on; once they're used up, the empty orb and "No Remy minutes left", in place of the call button.
+ * Remy goes on; once they're used up, the empty orb and "No Remy minutes left", in place of the call button. Greyed
+ * (`paused`) while a call can't be had for another reason, as the button beside it is.
  */
-export function RemyMinutesChip({ minutes }: { minutes: HeardMinutes }) {
+export function RemyMinutesChip({ minutes, paused = false }: { minutes: HeardMinutes; paused?: boolean }) {
   const now = useSecondsNow(minutes.going);
   const left = minutesLeftAt(minutes, now);
   const spent = minutesSpent(minutes);
   const title = spent ? spentTitle(minutes.totalMs) : minutesTitle(left, minutes.totalMs, minutes.going);
   return (
     <span
-      className={`remy-minutes${spent ? ' is-spent' : ''}`}
+      className={`remy-minutes${spent ? ' is-spent' : paused ? ' is-paused' : ''}`}
       title={title}
       role={spent ? 'status' : undefined}
       aria-label={spent ? SPENT_TEXT : `${spokenDuration(left)} of Remy's time left for this session`}
@@ -82,7 +83,7 @@ export function RemyMinutesChip({ minutes }: { minutes: HeardMinutes }) {
       data-left-s={Math.ceil(left / 1000)}
       data-spent={spent}
     >
-      <RemyOrb fullness={spent ? 0 : fullnessOf(left, minutes.totalMs)} draining={minutes.going && left > 0} ending={minutes.going && left <= MINUTES_ENDING_MS} />
+      <RemyOrb fullness={spent ? 0 : fullnessOf(left, minutes.totalMs)} draining={!paused && minutes.going && left > 0} ending={!paused && minutes.going && left <= MINUTES_ENDING_MS} />
       <span className="remy-minutes-text" aria-hidden="true">
         {spent ? SPENT_TEXT : `${formatMinutes(left)} left`}
       </span>

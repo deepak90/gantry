@@ -61,7 +61,7 @@ export function CallEntry({ snapshot, view, waiting, minutes = null, notice = nu
           {note.text}
         </span>
       )}
-      {minutes && !view.inCall && <RemyMinutesChip minutes={minutes} />}
+      {minutes && !view.inCall && <RemyMinutesChip minutes={minutes} paused={view.held !== null || (view.start === null && view.note !== null)} />}
       <AnimatePresence initial={false}>
         {shown && (
           <motion.span
@@ -73,7 +73,7 @@ export function CallEntry({ snapshot, view, waiting, minutes = null, notice = nu
             transition={{ duration: 0.32, ease: EASE }}
           >
             <SparkShell
-              state={view.joining ? 'connecting' : snapshot.status === 'failed' && !view.held ? 'failed' : 'off'}
+              state={view.joining ? 'connecting' : view.held ? 'held' : snapshot.status === 'failed' ? 'failed' : 'off'}
               icon="remy"
               text={view.joining ? 'Joining…' : view.held ? view.held.text : (view.start?.label ?? 'Call Remy')}
               title={view.joining ? 'Joining the call' : view.held ? view.held.title : (view.start?.title ?? '')}
@@ -114,7 +114,7 @@ export function RemySeat({ seat, held = null, onCall }: { seat: StripView['seat'
           transition={{ duration: reduce ? 0 : 0.42, ease: EASE }}
         >
           <SparkShell
-            state={seat === 'joining' ? 'connecting' : 'off'}
+            state={seat === 'joining' ? 'connecting' : seat === 'held' ? 'held' : 'off'}
             icon="remy"
             text={seat === 'joining' ? `${ASSISTANT_NAME} is joining…` : seat === 'held' ? (held?.text ?? `${ASSISTANT_NAME} is unavailable`) : `Call ${ASSISTANT_NAME}`}
             title={seat === 'joining' ? `${ASSISTANT_NAME} is on her way` : seat === 'held' ? (held?.title ?? '') : `${ASSISTANT_NAME} isn't on the call. Ask her to join.`}

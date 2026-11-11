@@ -7,6 +7,7 @@
  * On the hosted site, a refusal (403 or 409, with `{ error }` in plain words) comes back as a CallRefusedError carrying
  * those words; the dev server's answers stay plain errors, as they always were.
  */
+import { roomBlockOf } from './hold';
 import { roomMinutesOf } from './minutes';
 import type { TokenRequest } from './protocol';
 import type { CallToken } from './session';
@@ -62,14 +63,17 @@ export function callEndpoints({ hosted, accessToken, livekitUrl = null }: Endpoi
 /** The server said no, in its own words (403: not allowed; 409: not now, as when Remy is on as many calls as she takes). */
 export class CallRefusedError extends Error {
   readonly status: number;
-  /** Why, when the server said (call-hosted.ts: remy_busy, allowance_spent, calls_off). */
+  /** Why, when the server said (call-hosted.ts: remy_busy, allowance_spent, minutes_spent, calls_off, calls_paused). */
   readonly code: string | null;
+  /** When a pause lifts (ms), when the server said. */
+  readonly until: number | null;
 
-  constructor(message: string, status: number, code: string | null = null) {
+  constructor(message: string, status: number, code: string | null = null, until: number | null = null) {
     super(message);
     this.name = 'CallRefusedError';
     this.status = status;
     this.code = code;
+    this.until = until;
   }
 }
 
@@ -84,10 +88,11 @@ export async function requestCallToken(endpoints: CallEndpoints, request: TokenR
     headers: { 'Content-Type': 'application/json', ...(await endpoints.headers()) },
     body: JSON.stringify(request),
   });
-  const answer = (await response.json().catch(() => ({}))) as Partial<CallToken> & { error?: unknown; code?: unknown };
+  const answer = (await response.json().catch(() => ({}))) as Partial<CallToken> & { error?: unknown; code?: unknown; until?: unknown };
   const words = typeof answer.error === 'string' && answer.error.trim() !== '' ? answer.error.trim() : null;
   const code = typeof answer.code === 'string' && /^[a-z_]{1,40}$/.test(answer.code) ? answer.code : null;
-  if (endpoints.hosted && REFUSALS.has(response.status) && words) throw new CallRefusedError(words, response.status, code);
+  const until = typeof answer.until === 'number' && Number.isFinite(answer.until) ? answer.until : null;
+  if (endpoints.hosted && REFUSALS.has(response.status) && words) throw new CallRefusedError(words, response.status, code, until);
   const url = typeof answer.url === 'string' && answer.url !== '' ? answer.url : endpoints.fallbackUrl;
   if (!response.ok || typeof answer.token !== 'string' || !url) throw new Error(words ?? `the ${endpoints.hosted ? 'server' : 'dev server'} answered ${response.status}`);
   return { url, token: answer.token, remy: typeof answer.remy === 'string' ? answer.remy : null };
@@ -98,13 +103,15 @@ export async function requestRoom(endpoints: CallEndpoints, projectId: string, f
   try {
     const response = await fetcher(endpoints.roomUrl(projectId), { headers: await endpoints.headers() });
     if (!response.ok) return null;
-    const answer = (await response.json()) as Partial<RoomNews> & { minutes?: unknown };
+    const answer = (await response.json()) as Partial<RoomNews> & { minutes?: unknown; blocked?: unknown };
     const minutes = roomMinutesOf(answer.minutes);
+    const blocked = roomBlockOf(answer.blocked);
     return {
       up: answer.up === true,
       people: Array.isArray(answer.people) ? answer.people.filter((name): name is string => typeof name === 'string') : [],
       remy: answer.remy === true,
       ...(minutes ? { minutes } : {}),
+      ...(blocked ? { blocked } : {}),
     };
   } catch {
     return null;
