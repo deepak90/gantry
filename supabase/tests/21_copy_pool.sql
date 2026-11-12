@@ -324,16 +324,19 @@ select is((select enabled from public.app_flags where key = 'live_payments'), fa
 
 -- Quotas ---------------------------------------------------------------------------------------------------------
 select results_eq($$select kind, per_copy, per_day from public.quota_limits where kind in ('ai_turn', 'call_join', 'call_start') order by kind$$,
-  $$values ('ai_turn', 40, 250), ('call_join', 20, 300), ('call_start', 2, 15)$$,
-  'forty turns with Remy, two calls and twenty call tokens per copy; 250 turns, fifteen calls and 300 tokens a day (20261111040000_visitor_limits.sql, 20261111130000_call_allowances.sql)');
+  $$values ('ai_turn', 40, 500), ('call_join', 40, 300), ('call_start', null, 30)$$,
+  'forty turns with Remy and forty call tokens per copy, and no count of calls per copy; 500 turns, thirty calls and 300 tokens a day (20261111040000_visitor_limits.sql to 20261111180000_calls_hardening.sql)');
 -- The counting below is the same at any limit: run it at fifteen a copy.
 update public.quota_limits set per_copy = 15 where kind = 'ai_turn';
 select is(public.use_quota('ai_turn', pg_temp.project_of('full21')), true, 'a use within the limits is allowed');
 select is(public.use_quota('ai_turn', pg_temp.project_of('full21'), 14), true, 'up to the copy''s limit');
 select is(public.use_quota('ai_turn', pg_temp.project_of('full21')), false, 'not one more');
 select is((select used from public.quota_usage where kind = 'ai_turn' and project_id = pg_temp.project_of('full21')), 15, 'and a refusal counts nothing');
+-- Calls have no limit per copy since 20261111170000_calls_for_judging.sql; a count per copy still holds where one is set.
+update public.quota_limits set per_copy = 2 where kind = 'call_start';
 select is(public.use_quota('call_start', pg_temp.project_of('full21'), 2), true, 'two calls');
 select is(public.use_quota('call_start', pg_temp.project_of('full21')), false, 'but not a third');
+update public.quota_limits set per_copy = null where kind = 'call_start';
 select is(public.use_quota('ai_turn', pg_temp.project_of('full22'), 16), false, 'more than a copy may use at once is refused whole');
 select is((select coalesce(sum(used), 0)::int from public.quota_usage where kind = 'ai_turn' and project_id = pg_temp.project_of('full22')), 0, 'counting nothing');
 update public.quota_limits set per_day = 20 where kind = 'ai_turn';

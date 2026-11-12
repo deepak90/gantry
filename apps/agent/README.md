@@ -16,7 +16,7 @@ events); the tables, RPCs and topic come from `supabase/migrations/2026102204000
 pnpm agent:dev                                  # repo root; same as pnpm --filter @collab/agent dev
 AGENT_MODE=mock pnpm agent:dev                  # scripted stand-in model: no key, no cost
 pnpm --filter @collab/agent smoke ["question"]  # against the running stack and service, as Deepak (cm@demo.local)
-pnpm --filter @collab/agent test                # 359 Vitest tests
+pnpm --filter @collab/agent test                # 363 Vitest tests
 pnpm --filter @collab/agent typecheck
 ```
 
@@ -57,7 +57,7 @@ copies, on Fly.io, built from the repo root with `apps/agent/Dockerfile`. Its co
 | `REMY_LINE_SECRET` | `fly secrets import` (below) | the secret shared with Remy's call worker: the service signs every reply it streams and stores (`src/realtime/line-signature.ts`), and her voice says only what it signed. Unset, nothing is signed |
 
 With `GANTRY_HOSTED=1` (`src/hosted.ts`), before a turn calls Claude the service checks `app_flags.live_ai`, then
-spends one `use_quota('ai_turn', project)` (40 a copy, 2000 a day). If either says no, the turn is one plain reply
+spends one `use_quota('ai_turn', project)` (40 a copy, 500 a day). If either says no, the turn is one plain reply
 ("I've reached today's limit for this session. The rest of the app still works.") with no model call, said aloud on a
 call; an opening the app would start on its own stays quiet instead. A message over 600 characters gets a polite
 refusal and spends nothing. The system prompt adds two rules: decline anything that isn't about the project's plan,
@@ -72,9 +72,9 @@ apology, so nobody takes a draft that wasn't made as made) and 4,000 for one the
 the model cut at 8,000 characters with a note saying so, and the system prompt cached for an hour. After each turn,
 and each thread title, the service prices the tokens the API reported (`src/llm/pricing.ts`, Sonnet 5.5 at $2 in, $10
 out, $0.10 cache reads, $2.50 or $4 cache writes a million tokens) and calls `record_spend('anthropic', …)`
-(`supabase/migrations/20261111060000_spend_breaker.sql`). Once a day's budget is spent (Anthropic $5, OpenAI $4,
-ElevenLabs $1.50, LiveKit $1.50, $12 in all, UTC days; rows in `spend_limits`, set in
-`supabase/migrations/20261111130000_call_allowances.sql`), the breaker turns `live_ai` (or `live_calls`)
+(`supabase/migrations/20261111060000_spend_breaker.sql`). Once a day's budget is spent (Anthropic $15, OpenAI $7.50,
+ElevenLabs $3, LiveKit $3, $28.50 in all, UTC days; rows in `spend_limits`, set in
+`supabase/migrations/20261111170000_calls_for_judging.sql` and `20261111180000_calls_hardening.sql`), the breaker turns `live_ai` (or `live_calls`)
 off, so the next turns get the limit line; at 00:05 UTC pg_cron runs `reset_spend_breaker()`, which turns back on only
 what the breaker turned off.
 

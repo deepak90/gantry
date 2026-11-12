@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1010" width="1600" height="1010" role="img" aria-labelledby="t d">
 <title id="t">How Gantry fits together</title>
-<desc id="d">Each browser runs the Gantt and its scheduling engine and talks to Supabase (Auth, Postgres, Realtime, Storage, Edge Functions). The assistant service on Fly.io reads and writes through Supabase, runs Claude, and reads PayPal. Edge Functions pay the crews and send invoices through PayPal. The call runs on LiveKit: Vercel functions hand out tokens and bring Remy in, and her call worker hears each person through OpenAI and speaks through OpenAI or ElevenLabs.</desc>
+<desc id="d">Each browser runs the Gantt and its scheduling engine and talks to Supabase (Auth, Postgres, Realtime, Storage, Edge Functions). The assistant service on Fly.io reads and writes through Supabase, runs Claude, and reads PayPal. Edge Functions pay the crews and send invoices through PayPal. The call runs on LiveKit: Vercel functions hand out tokens, bring Remy in, keep each session’s minutes with her and take LiveKit’s webhook for when she leaves, and her call worker hears each person through OpenAI and speaks through OpenAI or ElevenLabs.</desc>
 <defs>
 <marker id="a-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#5b6b84"/></marker>
 <marker id="a-ai" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#6d4ae0"/></marker>
@@ -13,8 +13,8 @@
 <rect x="1" y="1" width="1598" height="1008" rx="20" fill="url(#major)" opacity="0.9"/>
 <text x="40" y="56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="26" font-weight="750" fill="#0f172a" text-anchor="start">How Gantry fits together</text>
 <text x="40" y="82" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13.5" font-weight="400" fill="#5b6b84" text-anchor="start">The hosted site runs on Vercel, Supabase, Fly.io and LiveKit Cloud. A local build runs the same pieces on your machine, with the Vite dev server in Vercel’s place.</text>
-<rect x="52" y="122" width="300" height="712" rx="16" fill="#ffffff" fill-opacity="0.5" stroke="#d3dbe8" stroke-width="1.2"/>
-<rect x="40" y="110" width="300" height="712" rx="16" fill="#ffffff" fill-opacity="0.72" stroke="#c4cfdf" stroke-width="1.3"/>
+<rect x="52" y="122" width="300" height="730" rx="16" fill="#ffffff" fill-opacity="0.5" stroke="#d3dbe8" stroke-width="1.2"/>
+<rect x="40" y="110" width="300" height="730" rx="16" fill="#ffffff" fill-opacity="0.72" stroke="#c4cfdf" stroke-width="1.3"/>
 <text x="58" y="135" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#5b6b84" text-anchor="start" letter-spacing="1.1">EACH PERSON’S BROWSER</text>
 <rect x="58" y="148" width="264" height="50" rx="11" fill="#ffffff" stroke="#b6c2d6" stroke-width="1.2"/>
 <text x="73" y="173" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="650" fill="#0f172a" text-anchor="start">Sign-in</text>
@@ -36,11 +36,11 @@
 <rect x="58" y="552" width="264" height="70" rx="11" fill="#ffffff" stroke="#7fb2ec" stroke-width="1.8" stroke-dasharray="6 4"/>
 <text x="73" y="577" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="650" fill="#0f172a" text-anchor="start">PayPal’s checkout window</text>
 <text x="73" y="597" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">PayPal’s own button (local build)</text>
-<rect x="58" y="694" width="264" height="110" rx="11" fill="#ffffff" stroke="#b6c2d6" stroke-width="1.2"/>
-<text x="73" y="719" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="650" fill="#0f172a" text-anchor="start">Call bar</text>
-<text x="73" y="739" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">livekit-client · each person’s mic</text>
-<text x="73" y="757" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">the host’s tab hands Remy her lines,</text>
-<text x="73" y="775" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">signed by the assistant service</text>
+<rect x="58" y="712" width="264" height="110" rx="11" fill="#ffffff" stroke="#b6c2d6" stroke-width="1.2"/>
+<text x="73" y="737" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="650" fill="#0f172a" text-anchor="start">Call bar</text>
+<text x="73" y="757" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">livekit-client · each person’s mic</text>
+<text x="73" y="775" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">the host’s tab hands Remy her lines,</text>
+<text x="73" y="793" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">signed by the assistant service</text>
 <rect x="440" y="110" width="320" height="468" rx="16" fill="#ffffff" fill-opacity="0.72" stroke="#c4cfdf" stroke-width="1.3"/>
 <text x="458" y="135" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#5b6b84" text-anchor="start" letter-spacing="1.1">SUPABASE</text>
 <rect x="458" y="148" width="284" height="50" rx="11" fill="#ffffff" stroke="#b6c2d6" stroke-width="1.2"/>
@@ -66,13 +66,14 @@
 <text x="744" y="629" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#8a97ab" text-anchor="end">local build</text>
 <rect x="458" y="636" width="284" height="44" rx="11" fill="#ffffff" stroke="#b6c2d6" stroke-width="1.2" stroke-dasharray="6 4"/>
 <text x="473" y="661" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="650" fill="#0f172a" text-anchor="start">Call routes · crews’ PayPal orders</text>
-<rect x="440" y="704" width="320" height="118" rx="16" fill="#ffffff" fill-opacity="0.72" stroke="#c4cfdf" stroke-width="1.3"/>
+<rect x="440" y="704" width="320" height="136" rx="16" fill="#ffffff" fill-opacity="0.72" stroke="#c4cfdf" stroke-width="1.3"/>
 <text x="458" y="729" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#5b6b84" text-anchor="start" letter-spacing="1.1">VERCEL</text>
 <text x="744" y="729" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#8a97ab" text-anchor="end">hosted</text>
-<rect x="458" y="738" width="284" height="72" rx="11" fill="#ffffff" stroke="#b6c2d6" stroke-width="1.2"/>
+<rect x="458" y="738" width="284" height="90" rx="11" fill="#ffffff" stroke="#b6c2d6" stroke-width="1.2"/>
 <text x="473" y="763" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="650" fill="#0f172a" text-anchor="start">api/call</text>
 <text x="473" y="783" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">call token · bring Remy in</text>
 <text x="473" y="801" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">checks membership and limits</text>
+<text x="473" y="819" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">keeps Remy’s minutes, in Postgres</text>
 <rect x="850" y="110" width="320" height="282" rx="16" fill="#ffffff" fill-opacity="0.72" stroke="#c4cfdf" stroke-width="1.3"/>
 <text x="868" y="135" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#5b6b84" text-anchor="start" letter-spacing="1.1">FLY.IO</text>
 <text x="1154" y="135" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#8a97ab" text-anchor="end">hosted · or pnpm agent:dev</text>
@@ -93,17 +94,18 @@
 <text x="865" y="495" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">Orders: PayPal’s button (local build)</text>
 <text x="865" y="513" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">Agent Toolkit: Remy reads, never pays</text>
 <text x="865" y="531" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">the app asks where each payment stands</text>
-<rect x="850" y="604" width="320" height="218" rx="16" fill="#ffffff" fill-opacity="0.72" stroke="#c4cfdf" stroke-width="1.3"/>
+<rect x="850" y="604" width="320" height="236" rx="16" fill="#ffffff" fill-opacity="0.72" stroke="#c4cfdf" stroke-width="1.3"/>
 <text x="868" y="629" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#5b6b84" text-anchor="start" letter-spacing="1.1">LIVEKIT CLOUD</text>
 <text x="1154" y="629" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="500" fill="#8a97ab" text-anchor="end">hosted · or livekit-server</text>
 <rect x="868" y="640" width="284" height="92" rx="11" fill="#ffffff" stroke="#b6c2d6" stroke-width="1.2"/>
 <text x="883" y="665" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="650" fill="#0f172a" text-anchor="start">Remy’s call worker</text>
 <text x="883" y="685" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">hears each person on their own track</text>
 <text x="883" y="703" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">answers lines addressed to her</text>
-<text x="883" y="721" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">speaks only lines the service signed</text>
-<rect x="868" y="752" width="284" height="54" rx="11" fill="#ffffff" stroke="#b6c2d6" stroke-width="1.2"/>
+<text x="883" y="721" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">her answers are lines the service signed</text>
+<rect x="868" y="752" width="284" height="72" rx="11" fill="#ffffff" stroke="#b6c2d6" stroke-width="1.2"/>
 <text x="883" y="777" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="650" fill="#0f172a" text-anchor="start">Call room</text>
 <text x="883" y="797" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">one per session · everyone’s audio</text>
+<text x="883" y="815" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">a signed webhook when Remy leaves</text>
 <rect x="1240" y="160" width="320" height="96" rx="11" fill="#ffffff" stroke="#6d4ae0" stroke-width="1.8"/>
 <text x="1255" y="185" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="650" fill="#0f172a" text-anchor="start">Claude</text>
 <text x="1255" y="205" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">Anthropic API</text>
@@ -112,9 +114,10 @@
 <text x="1255" y="655" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="650" fill="#0f172a" text-anchor="start">OpenAI</text>
 <text x="1255" y="675" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">realtime transcription, one per person</text>
 <text x="1255" y="693" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">gpt-4o-mini-tts voice · Whisper check</text>
-<rect x="1240" y="724" width="320" height="62" rx="11" fill="#ffffff" stroke="#b6c2d6" stroke-width="1.2" stroke-dasharray="6 4"/>
+<rect x="1240" y="724" width="320" height="72" rx="11" fill="#ffffff" stroke="#b6c2d6" stroke-width="1.2"/>
 <text x="1255" y="749" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="650" fill="#0f172a" text-anchor="start">ElevenLabs</text>
-<text x="1255" y="769" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">Remy’s voice (optional)</text>
+<text x="1255" y="769" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">Remy’s voice on the hosted site</text>
+<text x="1255" y="787" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" font-weight="400" fill="#475569" text-anchor="start">optional on a local build</text>
 <rect x="1240" y="330" width="320" height="196" rx="14" fill="#ffffff" fill-opacity="0.8" stroke="#d3dbe8"/>
 <text x="1258" y="356" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#5b6b84" text-anchor="start" letter-spacing="1.1">KEY</text>
 <path d="M1258 384 H1306" stroke="#5b6b84" stroke-width="2.4" marker-end="url(#a-data)"/>
@@ -143,8 +146,8 @@
 <rect x="341.4" y="468.0" width="97.2" height="18" rx="9" fill="#f7f9fc" stroke="#0070e0" stroke-opacity="0.35" stroke-width="1"/>
 <text x="390.0" y="481.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#0070e0" text-anchor="middle">pay · invoice</text>
 <path d="M322 774 L458 774" fill="none" stroke="#0f8f86" stroke-width="2" marker-end="url(#a-voice)" stroke-linejoin="round"/>
-<rect x="351.0" y="754.0" width="78.0" height="18" rx="9" fill="#f7f9fc" stroke="#0f8f86" stroke-opacity="0.35" stroke-width="1"/>
-<text x="390.0" y="767.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#0f8f86" text-anchor="middle">call token</text>
+<rect x="335.0" y="754.0" width="110.0" height="18" rx="9" fill="#f7f9fc" stroke="#0f8f86" stroke-opacity="0.35" stroke-width="1"/>
+<text x="390.0" y="767.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#0f8f86" text-anchor="middle">token · minutes</text>
 <path d="M742 260 L868 260" fill="none" stroke="#6d4ae0" stroke-width="2" marker-start="url(#a-ai)" marker-end="url(#a-ai)" stroke-linejoin="round"/>
 <rect x="750.0" y="240.0" width="110.0" height="18" rx="9" fill="#f7f9fc" stroke="#6d4ae0" stroke-opacity="0.35" stroke-width="1"/>
 <text x="805.0" y="253.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#6d4ae0" text-anchor="middle">messages · plan</text>
@@ -160,26 +163,30 @@
 <path d="M322 590 L800 590 L800 545 L850 545" fill="none" stroke="#0070e0" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#a-money)" stroke-linejoin="round"/>
 <rect x="341.4" y="570" width="97.2" height="18" rx="9" fill="#f7f9fc" stroke="#0070e0" stroke-opacity="0.35" stroke-width="1"/>
 <text x="390.0" y="583" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#0070e0" text-anchor="middle">approve · pay</text>
-<path d="M742 779 L868 779" fill="none" stroke="#0f8f86" stroke-width="2" marker-end="url(#a-voice)" stroke-linejoin="round"/>
-<rect x="769.2" y="759.0" width="71.6" height="18" rx="9" fill="#f7f9fc" stroke="#0f8f86" stroke-opacity="0.35" stroke-width="1"/>
-<text x="805.0" y="772.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#0f8f86" text-anchor="middle">send Remy</text>
+<path d="M742 770 L868 770" fill="none" stroke="#0f8f86" stroke-width="2" marker-end="url(#a-voice)" stroke-linejoin="round"/>
+<rect x="769.2" y="750.0" width="71.6" height="18" rx="9" fill="#f7f9fc" stroke="#0f8f86" stroke-opacity="0.35" stroke-width="1"/>
+<text x="805.0" y="763.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#0f8f86" text-anchor="middle">send Remy</text>
+<path d="M868 808 L742 808" fill="none" stroke="#0f8f86" stroke-width="2" marker-end="url(#a-voice)" stroke-linejoin="round"/>
+<rect x="769.2" y="788.0" width="71.6" height="18" rx="9" fill="#f7f9fc" stroke="#0f8f86" stroke-opacity="0.35" stroke-width="1"/>
+<text x="805.0" y="801.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#0f8f86" text-anchor="middle">Remy left</text>
 <path d="M1010 374 L1010 414" fill="none" stroke="#0070e0" stroke-width="2" marker-end="url(#a-money)" stroke-linejoin="round"/>
 <rect x="1014.0" y="386" width="78.0" height="18" rx="9" fill="#f7f9fc" stroke="#0070e0" stroke-opacity="0.35" stroke-width="1"/>
 <text x="1053.0" y="399" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#0070e0" text-anchor="middle">reads only</text>
 <path d="M1010 752 L1010 732" fill="none" stroke="#0f8f86" stroke-width="2" marker-start="url(#a-voice)" marker-end="url(#a-voice)" stroke-linejoin="round"/>
-<path d="M190 804 L190 866 L1010 866 L1010 806" fill="none" stroke="#0f8f86" stroke-width="2" marker-start="url(#a-voice)" marker-end="url(#a-voice)" stroke-linejoin="round"/>
-<rect x="461.8" y="846" width="276.4" height="18" rx="9" fill="#f7f9fc" stroke="#0f8f86" stroke-opacity="0.35" stroke-width="1"/>
-<text x="600.0" y="859" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#0f8f86" text-anchor="middle">audio · what she heard · her signed lines</text>
+<path d="M190 822 L190 882 L1010 882 L1010 824" fill="none" stroke="#0f8f86" stroke-width="2" marker-start="url(#a-voice)" marker-end="url(#a-voice)" stroke-linejoin="round"/>
+<rect x="461.8" y="862" width="276.4" height="18" rx="9" fill="#f7f9fc" stroke="#0f8f86" stroke-opacity="0.35" stroke-width="1"/>
+<text x="600.0" y="875" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#0f8f86" text-anchor="middle">audio · what she heard · her signed lines</text>
 <path d="M1152 208 L1240 208" fill="none" stroke="#6d4ae0" stroke-width="2" marker-start="url(#a-ai)" marker-end="url(#a-ai)" stroke-linejoin="round"/>
 <rect x="1160.2" y="188.0" width="71.6" height="18" rx="9" fill="#f7f9fc" stroke="#6d4ae0" stroke-opacity="0.35" stroke-width="1"/>
 <text x="1196.0" y="201.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#6d4ae0" text-anchor="middle">tool loop</text>
 <path d="M1152 668 L1240 668" fill="none" stroke="#0f8f86" stroke-width="2" marker-end="url(#a-voice)" stroke-linejoin="round"/>
 <rect x="1173.0" y="648.0" width="46.0" height="18" rx="9" fill="#f7f9fc" stroke="#0f8f86" stroke-opacity="0.35" stroke-width="1"/>
 <text x="1196.0" y="661.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#0f8f86" text-anchor="middle">hears</text>
-<path d="M1152 728 L1240 728" fill="none" stroke="#0f8f86" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#a-voice)" stroke-linejoin="round"/>
+<path d="M1152 728 L1240 728" fill="none" stroke="#0f8f86" stroke-width="2" marker-end="url(#a-voice)" stroke-linejoin="round"/>
 <rect x="1173.0" y="708.0" width="46.0" height="18" rx="9" fill="#f7f9fc" stroke="#0f8f86" stroke-opacity="0.35" stroke-width="1"/>
 <text x="1196.0" y="721.0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" fill="#0f8f86" text-anchor="middle">voice</text>
-<text x="40" y="924" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#5b6b84" text-anchor="start">On the hosted site, words said to Remy go from the speaker’s tab into the conversation; her answers go from the assistant service over Realtime to the host’s tab,</text>
-<text x="40" y="944" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#5b6b84" text-anchor="start">which hands them, signed, to her call worker. The assistant service and the call worker never connect directly. Every payment runs in PayPal’s sandbox.</text>
-<text x="1560" y="980" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#8a97ab" text-anchor="end" letter-spacing="1.2">GANTRY · ARCHITECTURE · SHEET A-401</text>
+<text x="40" y="928" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#5b6b84" text-anchor="start">On the hosted site, words said to Remy go from the speaker’s tab into the conversation; her answers go from the assistant service over Realtime to the host’s tab,</text>
+<text x="40" y="948" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#5b6b84" text-anchor="start">which hands them, signed, to her call worker. The assistant service and the call worker never connect directly. Every payment runs in PayPal’s sandbox.</text>
+<text x="40" y="968" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#5b6b84" text-anchor="start">A hosted session has five minutes with Remy on calls, kept in Postgres by the call routes. A call is counted when LiveKit’s webhook says she left, or when a tab next asks about the room.</text>
+<text x="1560" y="990" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#8a97ab" text-anchor="end" letter-spacing="1.2">GANTRY · ARCHITECTURE · SHEET A-401</text>
 </svg>

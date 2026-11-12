@@ -73,8 +73,9 @@ select results_eq(
            ('message', 10, interval '1 minute', 60, interval '1 hour')$$,
   'a network starts a session every 2 minutes at most, 5 an hour, 15 a day, and holds 2; joins, wrong codes and messages per person and per network');
 select results_eq($$select kind, per_copy, per_day from public.quota_limits order by kind$$,
-  $$values ('ai_turn', 40, 250), ('call_join', 20, 300), ('call_start', 2, 15), ('invoice', 3, 60), ('payout', 3, 30), ('payout_minor', 6000000, 15000000)$$,
-  'and the quotas: Remy''s turns (40 a visit since 20261111130000_call_allowances.sql), calls, call tokens, invoices, payouts and what they pay');
+  $$values ('ai_turn', 40, 500), ('call_join', 40, 300), ('call_start', null, 30), ('invoice', 3, 60), ('payout', 3, 30), ('payout_minor', 6000000, 15000000),
+           ('remy_second', 300, null)$$,
+  'and the quotas: Remy''s turns, call tokens, calls (a day, with no count per copy), invoices, payouts and what they pay, and a session''s seconds with Remy on calls (as of 20261111180000_calls_hardening.sql)');
 
 -- Whose address -------------------------------------------------------------------------------------------------------
 select is(public.visitor_address('203.0.113.7'), '203.0.113.7'::inet, 'a public address counts as itself');

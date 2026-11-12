@@ -107,9 +107,17 @@ name. A copy's `join_code` comes with its invite token and goes with it.
 
 `app_flags` (`live_ai`, `live_calls`, `live_payments`) is readable by anyone and written by the service role.
 `use_quota(p_kind, p_project, p_amount default 1) -> boolean` (service role) checks and counts a use against
-`quota_limits` (`ai_turn` 40 per copy and 250 a day, `call_start` 2 and 15, `call_join` 20 and 300, `payout` 3 and
-30, `payout_minor` $60,000 and $150,000, `invoice` 3 and 60; days in UTC; set in `20261111040000_visitor_limits.sql`
-and `20261111130000_call_allowances.sql`); a copy's counts start over when it is reset.
+`quota_limits` (`ai_turn` 40 per copy and 500 a day, `call_start` 30 a day with no limit per copy, `call_join` 40
+and 300, `payout` 3 and 30, `payout_minor` $60,000 and $150,000, `invoice` 3 and 60; days in UTC; set in
+`20261111040000_visitor_limits.sql`, `20261111130000_call_allowances.sql`, `20261111170000_calls_for_judging.sql` and
+`20261111180000_calls_hardening.sql`); a copy's counts start over when it is reset.
+
+A session's minutes with Remy on calls are a row of `remy_minutes` (the copy and its lease; 300 seconds, `quota_limits`
+`remy_second`), which clients can't read. The site's call routes keep it with the service role: `remy_minutes_now`
+reads it, counting a call that is over first; `remy_minutes_start` sets aside what is left for a call;
+`remy_minutes_ended` counts a call when LiveKit reports that Remy left or that its room closed. `call_readiness` says
+what a call needs as it stands (the switch, the starts, joins and turns left, and whether the day's spend has room), so
+the page can grey its call button before anyone presses it.
 
 ## Hosted project settings
 

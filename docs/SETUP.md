@@ -235,9 +235,9 @@ In the hosted app there is no sign-in screen: a visitor passes Cloudflare Turnst
 (`VITE_TURNSTILE_SITE_KEY`), is signed in anonymously and claims one of the twelve copies of Harbor
 (`claim_copy`); an invite link (`/app?join=<token>`) joins a copy (`join_copy`), and so does its
 6-digit code (`join_copy_by_code`). The call is offered when `app_flags.live_calls` is on and asks the
-site's own `/api/call/token` and `/api/call/room` (Vercel functions in `api/call/`, built and deployed
-with the site; `apps/remy-call/README.md` lists what they read); `VITE_LIVEKIT_URL` names the call
-server. A progress payment goes out through the `paypal-progress-payout` function as one Payouts
+site's own `/api/call/token` and `/api/call/room`; `/api/call/hook` takes LiveKit's webhook (all three
+are Vercel functions in `api/call/`, built and deployed with the site; `apps/remy-call/README.md` lists
+what they read); `VITE_LIVEKIT_URL` names the call server. A progress payment goes out through the `paypal-progress-payout` function as one Payouts
 batch. The walkthroughs and the dev server's crew payment routes (PayPal's own button) are not in a
 hosted build.
 
@@ -256,13 +256,21 @@ Production environment variables, set `VITE_GANTRY_HOSTED=1` and the app's other
 the deploy stops without `VITE_GANTRY_HOSTED=1`. Turn on Analytics and Speed Insights in the
 project, and fill the placeholders in `apps/web/src/site/site-config.ts` (the deploy names any left).
 
+Once, after the first deploy: in LiveKit Cloud, under Settings, Webhooks, add
+`https://<your site>/api/call/hook`, signed with the API key the site's functions use
+(`LIVEKIT_API_KEY`). The route accepts only events signed with that key. When one says Remy left a
+session's call, or that the call's room closed, it counts that call's minutes with her then
+(`remy_minutes_ended`). Without the webhook the minutes are still counted: when a tab next asks
+`/api/call/room`, or in full once the call's share of them has run out. A local build needs none of
+this: the dev server has no hook route and keeps no minutes.
+
 ## 5. Tests
 
 | Command | What it runs |
 |---|---|
-| `pnpm typecheck` | `tsc --noEmit` for `packages/shared`, `apps/web`, `apps/agent`, `apps/remy-call`, `apps/clip-studio`, `supabase/functions`, `tests/e2e` and `tests/clips` |
+| `pnpm typecheck` | `tsc --noEmit` for `packages/shared`, `apps/web`, `apps/agent`, `apps/remy-call`, `apps/clip-studio`, `supabase/functions`, `tests/e2e`, `tests/clips` and `api` |
 | `pnpm test` | Vitest: shared money, date, schema, rental, progress-payment, watch-rule and seed tests; the web tests (Gantt project model, revision sync against the headless engine, presence and follow, library drops, pay holds and late-payment branches, the odds, payments, the call's captions and protocol); the Edge Function logic with a fake PayPal; the assistant service (`apps/agent`: tools, grounding, plan edits, audiences, watch rules, stream batching, the Supabase adapters with fakes, and whole conversations with the scripted model); Remy's call worker (`apps/remy-call`: addressing, turn taking, barge-in, voice pacing, fillers, the voices with fakes) |
-| `pnpm test:db` | pgTAP suite in `supabase/tests` (RLS, `load_project`, `submit_revision`, phantom ids, `save_snapshot`, Realtime, commercial tables, the proposal workflow RPCs, payout bookkeeping and `reset_demo`, project documents and receipts, conversations, the watch list, the payment lock, rental dates, payment approvals, the pool of copies, session codes and names, payment caps); needs the running stack and a freshly reset database (`pnpm db:reset`) |
+| `pnpm test:db` | pgTAP suite in `supabase/tests` (RLS, `load_project`, `submit_revision`, phantom ids, `save_snapshot`, Realtime, commercial tables, the proposal workflow RPCs, payout bookkeeping and `reset_demo`, project documents and receipts, conversations, the watch list, the payment lock, rental dates, payment approvals, the pool of copies, session codes and names, payment caps, payment integrity, visitors' limits, each copy's library, Remy's minutes, invoice redrafts, call readiness); needs the running stack and a freshly reset database (`pnpm db:reset`) |
 | `pnpm test:e2e` | Playwright, mostly two Chromium contexts signed in as the two demo users, in ten specs: `presence`, `collab`, `realtime`, `cells`, `rental-editor`, `rental-pay`, `library`, `demos`, `assistant` and `bryntum-plain` (Bryntum's own behavior, see `docs/bryntum-workarounds.md`). With `PAYPAL_MODE=live` and the functions served, the payment specs send real sandbox payouts; `E2E_PAYOUT=succeeded` requires a payout to reach Paid. Needs the stack and `.env.local`; starts the dev server itself (or reuses one on 5173). Screenshots go to `test-results/screenshots` (`E2E_SCREENSHOT_DIR` overrides) |
 | `pnpm seed:snapshot` | Regenerates `supabase/seed_snapshot.sql` from `packages/shared/src/seed`; `pnpm test` fails while the file is stale |
 

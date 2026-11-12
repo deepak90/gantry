@@ -20,7 +20,7 @@ Every refused line is logged as `say_refused`, with why.
 
 ## Leaving
 
-However she leaves (time up, a quiet minute, everyone gone, nobody came), she sets `remy.leaving=1`, leaves the room at
+However she leaves (time up, 30 quiet seconds on the hosted worker, everyone gone, nobody came), she sets `remy.leaving=1`, leaves the room at
 once, and her sessions close behind her (`src/leaving.ts`). The token route counts a Remy who is leaving, or who has
 shown no `lk.agent.state` for 15 seconds, as gone, and sends her again.
 
@@ -72,12 +72,13 @@ lk agent status                                  # what is live; `lk agent logs`
 
 ## The call's tokens on the hosted site
 
-The site's functions `api/call/token.ts` and `api/call/room.ts` (Vercel) mint the tokens and send Remy, for signed-in
-members of the project (see `apps/web/call-hosted.ts`). `vercel build` builds them with the site, so they deploy with
+The site's functions `api/call/token.ts` and `api/call/room.ts` (Vercel) mint the tokens, send Remy and keep each
+session's minutes with her, for signed-in members of the project; `api/call/hook.ts` takes LiveKit's webhook (see
+`apps/web/call-hosted.ts`). `vercel build` builds them with the site, so they deploy with
 it (`pnpm deploy:site`), and they read these from the Vercel project's Production environment:
 
 | Variable | Use |
 |---|---|
-| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | check the caller's access token, membership, tab and `app_flags.live_calls`; read the copy's visit (`copy_pool.claimed_at`, which names the call's room) and its tabs' sessions; count `use_quota('call_join')` and `use_quota('call_start')`; charge each time Remy is sent with `record_spend`, where the database has it |
-| `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | the same LiveKit Cloud project as the worker |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | check the caller's access token, membership, tab and `app_flags.live_calls`; read the copy's visit (`copy_pool.claimed_at`, which names the call's room) and its tabs' sessions; count `use_quota('call_join')` and `use_quota('call_start')`; charge each time Remy is sent with `record_spend`, where the database has it; keep the session's minutes with Remy (`remy_minutes_now`, `remy_minutes_start`, `remy_minutes_ended`); read what a call needs before anyone presses (`call_readiness`) |
+| `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | the same LiveKit Cloud project as the worker; the key and secret also check the webhook's signature |
 | `MAX_CALLS` | how many rooms may have Remy at once (default 5) |
