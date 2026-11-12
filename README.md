@@ -655,7 +655,7 @@ Remy's tool inputs, presence messages and the assistant's stream events are vali
 - Payments are sandbox only, and no real money has moved. Going live needs PayPal's approvals (see [What going live would take](#what-going-live-would-take)): the platform program for paying several firms in one order, Payouts access, and partner onboarding so invoices don't go out with the app's own API key.
 - Remy reads PayPal only when someone asks her to check, and only status. What she reads doesn't update the app's record (the invoice card catches up when it asks PayPal itself), and she can't send the tenant a reminder.
 - Progress payments get no PDF receipt; receipts are filed for rental payments only. The plan keeps the PayPal order or batch id and the outcome, and each firm's PayPal details stay in the page that sent the payment.
-- Pay applications are simplified: percent complete times scheduled value, less retainage, less what was paid. There are no G702/G703 forms, no stored materials, no lien waivers and no release of retainage at handover.
+- Pay applications are simplified: percent complete times scheduled value, less retainage, less what was paid. Payments use no cost codes, and there are no subcontracts, no G702/G703 forms, no stored materials, no lien waivers and no release of retainage at handover. [A proof of concept](#a-proof-of-concept) says how far that is from a real payment.
 - There is no sign-up and no way to create a project. Locally, the seed creates the demo users and their memberships. On the hosted build, a visitor starts a session on a copy of Harbor and can invite up to four people into it, with its code or link.
 - The payment and permission gaps under [Gaps we know about](#gaps-we-know-about): amounts worked out in the browser, the plan's money fields in a revision log every member can read, and the assistant service's service-role key.
 - One assistant-service instance answers for all projects. It finds the projects when it starts, so a new project needs a restart. A message posted while it is down gets no answer, and after a restart it remembers the last 12 messages of a conversation.
@@ -668,19 +668,33 @@ Remy's tool inputs, presence messages and the assistant's stream events are vali
 
 ## What's next
 
-These are plans, not promises, listed in the order we would build them. The payment safeguards a real business would need are under [For real use](#for-real-use-how-we-would-layer-it).
+### A proof of concept
+
+Gantry is a humble proof of concept. It shows that a payment can sit in the schedule, and that paying a trade partner can release the work waiting on it. On a real job, paying a trade partner takes far more than a PayPal payment from a Gantt chart:
+
+- **Cost codes.** A general contractor keeps each job's money by cost code, often built on CSI's [MasterFormat](https://www.csiresources.org/westregion/masterformat), and by cost type, such as labor, materials or subcontract. Every line of the budget, of each contract and of each invoice is booked to a cost code and a cost type together, which Procore, for one, calls a [budget code](https://support.procore.com/faq/what-is-a-budget-code-in-procores-wbs). Gantry's tasks carry a code from the demo data, but no payment or invoice uses it.
+- **Subcontracts.** Each trade partner works under a subcontract with its own schedule of values, each line coded to the budget. A change reaches the owner as one change order and the trade partner as another, and each moves different numbers. In Gantry a firm has no subcontract: its work is the tasks assigned to it, at their budgets.
+- **A monthly cycle.** The trade partner bills by a set day each month, line by line. The project manager checks the bill against the work on site, and the contractor folds the approved amount into its own bill to the owner. The architect certifies that bill, and on a financed job the lender inspects the work before it funds the draw. A standard subcontract has the contractor pay the trade partner no later than seven days after the owner pays the contractor ([ConsensusDocs 750](https://www.consensusdocs.org/wp-content/uploads/2025/08/750-3.pdf), section 8.2.5). Gantry works the amount out from the plan, in the contractor's browser, with no billing period and nothing sent in by the trade partner.
+- **Paperwork before money.** Each payment is traded for a lien waiver from the trade partner and its suppliers, in a form set by state law in some states ([California's](https://california.public.law/codes/civil_code_section_8132), for example). The contractor also wants a current insurance certificate, a W-9 and, on federally funded work, weekly certified payroll. Payment systems such as Oracle Textura can hold a payment while a lien waiver or a required document is missing ([Oracle's help](https://docs.oracle.com/cd/E97085_01/TPMhelp/en/North_America/10313757.htm)). Gantry collects none of them.
+- **The books and the bank.** The approved bill is posted to the job as a coded payable in the contractor's accounting system (Sage, Trimble Vista, CMiC and others), with retainage kept as its own balance, and a payment run pays it. In [PYMNTS Intelligence's January 2024 report](https://www.americanexpress.com/content/dam/amex/us/merchant/pdf/bcfm/PYMNTS-Rebuilding-Payments-in-the-Construction-Industry-2024.pdf), 76% of subcontractors said they usually or always get paid by paper check. Gantry pays straight from the plan, in PayPal's sandbox, and keeps no books.
+
+Where we want to take it: build those steps in, starting with cost codes and subcontracts, so that an approved pay application ends in a PayPal payment the way it ends in a check or a bank transfer today.
+
+The plans below are listed in the order we would build them. They are plans, not promises. The payment safeguards a real business would need are under [For real use](#for-real-use-how-we-would-layer-it).
 
 ### The next three months
 
+- Cost codes and subcontracts: a budget kept by cost code and cost type, with each task linked to the budget lines it spends, a subcontract for each trade partner with its own schedule of values coded to the budget, and progress payments worked out from those lines instead of from tasks.
 - Move PayPal's own button for the crews (Orders) from the dev server to a deployed function, so a production build can pay either way.
-- Apply to PayPal's platform program, request Payouts access, and test seller onboarding, so trade partners can be paid in their own accounts for real. Until then, keep the sandbox and say so on screen.
+- Apply to PayPal's platform program, request Payouts access, and test seller onboarding, so trade partners can be paid in their own accounts for real. Payouts pays into PayPal and Venmo accounts, so for trade partners who want the money in their bank account, ask PayPal about [Enterprise Payouts (Hyperwallet)](https://developer.paypal.com/payouts/overview), whose enterprise tiers [list bank accounts and checks](https://www.hyperwallet.com/features/). Until then, keep the sandbox and say so on screen.
 - File a PDF receipt for progress payments too, and keep each firm's PayPal result with the plan.
 - Sign-up, project creation and invitations, with roles set per person.
 - Save plan snapshots on the server so big projects open fast.
 
 ### The rest of the first year
 
-- Pay applications on standard terms: G702/G703 exports, stored materials, retainage release at substantial completion, and conditional and unconditional lien waivers collected with each payment.
+- Pay applications that each trade partner sends in every month, from a page of its own, against its schedule of values: change orders on both the owner's side and the trade partner's, stored materials, retainage per line and its release at substantial completion, and G702/G703 exports.
+- Lien waivers and compliance: conditional and unconditional waivers from each trade partner and its suppliers, in the state's form where the law sets one, and insurance certificates, W-9s and licenses checked before a payment can be sent.
 - A phone layout for the field: a foreman reports percent complete with a photo, and the payment is worked out from that report. Spanish as well as English on those screens.
 - Import and export Primavera P6 and Microsoft Project files, so a team can bring its existing schedule.
 - Remy teaches the app: more how-to clips, recorded from the real app the way the first five are, offered when someone gets stuck.
@@ -689,8 +703,8 @@ These are plans, not promises, listed in the order we would build them. The paym
 ### The second year
 
 - A view for trade partners: when their work is scheduled, what they have earned, and when they will be paid.
-- A view for owners and lenders: what is paid, what is held, and what a change does to the handover date.
-- Accounting integrations, so payments and invoices reach the general contractor's books.
+- A view for owners and lenders: what is paid, what is held, and what a change does to the handover date, with the contractor's monthly bill and its trade partners' lien waivers.
+- Accounting integrations: approved, coded pay applications go to the contractor's accounting system, and each payment's record comes back from it.
 - Odds that learn from the team's own finished projects instead of ranges set by hand.
 - Pilots with a few general contractors, onboarding by call with Remy, and pricing per project.
 
