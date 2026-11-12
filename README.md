@@ -70,7 +70,7 @@ What Remy doesn't do: she can't approve, pay or send. Every payment and invoice 
 
 What Gantry does that we did not find on the pages of the products under [Prior art](#prior-art):
 
-- A payment is part of the schedule. Textura holds a payment when lien waivers or compliance documents are missing. Gantry holds the work until the payment is in, so the same scheduling engine that moves the plan shows what paying late does, and paying releases the work.
+- A payment is part of the schedule. Payment systems such as Procore Pay and Oracle Textura hold a payment until its lien waivers and other requirements are in. Gantry holds the work until the payment is in, so the same scheduling engine that moves the plan shows what paying late does, and paying releases the work.
 - The progress payment comes from the plan that people edit: each firm's tasks at their budgets, by percent complete, less retainage, less what was paid.
 - The late-payment forecast and the odds run on the same scheduling engine people edit with, in their own browser.
 - An assistant drafts plan changes, packages of work and invoices from the live plan, works out what each payment comes to, and joins a call with several people.
@@ -678,13 +678,15 @@ Gantry is a humble proof of concept. It shows that a payment can sit in the sche
 - **Paperwork before money.** Each payment is traded for a lien waiver from the trade partner and its suppliers, in a form set by state law in some states ([California's](https://california.public.law/codes/civil_code_section_8132), for example). The contractor also wants a current insurance certificate, a W-9 and, on federally funded work, weekly certified payroll. Payment systems such as Oracle Textura can hold a payment while a lien waiver or a required document is missing ([Oracle's help](https://docs.oracle.com/cd/E97085_01/TPMhelp/en/North_America/10313757.htm)). Gantry collects none of them.
 - **The books and the bank.** The approved bill is posted to the job as a coded payable in the contractor's accounting system (Sage, Trimble Vista, CMiC and others), with retainage kept as its own balance, and a payment run pays it. In [PYMNTS Intelligence's January 2024 report](https://www.americanexpress.com/content/dam/amex/us/merchant/pdf/bcfm/PYMNTS-Rebuilding-Payments-in-the-Construction-Industry-2024.pdf), 76% of subcontractors said they usually or always get paid by paper check. Gantry pays straight from the plan, in PayPal's sandbox, and keeps no books.
 
-Where we want to take it: build those steps in, starting with cost codes and subcontracts, so that an approved pay application ends in a PayPal payment the way it ends in a check or a bank transfer today.
+Construction platforms already run much of this chain. Procore, for example, keeps each subcontract with its schedule of values ([Commitments](https://support.procore.com/products/online/user-guide/project-level/commitments)), invoices owner and subcontractor contracts by billing period, with retainage ([Invoicing](https://support.procore.com/products/online/user-guide/project-level/invoicing)), connects to accounting systems such as Sage 300 CRE, Vista and CMiC ([ERP integrations](https://support.procore.com/products/online/user-guide/company-level/erp-integrations)), and keeps lien waivers, payment requirements and payment holds together in [Procore Pay](https://support.procore.com/products/online/user-guide/company-level/payments). Oracle Textura, GCPay and others cover parts of it too ([Prior art](#prior-art)). Gantry's author works at Procore. Gantry is a personal project, built for PayPal's AI hackathon, and isn't affiliated with or endorsed by Procore.
+
+Where we want to take it: work with the systems that already run those steps instead of rebuilding them. A pay application approved there would end in a PayPal payment, the way it ends in a check or a bank transfer today, and the hold on the work waiting for it would lift.
 
 The plans below are listed in the order we would build them. They are plans, not promises. The payment safeguards a real business would need are under [For real use](#for-real-use-how-we-would-layer-it).
 
 ### The next three months
 
-- Cost codes and subcontracts: a budget kept by cost code and cost type, with each task linked to the budget lines it spends, a subcontract for each trade partner with its own schedule of values coded to the budget, and progress payments worked out from those lines instead of from tasks.
+- Cost codes and subcontracts, read from the contractor's own systems instead of kept in Gantry: the budget by cost code and cost type, and each trade partner's subcontract with its schedule of values. Each task is linked to the budget lines it spends, and progress payments are worked out from those lines instead of from tasks.
 - Move PayPal's own button for the crews (Orders) from the dev server to a deployed function, so a production build can pay either way.
 - Apply to PayPal's platform program, request Payouts access, and test seller onboarding, so trade partners can be paid in their own accounts for real. Payouts pays into PayPal and Venmo accounts, so for trade partners who want the money in their bank account, ask PayPal about [Enterprise Payouts (Hyperwallet)](https://developer.paypal.com/payouts/overview), whose enterprise tiers [list bank accounts and checks](https://www.hyperwallet.com/features/). Until then, keep the sandbox and say so on screen.
 - File a PDF receipt for progress payments too, and keep each firm's PayPal result with the plan.
@@ -693,8 +695,8 @@ The plans below are listed in the order we would build them. They are plans, not
 
 ### The rest of the first year
 
-- Pay applications that each trade partner sends in every month, from a page of its own, against its schedule of values: change orders on both the owner's side and the trade partner's, stored materials, retainage per line and its release at substantial completion, and G702/G703 exports.
-- Lien waivers and compliance: conditional and unconditional waivers from each trade partner and its suppliers, in the state's form where the law sets one, and insurance certificates, W-9s and licenses checked before a payment can be sent.
+- Pay applications approved where the contractor already approves them: a trade partner's monthly pay application, with its change orders, stored materials and retainage, becomes the PayPal payment that lifts the hold on the work it covers.
+- Lien waivers and compliance: a payment, and the work waiting on it, stays held until the contractor's system shows that the lien waivers, insurance certificates and other required documents are in.
 - A phone layout for the field: a foreman reports percent complete with a photo, and the payment is worked out from that report. Spanish as well as English on those screens.
 - Import and export Primavera P6 and Microsoft Project files, so a team can bring its existing schedule.
 - Remy teaches the app: more how-to clips, recorded from the real app the way the first five are, offered when someone gets stuck.
@@ -704,7 +706,7 @@ The plans below are listed in the order we would build them. They are plans, not
 
 - A view for trade partners: when their work is scheduled, what they have earned, and when they will be paid.
 - A view for owners and lenders: what is paid, what is held, and what a change does to the handover date, with the contractor's monthly bill and its trade partners' lien waivers.
-- Accounting integrations: approved, coded pay applications go to the contractor's accounting system, and each payment's record comes back from it.
+- Accounting: each PayPal payment's record goes back to the contractor's accounting system, against the pay application and cost code it paid.
 - Odds that learn from the team's own finished projects instead of ranges set by hand.
 - Pilots with a few general contractors, onboarding by call with Remy, and pricing per project.
 
@@ -724,7 +726,7 @@ Construction scheduling:
 
 Construction payments:
 
-- [Procore Pay](https://www.procore.com/pay) puts lien waivers, payment requirements, payment holds and invoice payments in one place for the payer, and payees link a bank account. It is available in the US.
+- [Procore Pay](https://www.procore.com/pay) puts lien waivers, payment requirements, payment holds and invoice payments in one place for the payer, and payees link a bank account ([support page](https://support.procore.com/products/online/user-guide/company-level/payments)). It is available in the US.
 - [Oracle Textura Payment Management](https://www.oracle.com/construction-engineering/textura-construction-payment-management/) runs the draw process, generates G702/G703 documents from each contract's schedule of values, and holds payments when lien waivers or compliance documents are missing.
 - [GCPay](https://www.gcpay.com/) handles pay applications, schedules of values, change orders, retainage and lien waivers between general contractors and subcontractors.
 - [Built](https://getbuilt.com/features/draw-management/) gives lenders construction loan and draw management, and pays trade partners with each payment tied to a lien waiver.
