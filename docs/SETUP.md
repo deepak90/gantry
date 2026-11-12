@@ -8,8 +8,8 @@ covers what is wired today and names what is not. The README's "Run it yourself"
 
 | Tool | Version | Notes |
 |---|---|---|
-| Node.js | 22.18 or newer (24 used) | runs the repo's TypeScript scripts directly (built-in type stripping) |
-| pnpm | 9.15 | `corepack enable` picks the pinned version from `package.json` |
+| Node.js | 22.18 or newer (24 used) | runs the repo's TypeScript scripts directly (built-in type stripping); on 26, pnpm warns about the engine range, and the unit tests pass there too |
+| pnpm | 9.15 | `corepack enable` picks the pinned version from `package.json`; Node 25 and later come without corepack, so `npm install -g pnpm`, which switches itself to the pinned version |
 | Docker Desktop | current | runs the local Supabase stack |
 | Supabase CLI | 3.0 or newer | `brew install supabase/tap/supabase` |
 | Chromium for Playwright | installed by `pnpm exec playwright install chromium` | only for `pnpm test:e2e` |
@@ -27,19 +27,11 @@ pnpm install
 ## 2. Start the database
 
 ```sh
-pnpm db:start        # supabase start: Postgres 17, Auth, PostgREST, Realtime, Storage, Studio
-pnpm db:reset        # supabase db reset: migrations, then supabase/seed.sql and seed_snapshot.sql; then the seed documents
-supabase status -o env   # prints API_URL and ANON_KEY for the next step
+pnpm db:start            # supabase start: Postgres 17, Auth, PostgREST, Realtime, Storage, Studio
+supabase status -o env   # prints ANON_KEY and SERVICE_ROLE_KEY for the next step
 ```
 
-`db:reset` rebuilds the schema (`supabase/migrations`) and creates the two demo users and the seed
-projects: Harbor Street Offices, the one project the app lists; twelve unlisted copies of it for a
-hosted demo; and two projects reached only by a link, Cedar Park Clinic and Riverside Clinic (the
-automated tests' fixture, with a crane rental booked 4 days before the work can use it). Then it
-files the seed documents (`scripts/seed-documents.ts`, below), which needs `SUPABASE_URL` and
-`SUPABASE_SERVICE_ROLE_KEY` in `.env.local`: on a first run, do step 3 before `pnpm db:reset`, or
-run it again after step 3. Run it again whenever a migration or the seed changes. Studio is at
-http://127.0.0.1:54323.
+Studio is at http://127.0.0.1:54323.
 
 ## 3. Configure the environment
 
@@ -50,14 +42,29 @@ through `envDir`, scripts load it with `node --env-file`):
 cp .env.example .env.local
 ```
 
-Set the two values the browser needs:
+Paste the two keys from `supabase status -o env` (the URLs are already filled in):
 
 ```
-VITE_SUPABASE_URL=http://127.0.0.1:54321
-VITE_SUPABASE_ANON_KEY=<ANON_KEY from `supabase status -o env`>
+VITE_SUPABASE_ANON_KEY=<ANON_KEY>
+SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY>
 ```
 
-A missing or malformed value shows a "Configuration needed" screen that names the variable.
+The browser uses the anon key. The scripts (the seed documents, `pnpm demo:reset`) and Remy's
+service use the service-role key, which never reaches a browser. A missing or malformed browser
+value shows a "Configuration needed" screen that names the variable.
+
+Then build the database:
+
+```sh
+pnpm db:reset        # supabase db reset: migrations, then supabase/seed.sql and seed_snapshot.sql; then the seed documents
+```
+
+`db:reset` rebuilds the schema (`supabase/migrations`) and creates the two demo users and the seed
+projects: Harbor Street Offices, the one project the app lists; twelve unlisted copies of it for a
+hosted demo; and two projects reached only by a link, Cedar Park Clinic and Riverside Clinic (the
+automated tests' fixture, with a crane rental booked 4 days before the work can use it). Then it
+files the seed documents (`scripts/seed-documents.ts`, below). Run it again whenever a migration or
+the seed changes.
 
 The Edge Functions read the `PAYPAL_*` values from the same file (`pnpm functions:serve` passes it
 with `--env-file`; the CLI skips the `SUPABASE_*` names, which the edge runtime sets itself).
@@ -69,12 +76,23 @@ succeed with a fixed mock fee. For real sandbox payouts, in the
 2. Under **Apps & Credentials**, **Create App** of type **Merchant**, then copy its **Client ID**
    and **Secret** into `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET`. In the app's features, make
    sure **Payouts** is enabled.
-3. Under **Testing Tools > Sandbox Accounts**, create a sandbox **Personal** account and put its
-   email in `PAYPAL_SANDBOX_PAYEE_EMAIL`; payouts to any other address stay unclaimed. The value
-   is written into the seeded supplier booking by `pnpm db:reset` (through the generated,
-   gitignored `supabase/seed_local.sql`).
-4. Set `PAYPAL_MODE=live` and restart `pnpm functions:serve`. Live mode calls
-   `api-m.sandbox.paypal.com` only; there is no production mode.
+3. Under **Testing Tools > Sandbox Accounts**, create sandbox **Personal** accounts, a different
+   one for each party: a payment is refused when one account is set up for two parties.
+   - `PAYPAL_SANDBOX_PAYEE_EMAIL`: the rental supplier's, which the crane payouts go to; payouts to
+     any other address stay unclaimed.
+   - `PAYPAL_SANDBOX_GRANITE_EMAIL` and `PAYPAL_SANDBOX_PINECREST_EMAIL`: the two trade partners
+     Harbor's Footings paid hold pays, Granite Ridge Concrete and Pinecrest Sitework. A firm is
+     found by the first word of its name, and a live payment to a firm without an account is
+     refused.
+   - `PAYPAL_SANDBOX_TENANT_EMAIL`: the tenant Harbor's invoices bill. Without it they bill the
+     payee's account.
+   - One more to pay with: a crew payment opens PayPal's own window, where you sign in with a
+     sandbox account that isn't any of the above and approve it.
+4. Set `PAYPAL_MODE=live`, restart `pnpm functions:serve` and `pnpm dev` (both read these values
+   when they start), and run `pnpm demo:reset`, which points the seeded payments at the new
+   accounts (`pnpm db:reset` does the same, through the generated, gitignored
+   `supabase/seed_local.sql`). Live mode calls `api-m.sandbox.paypal.com` only; there is no
+   production mode.
 5. Optional: webhooks. PayPal can only call a public URL, so expose the local `paypal-webhook`
    function through a tunnel (for example `ngrok http 54321` or
    `cloudflared tunnel --url http://127.0.0.1:54321`; either exposes the whole local API while it
@@ -182,7 +200,8 @@ uploads (up to 200 KiB), its plain text for the AI agent.
 `apps/agent` is a Node service (`pnpm agent:dev`) that joins every project as the AI assistant. It
 reads `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and `ANTHROPIC_API_KEY` from `.env.local`; the
 Anthropic key never reaches a browser. `AGENT_MODE=mock` runs a scripted stand-in model that costs
-nothing; with a key and no `AGENT_MODE` it uses Claude.
+nothing and knows only a few requests (it can change the crane's dates), so the README's Harbor
+story, `?rails=film` and the call need the key; with a key and no `AGENT_MODE` it uses Claude.
 
 - It answers when asked. With `AGENT_PROACTIVE=issues` it also looks for an issue worth fixing when
   two people are in the plan (for example a crane paid but idle) and, once per issue, says so in the
@@ -222,7 +241,8 @@ the call's tokens.
 
 On one computer both microphones hear you: mute one tab from the call bar (or use two computers),
 or Remy hears every line twice. "Call server off" on the header button means `livekit-server` isn't
-running.
+running. "Remy is joining…" that turns back into **Call Remy** means her call worker isn't running:
+start `pnpm remy:call`, which needs `OPENAI_API_KEY`.
 
 ### The hosted build and deploy
 

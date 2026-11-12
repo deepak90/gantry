@@ -25,8 +25,8 @@ export function readSupabaseConfig(env: SupabaseEnv = import.meta.env): Supabase
   );
   if (missing.length > 0) {
     throw new SupabaseConfigError(
-      `Supabase is not configured: set ${missing.join(' and ')} in apps/web/.env (copy .env.example; ` +
-        'for a local stack run `supabase start` and paste the anon key it prints).',
+      `Supabase is not configured: set ${missing.join(' and ')} in .env.local at the repo root (copy .env.example; ` +
+        'for a local stack, paste the ANON_KEY that `supabase status -o env` prints).',
     );
   }
   if (!/^https?:\/\//.test(url)) {

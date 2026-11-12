@@ -17,7 +17,7 @@ Built with PayPal and Bryntum for the [PayPal AI Hackathon](https://paypalaihack
 - **Watch the film (2:59):** https://www.youtube.com/watch?v=dtjWu35chMo. One recorded call on the demo project: a crane rental with idle days is cut back, a change order goes to the tenant as a PayPal invoice, and $37,800 goes to two trade partners through PayPal once a second person approves. [How it was made](#how-it-was-made).
 - **Try it online:** the live demo is linked from Gantry's [Devpost entry](https://devpost.com/software/gantry-talk-build-pay), under "Try it out". Press "Start a session" (or "Join with a code" if a teammate gave you one): a private copy of the demo project for your visit, with no sign-up, sandbox money only, wiped afterwards. "Try these", on the counter in the header, lists things to do, from calling Remy to paying the footings with PayPal. To be both people in a payment, open Invite, then "Open a teammate in a new tab", and approve from that tab. On this site the crews are paid as one PayPal Payouts batch; the film's PayPal button runs on a local build ([why](#paying-the-crews-two-routes)).
 - **The site's date:** it runs on the film's day, Tue, Nov 10, 2026, so the forecast and the odds match the film. Times on messages, calls and payments are real. [More on the date](#the-hosted-sites-date).
-- **Run it on your machine:** eight commands and no outside API keys, since Remy and PayPal each have a mock mode. [Run it yourself](#run-it-yourself).
+- **Run it on your machine:** eight commands. PayPal has a mock mode, so the payments work without a PayPal account. Remy needs an Anthropic API key: without one, a scripted stand-in answers, and it knows only a few requests. [Run it yourself](#run-it-yourself).
 - **Then:** [PayPal and AI together](#paypal-and-ai-together), [how money is protected](#security-permissions-and-payments) and [what's missing](#whats-missing-today).
 
 ## At a glance
@@ -524,9 +524,10 @@ Code: `apps/web/site-pages.ts`, `apps/web/src/site/`, `apps/web/src/analytics.ts
 
 ### What you need
 
-- Node.js 22.18 or newer (24 is what we use) and pnpm 9.15 (`corepack enable`).
+- Node.js 22.18 or newer (24 is what we use; on 26, pnpm warns about the engine range, and the unit tests pass there too) and pnpm 9.15. On Node 22 and 24, `corepack enable` gets it. Node 25 and later come without corepack: `npm install -g pnpm`, which switches itself to 9.15 in this repo.
 - Docker Desktop, running, and the Supabase CLI 3.0 or newer.
-- Optional: an Anthropic API key for Remy (without one, `AGENT_MODE=mock` gives a scripted stand-in), a PayPal sandbox app (without one, `PAYPAL_MODE=mock`), and for the call, LiveKit's server and an OpenAI API key. An ElevenLabs voice for Remy is optional too.
+- An Anthropic API key for Remy, in `ANTHROPIC_API_KEY`. The Harbor story below, the `?rails=film` walkthrough and Remy on a call need it. Without one, `AGENT_MODE=mock` runs a scripted stand-in that can change the crane's dates and knows little else. The plan, the second person and the payments work the same without it.
+- Optional: a PayPal sandbox app (without one, `PAYPAL_MODE=mock`), and for the call, LiveKit's server and an OpenAI API key. An ElevenLabs voice for Remy is optional too.
 
 ### Start it
 
@@ -554,11 +555,11 @@ To see two people at once, sign in as the other one in a second browser profile 
 
 ### Try the Harbor story
 
-Harbor Street Offices is the project the app lists, so it opens first. Its direct link is http://localhost:5173/?project=00000000-0000-4000-8000-000000000002. Then, in the Remy tab:
+Harbor Street Offices is the project the app lists, so it opens first. Its direct link is http://localhost:5173/?project=00000000-0000-4000-8000-000000000002. Remy's part needs the Anthropic key; the payment at the end of step 3 works without it. In the Remy tab:
 
 1. "How's the crane rental looking?" Then: "Keep two days either side of the steel and drop the rest." Press Apply on her card.
 2. "The tenant wants new light fixtures, starting on Level 1. Can you add them?" She drafts the work with costs. Put it on Level 1, then take her offer for Levels 2 and 3. Then: "The tenant approved that, get their PayPal invoice ready." A person sends it.
-3. "What's holding the ground floor?" Then: "What happens if we wait till Friday?" and "Would we still make June 11th?" Open the Footings paid hold in the Task tab and press Review payment. Chris approves in the other browser, then Deepak pays.
+3. "What's holding the ground floor?" Then: "What happens if we wait till Friday?" and "Would we still make June 11th?" Open the Footings paid hold (under Site and foundations, then Footings) in the Task tab and press Review payment. Chris approves in the other browser, then Deepak pays.
 
 Her words differ from run to run. Her numbers come from the plan.
 
@@ -594,7 +595,7 @@ Locally, the call runs on the Vite dev server. On top of the steps above:
 4. Open http://localhost:5173/?project=00000000-0000-4000-8000-000000000002&call in two browser profiles, signed in as Deepak in one and Chris in the other. Allow the microphone.
 5. Press Call Remy in one of them. The other sees Join. Say "Remy, how's the crane rental looking?"
 
-On one computer, both tabs' microphones hear you. Mute one of them from the call bar, or use two computers, or Remy hears every line twice. If the browser holds the sound back, press "Turn on sound" on the call bar.
+On one computer, both tabs' microphones hear you. Mute one of them from the call bar, or use two computers, or Remy hears every line twice. If the browser holds the sound back, press "Turn on sound" on the call bar. If the bar says "Remy is joining…" and then goes back to "Call Remy", her call worker isn't running: start `pnpm remy:call`, which needs `OPENAI_API_KEY`.
 
 ### Environment variables
 
@@ -616,7 +617,7 @@ On one computer, both tabs' microphones hear you. Mute one of them from the call
 
 ### Other things to try
 
-- `?rails=film` on Harbor: the film's story as a twelve-step walkthrough.
+- `?rails=film` on Harbor: the film's story as a twelve-step walkthrough. It needs the Anthropic key; with the stand-in it stops at step 3.
 - `pnpm crowd:harbor`: two simulated teammates at work in Harbor (stop with Ctrl+C).
 - `?fx=off`: the app without the 3D view.
 

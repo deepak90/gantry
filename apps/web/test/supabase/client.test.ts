@@ -36,7 +36,7 @@ describe('supabase/client', () => {
 
   it('names every missing variable in one clear error', () => {
     expect(() => readSupabaseConfig({})).toThrow(SupabaseConfigError);
-    expect(() => readSupabaseConfig({})).toThrow(/set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in apps\/web\/\.env/);
+    expect(() => readSupabaseConfig({})).toThrow(/set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in \.env\.local at the repo root/);
     expect(() => readSupabaseConfig({ VITE_SUPABASE_URL: 'http://x' })).toThrow(/set VITE_SUPABASE_ANON_KEY/);
     expect(() => readSupabaseConfig({ VITE_SUPABASE_URL: '', VITE_SUPABASE_ANON_KEY: 'k' })).toThrow(/set VITE_SUPABASE_URL /);
     expect(() => readSupabaseConfig({ VITE_SUPABASE_URL: 'localhost:54321', VITE_SUPABASE_ANON_KEY: 'k' })).toThrow(/http\(s\) URL/);
